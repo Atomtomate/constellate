@@ -19,7 +19,9 @@
 
 ## How it was verified
 
-- `python scripts/check_docs.py` passes. No prose line is wider than 100 columns.
+- `python scripts/check_docs.py` passes. No prose line is wider than 100 columns. The record
+  gate passed in the pre-commit and pre-push hooks. CI's `Record` workflow did not start:
+  GitHub reports that the account's payments failed or its spending limit is reached.
 - Every citation of a data-source finding was checked against its document; the Spotify terms
   and the Last.fm path against §6 at `ec00a85`, quote by quote.
 - Each reviewer finding was checked against the text before it was folded. The failure cases in
