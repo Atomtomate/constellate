@@ -37,6 +37,10 @@ coordinating session; no code, no scaffold, no issue.
 ## How it was verified
 
 - `python scripts/check_docs.py` is green, and the pre-commit hook passed on every commit.
+- **CI did not run.** GitHub did not start the `record` job, because of the account's billing
+  state ("recent account payments have failed or your spending limit needs to be increased",
+  2026-09-23). The same checks passed locally in the pre-push hook: the record check and the
+  record scripts' 338 tests.
 - Every line outside a table and a handoff header is at most 100 characters, counted by
   character.
 - The draft's claims about the sibling project were read from its files at the time of writing.
