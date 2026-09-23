@@ -77,9 +77,13 @@ coordinating session; no code, no scaffold, no issue.
 - **The data-source documents may move smaller details**: whether an extension makes
   `extension/` and its gate area real, and the key that recognises a polled play and an
   exported play as one. None of them reopens the stack.
+
 ## Needs a decision
 
-Nothing further here: the stack was decided by the owner on 2026-09-23.
+The stack itself was decided by the owner on 2026-09-23. Two smaller calls it left are the
+owner's: **the poller's shape if Spotify's sampler is adopted** (leaning: a bounded sampling run
+the OS scheduler still fires, as ADR-0002 records), and **which milestone the scaffold belongs
+to** (leaning: M1's first bullet, since M0 promises no product code).
 
 ## What carried it
 
