@@ -402,6 +402,148 @@ three months that is at most three months of estimates, all corrected (inferred)
 6. **Optional:** connect Spotify to Last.fm in its application settings, as insurance for
    poller downtime.
 
+## 6. What Spotify's terms allow the tracker to keep
+
+Read on 2026-09-23:
+
+- the Spotify Developer Terms, "Version 10, effective as of 15 May, 2025" (S38);
+- the Spotify Developer Policy, "Effective as of 15 May, 2025", which is incorporated into the
+  Terms (S39).
+
+Quotations are verified on those pages. The pages number their sub-clauses with list markers
+that did not survive into text, so a clause is named here by its section and heading. **What
+follows is a reading of the text, not legal advice.**
+
+### What the terms cover
+
+"Spotify Content" is defined broadly, as "any content, data, information or material made
+available through the Spotify Platform, Spotify Service or by Spotify. This may include, among
+other things, [...] metadata, playlists, and user data including Spotify Personal Data" (S38
+§II, verified). Catalogue facts fetched from the Web API are therefore Spotify Content: track
+length, artists, ISRC, album. So are the listening events the poller captures. The events are
+also "Spotify Personal Data": "any Personal Data in respect of which Spotify or a Spotify
+Affiliate is a data controller, which you process in connection with the Developer Terms" (S38
+Appendix A §1, verified). The "Spotify Platform" is the "developer tools accessible (e.g. APIs,
+SDKs, Widgets) and documentation" (S38 §II, verified). The licence is to build apps "for private
+personal use" (S38 §III, verified), which fits the tracker.
+
+### Retention: not indefinitely, with no period given
+
+The clause the domain model has to respect is §IV, "Storing Spotify Content" (S38, verified):
+
+> Except as otherwise set out in these Developer Terms, you may not store, aggregate or create
+> compilations or databases of Spotify Content, other than as strictly necessary to operate
+> your SDA. You must use reasonable efforts to ensure that any data you display to users is the
+> most up to date data available through the Spotify Platform, and to delete older data. Do not
+> store Spotify Content indefinitely.
+
+The same section limits caching to what is "strictly necessary to enhance the performance of
+your SDA", and to "the temporary caching of: metadata and cover art" (S38 §IV, "Local caching",
+verified). **Unlike YouTube's 30 days, no period is stated** (verified by searching both pages
+for any retention period). A cache that is refreshed from the API and replaces older values
+fits "most up to date [...] and to delete older data". A column written once from the API and
+never refreshed does not (inferred).
+
+Personal data has a softer rule. "You may only process Spotify Personal Data for as long as is
+necessary to provide your SDA to the applicable user, and consistent with the specific consent
+they've granted to you" (S38 §V, verified). The Policy puts it as "you may store users'
+personal data for as long as is necessary to provide your SDA" (S39 §I, verified). The tracker's
+purpose is a long-term log, so keeping its events for the log's life is arguably "necessary".
+Yet the events are also Spotify Content, which may not be stored "indefinitely". The text does
+not resolve that tension (inferred).
+
+### Aggregates and analysis
+
+§IV forbids aggregating or compiling Spotify Content beyond what is "strictly necessary to
+operate your SDA" (S38, quoted above). The Policy's list of prohibited applications adds (S39
+§III, verified):
+
+> Do not analyze the Spotify Content or the Spotify Service for any purpose, including without
+> limitation, creating new or derived listenership metrics, benchmarking, functionality, usage
+> statistics, user metrics, or building profiles of users, including for the purpose of
+> targeting them with advertising or marketing.
+
+Read literally, per-artist or per-month totals computed from API data are "derived listenership
+metrics" or "usage statistics". Against that, §V lets an app use personal data for "displaying
+it back to the user on your SDA" without further consent (S38 §V, verified). The text does not
+settle whether an owner's totals of their own listening, shown only to that owner, count as
+displaying back or as analysis (inferred).
+
+Training is flatly excluded: "using the Spotify Platform or any Spotify Content to train a
+machine learning or AI model" (S38 §IV; S39 §III, verified). That matters for the automatic
+recommendations `00-vision-and-scope.md` defers.
+
+### Combining with YouTube
+
+The Policy's prohibited list includes "Do not create any product or service which is integrated
+with streams or content from another service" (S39 §III, verified). Its neighbours in that list
+are about playback: webcasting, synchronising recordings with video, and mixing Spotify audio
+with other audio. That context suggests the clause targets playback integration (inferred). The
+text is not limited to playback, though, and a timeline that shows Spotify metadata beside
+YouTube's is "integrated with [...] content from another service" on a literal reading.
+
+Two neighbouring rules do not bite:
+
+- The rule against transferring data "to another service" makes an exception for "a user to
+  transfer their personal data" (S39 §III, verified). A store the owner runs is not another
+  service (inferred).
+- Hosting is allowed. §IV permits "third party data processors, such as server providers for
+  providing your SDA" (S38, "Transfer to third parties", verified).
+
+### Disconnection and termination
+
+- **On disconnect.** "When a user disconnects their Spotify Service account or otherwise
+  expresses an intent to prevent your SDA from accessing their data, you agree to delete and no
+  longer request or process any of that user's Spotify Personal Data" (S38 §V, verified). The
+  appendix sets the deadline: "delete the applicable Spotify Personal Data in your possession
+  or control within five (5) days" (S38 Appendix A §5(c), verified). The app must also offer
+  "a working and easily accessible mechanism to disconnect" (S38 §V, verified).
+- **On termination.** "Upon any termination or notice of any discontinuance, you must
+  immediately cease and desist from using the Spotify Platform and delete all Spotify Content
+  (including Spotify Personal Data) obtained through use of the Spotify Platform (including
+  from your servers)" (S38 §IX, "Term, Suspension, Termination and Survival", verified).
+- **On revised terms.** A developer who does not accept revised terms must likewise "delete all
+  Spotify Content" (S38 §IX, "Changes to the Agreement", verified).
+
+So everything the tracker got from the Web API must be deletable as one set within five days:
+events and catalogue facts alike (inferred). The six-monthly refresh-token expiry is not a
+disconnect, because the owner has expressed no intent to stop access (inferred).
+
+### The export is the owner's own data, probably outside these terms
+
+The export does not come "through use of the Spotify Platform", which means the APIs, SDKs and
+widgets. It comes from the Spotify Service's privacy page, as the owner's right of access and
+portability under the GDPR. Article 20(1) gives "the right to receive the personal data [...] in
+a structured, commonly used and machine-readable format and [...] the right to transmit those
+data to another controller without hindrance" (S41, verified). Article 2(2)(c) excludes
+processing "by a natural person in the course of a purely personal or household activity"
+(S42, verified). The deletion duties above are all worded as data "obtained through use of the
+Spotify Platform" or processed in connection with an app's account linking (S38 §IX,
+Appendix A §5, verified).
+
+Two things keep this an inference rather than a finding:
+
+- The definition of Spotify Content ends with "or by Spotify". Read literally, that covers the
+  export.
+- No page read says whether Spotify treats a user's own export, imported into their own app,
+  as governed by the Developer Terms.
+
+Spotify's consumer Terms of Use define "Content" as "music, videos, podcasts, audiobooks, or
+other material that is made available through the Spotify Service", and grant "personal,
+non-commercial use" (S40, verified). A keyword search of them found nothing specific to the
+data export; they were not read in full. Terms that bound what a data subject does with their
+own Article 20 export would be hard to reconcile with "without hindrance" (inferred).
+
+A consequence for matching (§4): once an API-captured play is reconciled with an export play,
+the event can be re-sourced to the export, and its duration and identifiers then rest on data
+the Developer Terms arguably do not govern (inferred).
+
+**What the domain model may assume:** the export's own fields (names, URIs, `ts`, `ms_played`,
+reasons, flags) may be durable columns of the log. Anything taken from the Web API must be
+tagged with its source, refreshable, and deletable as a set within five days. That covers
+catalogue facts and not-yet-reconciled live events alike (inferred from S38 §IV, §V,
+Appendix A §5(c) and §IX).
+
 ## What could not be verified
 
 - **The quota's size, buckets and reset period** for development mode. Spotify does not publish
@@ -420,6 +562,13 @@ three months that is at most three months of estimates, all corrected (inferred)
 - **Last.fm's default profile privacy and its scrobble rule for the Spotify connection.** The
   general scrobbling rule (over 30 s, half the track or 4 minutes, S32) is for clients that
   scrobble themselves.
+- **How Spotify reads its own terms for a personal tracker** (§6):
+  - what "indefinitely" and "strictly necessary" mean for a years-long log;
+  - whether an owner's totals of their own listening are prohibited "analysis";
+  - whether a timeline beside YouTube is "integrated with [...] content from another service";
+  - whether a user's own GDPR export imported into their app falls under the Developer Terms.
+
+  Spotify has published nothing on these, and none of it is settled here.
 
 ## Sources
 
@@ -508,3 +657,13 @@ Spotify. Inferences are marked where they occur in the text, not here.
 - **S37** (R) Theodore Echo, "Spotify Recently Played Not Showing All Songs?" (2026-06, updated
   2026-08)
   https://www.theodorehq.com/echo/blog/posts/spotify-recently-played-missing-songs
+- **S38** (V) Spotify Developer Terms, Version 10, effective 15 May 2025
+  https://developer.spotify.com/terms
+- **S39** (V) Spotify Developer Policy, effective 15 May 2025
+  https://developer.spotify.com/policy
+- **S40** (V, keyword search only) Spotify Terms of Use, last updated 2026-09-04
+  https://www.spotify.com/us/legal/end-user-agreement/
+- **S41** (V) GDPR Article 20, right to data portability
+  https://gdpr-info.eu/art-20-gdpr/
+- **S42** (V) GDPR Article 2, material scope
+  https://gdpr-info.eu/art-2-gdpr/
