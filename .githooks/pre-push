@@ -1,0 +1,33 @@
+#!/bin/sh
+# Runs everything the build would run for what is being pushed, before the push starts it.
+#
+# `scripts/gates.py --branch --push-refs` takes each commit git names on stdin against its
+# merge base with main and runs the full set for every area it touches. That is the same
+# list the workflow runs, held to it by `scripts/tests/test_gates.py`, so a red build here
+# is one that will not be paid for there.
+#
+# Whether to read stdin at all is decided by the arguments, not by `[ -t 0 ]`: git passes
+# the remote's name and URL, and a hook run by hand passes neither. Testing for a terminal
+# hangs forever the moment the hook is run by hand from anywhere that is not one -- a
+# script, a pipe -- because stdin is then open and silent rather than closed. What is on
+# that stdin, and which of the refs this worktree can answer for at all, is `gates.py`'s
+# (`push_revs`, `gating_split`).
+#
+# Activate once per clone: `git config core.hooksPath .githooks`. To push past it once,
+# `git push --no-verify`. See .githooks/pre-commit for why the root is resolved first and
+# why GIT_DIR and GIT_INDEX_FILE are unset.
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -f "$root/scripts/gates.py" ] || exit 0
+
+if ! command -v python >/dev/null 2>&1; then
+    echo "pre-push: python is not on PATH; the gates did not run" >&2
+    exit 0
+fi
+
+cd "$root" || exit 0
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+if [ "$#" -ge 2 ]; then
+    PYTHONUTF8=1 python scripts/gates.py --branch --push-refs
+else
+    PYTHONUTF8=1 python scripts/gates.py --branch
+fi

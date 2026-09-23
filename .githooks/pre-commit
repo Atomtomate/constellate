@@ -1,0 +1,31 @@
+#!/bin/sh
+# Runs the fast half of the checks the staged change calls for, before the commit exists.
+#
+# `scripts/gates.py --staged --quick` decides which those are: today the record check and
+# the record scripts' own tests, each only when the change touches what it guards. Nothing
+# here takes much over twenty seconds.
+#
+# Activate once per clone: `git config core.hooksPath .githooks`. To commit past it once,
+# `git commit --no-verify`; the push gate and the build both still stand behind it.
+#
+# `core.hooksPath` may resolve outside the worktree committing: a worktree can carry an
+# absolute path to the main checkout's `.githooks`, where this file is main's copy even
+# though the commit is being made elsewhere. (Set relatively, as the root CLAUDE.md asks,
+# each worktree resolves its own.) `--show-toplevel` is therefore asked first and everything
+# after it is that worktree's. GIT_DIR and GIT_INDEX_FILE are unset once the root is known:
+# git sets both for this hook, the second naming the index being committed, and a git
+# command started under gates.py would inherit them rather than discover the repository it
+# stands in. The record tests build scratch repositories and commit in them; with
+# GIT_INDEX_FILE still set, that writes a scratch repository's entries over the committing
+# worktree's index.
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+[ -f "$root/scripts/gates.py" ] || exit 0
+
+if ! command -v python >/dev/null 2>&1; then
+    echo "pre-commit: python is not on PATH; the gates did not run" >&2
+    exit 0
+fi
+
+cd "$root" || exit 0
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
+PYTHONUTF8=1 python scripts/gates.py --staged --quick

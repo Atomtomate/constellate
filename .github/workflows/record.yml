@@ -1,0 +1,47 @@
+name: Record
+
+# The one workflow so far: the written record and the scripts that read it. The path list
+# lives once in scripts/gates.py's AREAS, and scripts/tests/test_gates.py fails when this
+# file and that list disagree.
+#
+# It triggers on everything, which is not an oversight. check_docs.py answers for links
+# across the whole tree, so a rename anywhere can break a handoff's link to it and a
+# deletion anywhere can dangle one. It is also what runs test_gates.py, so a narrower
+# filter here would stop the guard firing on the very edits it guards.
+
+on:
+  pull_request:
+    paths:
+      - "**"
+  push:
+    branches: [main]
+    paths:
+      - "**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A superseded pull-request run answers about a commit nobody waits on. Pushes to main
+  # are not cancelled: each merge is the only run that will ever vouch for it.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # check_docs.py asks git whether a branch a handoff calls open is already
+          # merged, which the single-commit checkout fetches by default cannot answer.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: The written record is consistent
+        run: python scripts/check_docs.py
+
+      - name: The record scripts' own tests
+        run: python -m unittest discover scripts/tests

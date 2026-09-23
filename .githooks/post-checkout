@@ -1,0 +1,33 @@
+#!/bin/sh
+# Populates the agent-fleet submodule (`.claude/agents`, ADR-0019) in a new worktree --
+# `git worktree add` does not check submodules out on its own. Skips only a submodule with
+# a branch checked out inside it (root CLAUDE.md's editing workflow) -- that state is never
+# touched. Otherwise runs `git submodule update --init`, which is correct whichever of the
+# remaining states it finds: uninitialised, already at the recorded commit (a no-op), or
+# detached at an older one after a pointer bump (resynced to it -- a detached HEAD carries
+# nothing of its own to lose). Exits before touching anything on a worktree whose checked-
+# out commit predates the submodule's introduction (PR #91), where `.claude/agents` is not
+# in `.gitmodules` at all.
+#
+# Activate once per clone: `git config core.hooksPath .githooks`. Non-fatal: if the fleet
+# remote is unreachable the checkout still succeeds, and this prints one line below so the
+# worktree isn't left blind in silence. Why a hook, not `submodule.recurse`, and what was
+# tested: ADR-0019's Consequences.
+cd "$(git rev-parse --show-toplevel)" 2>/dev/null || exit 0
+[ -f .gitmodules ] && grep -q '\.claude/agents' .gitmodules || exit 0
+# Two traps here, both reproduced: `-e .claude/agents/.git` must gate the symbolic-ref
+# check, since an uninitialised submodule is an empty directory and discovery from one
+# with no `.git` climbs to the superproject's own repo instead of failing. And the check
+# itself must run in a subshell with GIT_DIR/GIT_WORK_TREE unset: git sets GIT_DIR to this
+# checkout's own gitdir for every hook it runs, which a bare `-C .claude/agents` does not
+# override, so without the unset this always reads the superproject's own HEAD instead of
+# the submodule's -- always "on a branch", so the resync below would never run.
+if [ -e .claude/agents/.git ] \
+    && (unset GIT_DIR GIT_WORK_TREE; cd .claude/agents && git symbolic-ref -q HEAD >/dev/null 2>&1); then
+    exit 0
+fi
+git submodule update --init .claude/agents
+if [ ! -f .claude/agents/CLAUDE.md ]; then
+    echo "post-checkout: .claude/agents is still empty (fleet remote unreachable?); run 'git submodule update --init .claude/agents' in this worktree, then start a fresh session" >&2
+fi
+exit 0
