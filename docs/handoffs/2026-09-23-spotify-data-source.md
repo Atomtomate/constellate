@@ -10,7 +10,7 @@
   as it stands after the February, March, May and July 2026 changes and the June 2026
   refresh-token expiry, Last.fm and ListenBrainz, what "how long" means on each path, how to
   match export and API plays, and a recommendation with the owner's steps.
-- Every load-bearing claim names one of 37 numbered sources, each read on 2026-09-23 and marked
+- Every load-bearing claim names one of 44 numbered sources, each read on 2026-09-23 and marked
   verified on the page or reported by a third party; inferences are marked where they occur.
 - Decided nothing: `docs/07` and `docs/08` are untouched, as the brief required. The document
   says which of Q-D's leanings it confirms and which it changes.

@@ -368,7 +368,10 @@ the export's own fields and treat the rest as enrichment that arrives later (inf
 
 **Backfill from the extended history; capture with our own poller of both endpoints; reconcile
 by re-requesting the extended history every few months.** Last.fm is optional insurance for
-poller downtime. ListenBrainz is not recommended, because it publishes listens.
+poller downtime. ListenBrainz is not recommended, because it publishes listens. On the text of
+Spotify's Developer Policy, this plan's totals and its combined timeline plausibly fall under
+two prohibitions. §6 gives the path that avoids Spotify's developer terms entirely: the export
+plus Last.fm, with no Spotify app. It also says what that path costs.
 
 Each part covers the others' losses:
 
@@ -538,11 +541,110 @@ A consequence for matching (§4): once an API-captured play is reconciled with a
 the event can be re-sourced to the export, and its duration and identifiers then rest on data
 the Developer Terms arguably do not govern (inferred).
 
+### Policy §III read whole, and the paths that avoid it
+
+§III is a single list of fourteen prohibitions under one sentence: "This section of the
+Developer Policy identifies some types of SDA and functionality that you must not build, nor
+enable or encourage others to build" (S39 §III, verified). In order, the list covers:
+
+- alarms and ringtones, games and quizzes, voice control, non-interactive webcasting;
+- "Do not create any product or service which is integrated with streams or content from
+  another service.";
+- synchronising recordings with visual media, mixing Spotify audio with other audio, products
+  for children;
+- transferring data to another service, except a user's own personal data or playlist
+  metadata; products for businesses; copying "a core user experience of Spotify"; news media
+  and commercial offers;
+- "Do not analyze the Spotify Content or the Spotify Service for any purpose, including without
+  limitation, creating new or derived listenership metrics, benchmarking, functionality, usage
+  statistics, user metrics, or building profiles of users, including for the purpose of
+  targeting them with advertising or marketing.";
+- training machine-learning models.
+
+**On the text as written, both clauses plausibly reach this tracker** (inferred from the
+verified text):
+
+- **Analysis.** "For any purpose, including without limitation" makes the listed purposes
+  examples. The advertising purpose at the end is one more example, not a limit. Totals by day,
+  artist or track computed from API-captured plays are "derived listenership metrics" and
+  "usage statistics" of Spotify Content, which includes "user data" (S38 §II). Showing plays
+  back one by one is what the Terms call "displaying it back to the user" (S38 §V). That
+  sentence governs consent, though, and is no exception to the Policy.
+- **Integration.** The clause's neighbours are all about playback. Spotify's Compliance Tips
+  list the common disallowed cases as ringtones, retail software, DJ mixes, games,
+  synchronisation and voice control. Statistics and cross-service timelines are not among them
+  (S44, verified). That context points at playback, but the words "or content" do not. A
+  timeline built from Spotify plays and YouTube watches integrates Spotify Content with content
+  from another service.
+- **No exemption for this app's shape.** The licence already covers only apps "for private
+  personal use" (S38 §III), so the prohibitions are written for exactly such apps. An SDA is
+  "any application, website or service that accesses the Spotify Service or Spotify Content
+  through [...] the Spotify Platform" (S38 §II). The Terms bind "when you first use the Spotify
+  Platform" (S38 §IX). Neither document exempts a single-user, unpublished or
+  development-mode app (verified by absence), and §III forbids building, not only publishing.
+- **Against that** (inferred): the Platform itself offers "Get User's Top Items" (S19), a
+  per-user listening statistic made for apps to show. The Compliance Tips encourage developers
+  "to create value from data" (S44). No evidence was found of enforcement against a private
+  development-mode app. But the question here is the text, and the text reaches.
+
+**Outside Spotify's developer terms.** The Developer Agreement binds whoever uses the
+Platform: "If you use or otherwise access the Spotify Platform, you will be deemed to have
+accepted the Developer Agreement" (S38 §I, verified). A tracker that never registers a Spotify
+app never accepts it (inferred). Two paths capture listening without one:
+
+- **The export alone, re-requested.** It is the owner's own data under the GDPR (above), and no
+  API is involved.
+  - *Gives:* every play, podcasts and offline and private-session plays included, with measured
+    `ms_played` and URIs.
+  - *Loses latency:* a play reaches the log only when the next export arrives, hours to 30 days
+    after the request (§1), so the log runs weeks behind.
+  - *Costs the owner* a sign-in, a confirmation click and a download each cycle. The request
+    cannot be automated without scraping a private page, which `00-vision-and-scope.md`
+    excludes, so v1's "by the next morning with the owner having typed nothing" fails.
+- **Last.fm for the live tail, the export for the record.** The owner connects Spotify to
+  Last.fm, which makes Last.fm the Spotify developer, not the owner. The tracker reads the
+  owner's scrobbles through Last.fm's API under Last.fm's API Terms (S43, verified). Those
+  terms:
+  - allow storage: "You may access, retrieve, store and use any Last.fm Data in accordance with
+    the laws relating to the storage and processing of data in the country in which You live"
+    (§2.3);
+  - allow use "solely for non-commercial purposes" (§3.1);
+  - license derivative and collective works (§4.1);
+  - cap Last.fm Data held at any time at a "Reasonable Usage Cap [...] of 100 MB" and require
+    caching "in accordance with the HTTP headers" (§4.3.4);
+  - require a credit and a link to Last.fm wherever the data is used (preamble);
+  - require deleting all Last.fm Data on termination (§9.3).
+
+  Nothing in them forbids statistics or combining with other data (verified by reading them).
+
+  *Gives* plays minutes after they end, since tracks "aren't actually scrobbled until the next
+  track starts" (S29), with start times and names. *Loses*, until the export arrives:
+  - listened time, because `user.getRecentTracks` returns none (S31);
+  - Spotify URIs, so matching to the export falls back to names and time;
+  - partial plays, and offline plays beyond 50 (S29; inferred from its use of the Web API);
+  - podcasts, unless Last.fm scrobbles them (not verified).
+
+  The tracker holds only the weeks no export has covered yet, far below 100 MB, and deletes
+  scrobbles an export supersedes (inferred). Whether data Last.fm got from Spotify is still
+  "Spotify Content" in the owner's hands does not arise, because the owner is not a party to
+  Spotify's Developer Agreement (inferred).
+
+**For zero Spotify-terms risk, the plan is the export for the record and Last.fm for the live
+tail, with no Spotify app.** Against the API plan in §5 it loses three things until each export
+arrives: measured listened time (plays carry a start time and no duration), Spotify URIs, and
+the partial plays the poller would have seen. It keeps next-morning latency for completed
+tracks. It gains the most: no Premium requirement, no undisclosed quota, and no six-monthly
+sign-in. `user.getRecentTracks` needs only an API key (S31). If "zero risk" is to exclude
+Last.fm's terms as well, the export alone is the only path. It loses next-morning latency and
+needs the owner's hand every cycle, but it never loses a measured duration.
+
 **What the domain model may assume:** the export's own fields (names, URIs, `ts`, `ms_played`,
 reasons, flags) may be durable columns of the log. Anything taken from the Web API must be
 tagged with its source, refreshable, and deletable as a set within five days. That covers
 catalogue facts and not-yet-reconciled live events alike (inferred from S38 §IV, §V,
-Appendix A §5(c) and §IX).
+Appendix A §5(c) and §IX). On the zero-risk path the Web API half does not arise. Last.fm
+scrobbles are a small, source-tagged tail under Last.fm's terms, replaced by export rows as
+they arrive.
 
 ## What could not be verified
 
@@ -569,6 +671,9 @@ Appendix A §5(c) and §IX).
   - whether a user's own GDPR export imported into their app falls under the Developer Terms.
 
   Spotify has published nothing on these, and none of it is settled here.
+- **What Last.fm's Spotify connection records** (§6): whether it scrobbles podcasts, whether it
+  misses partial plays as `recently-played` does, and whether `user.getRecentTracks` needs
+  more than an API key when the profile hides its listening.
 
 ## Sources
 
@@ -667,3 +772,7 @@ Spotify. Inferences are marked where they occur in the text, not here.
   https://gdpr-info.eu/art-20-gdpr/
 - **S42** (V) GDPR Article 2, material scope
   https://gdpr-info.eu/art-2-gdpr/
+- **S43** (V) Last.fm, API Terms of Service
+  https://www.last.fm/api/tos
+- **S44** (V) Spotify for Developers, Compliance Tips
+  https://developer.spotify.com/compliance-tips
