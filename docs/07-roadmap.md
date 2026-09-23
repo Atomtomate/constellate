@@ -24,7 +24,8 @@ The repository, the agent fleet and the written plan — no product code.
 - The domain model sketched — an event, an item, a creator, and the room the atlas needs
   later (Q-C) — as `02-domain-model.md`.
 - The stack decided (Q-B), as an ADR, and with it the file-ownership map in
-  `.claude/agents.local.md` that the implementation agents need before any of them can run.
+  `.claude/agents.local.md` that the implementation agents need before any of them can run —
+  **done** *(2026-09-23, ADR-0002)*.
 
 **Done when:** the questions above have answers written down, and an implementation agent
 can be briefed against an ownership map.

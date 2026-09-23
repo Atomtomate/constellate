@@ -7,7 +7,7 @@ That only stays true if the record is maintained. Read the root `CLAUDE.md` firs
 
 | Path | Holds | Written when |
 |------|-------|--------------|
-| `00`, `07`, `08` (and `02`, `03` once they exist) | Scope, roadmap, open questions; later the domain model and the architecture | The plan changes |
+| `00`, `03`, `07`, `08` (and `02` once it exists) | Scope, architecture, roadmap, open questions; later the domain model | The plan changes |
 | `adr/` | Decisions, with the reasoning that produced them | A decision is made |
 | `investigations/` | External constraints, researched then **parked** | Reality is discovered |
 | `handoffs/` | One record per finished task: done, verified, still open, what carried it — a `**Summary:**`/`**State:**` header under the title, indexed by `scripts/record_index.py` | A task closes |

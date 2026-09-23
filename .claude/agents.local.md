@@ -32,23 +32,23 @@ it, as its definition says, rather than inventing the answer.
 
 ## File ownership (the implementation specialists)
 
-`impl-*` agents are split by the files they own, not by topic, so two can run at once without
-colliding; the map is ADR-0002's. The line between database and backend is SQL: `repos/` is
-the only module that knows it. `<pkg>` is `api/src/constellate/`, which the scaffold PR lays
-out; until it does, the rows name ground that is about to exist.
+The map was decided by ADR-0002, and this is its only living copy. The line between database and
+backend is SQL: `repos/` is the only module that knows it. `<pkg>` is `api/src/constellate/`, which
+the scaffold PR lays out; until it does, the rows name ground that is about to exist.
 
 | Agent | Owns | Never touches |
 |-------|------|---------------|
 | `impl-database` | `<pkg>/models/`, `<pkg>/repos/`, `<pkg>/db.py`, `api/alembic/`, and their tests under `api/tests/` | routers, services, sources, the contract |
-| `impl-backend` | `<pkg>/api/`, `<pkg>/services/`, `<pkg>/domain/`, `<pkg>/sources/`, `<pkg>/main.py`, `<pkg>/poll.py`, `api/openapi.json`, and their tests under `api/tests/` | migrations, SQL |
+| `impl-backend` | `<pkg>/api/`, `<pkg>/services/`, `<pkg>/domain/`, `<pkg>/sources/`, `<pkg>/main.py`, `<pkg>/poll.py`, `api/openapi.json`, `api/scripts/`, and their tests under `api/tests/` | migrations, SQL |
 | `impl-frontend` | `web/`, and `extension/` if Q-D calls for one | anything under `api/` |
 
 **A module these rows do not name belongs to the agent whose layer imports it** — to the lower
-one where both do, which is the direction the layering already runs. The rows name only the
-modules the scaffold starts with, so the next one added does not need this table edited to
-have an owner. `config.py` is the exception the rule does not decide, since every layer reads
-it: a setting belongs to whoever is adding it — a migration's to `impl-database`, an endpoint's
-or a source's to `impl-backend`.
+one where both do, which is the direction the layering already runs — **and a module nothing
+imports is an entry point, and `impl-backend`'s**, an importer run as a command included. The
+rows name only the modules the scaffold starts with, so the next one added does not need this
+table edited to have an owner. `config.py` and `api/pyproject.toml` are the exceptions the rule
+does not decide, since every layer depends on them: a setting or a dependency belongs to whoever
+is adding it — a migration's to `impl-database`, an endpoint's or a source's to `impl-backend`.
 
 **A break in constructing a `models/` object in a test belongs to whoever changed the model.**
 "Their tests under `api/tests/`" divides the suite but not its shared fixtures, which are built
@@ -62,11 +62,9 @@ and its installer — which is edited from the session, nor the record: `docs/`,
 
 ## The contract, and the order
 
-- The contract is `api/openapi.json`, committed and checked in CI. Every client — the website,
-  the extension if Q-D calls for one — generates from it, and the API is the only path to data
-  (the root [`CLAUDE.md`](../CLAUDE.md#standing-constraints), ADR-0002).
-- The build order is **schema → API and contract → clients**, non-negotiable: a client built
-  against an unsettled shape is rework.
+- The contract is `api/openapi.json`; what it guarantees is the root
+  [`CLAUDE.md`](../CLAUDE.md#standing-constraints)'s standing constraints. The fleet's build
+  order — schema, then API and contract, then clients — holds.
 - Regenerate after any change to the API surface: from `api/`, run
   `python scripts/export_openapi.py` (that is `api/scripts/export_openapi.py`). The script and
   the CI check that the committed file matches the code arrive with the scaffold PR.
@@ -78,8 +76,8 @@ and its installer — which is edited from the session, nor the record: `docs/`,
 - The per-layer rules in detail: `api/src/constellate/CLAUDE.md`, which **arrives with the
   scaffold PR**.
 - The layering check `pr-architecture-review` runs: `scripts/check_layering.py`, which **arrives
-  with the scaffold PR**, ported to package `constellate`. Until it exists the reviewer reads
-  the imports itself, per its definition, and says so in its report.
+  with the scaffold PR**, ported to package `constellate` with the rule for `sources/` that
+  `docs/03` states. Until it exists, the reviewer's definition says what it does instead.
 - The web client's own layer rule arrives with `web/`.
 
 ## Project docs and record
@@ -154,8 +152,7 @@ review report's verdict line and `### N.` headings are what the script reads fro
 
 **None decided about the domain yet.** The root
 [`CLAUDE.md`](../CLAUDE.md#standing-constraints)'s standing constraints hold ADR-0002's
-structural ones — the API as the only path to data, the committed contract, one ingestion
-path, one language per deployable — and a reviewer holds a change to them. The domain model
+structural ones, and a reviewer holds a change to them. The domain model
 (Q-C) produces the first domain invariants, and the reviewer-facing checklist is written here
 when it does; until then a reviewer holds a change to those constraints and to
 [`docs/00-vision-and-scope.md`](../docs/00-vision-and-scope.md)'s scope and non-goals.

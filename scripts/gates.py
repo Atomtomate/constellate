@@ -9,7 +9,8 @@ Two depths, because a gate nobody waits for is a gate everyone bypasses. `--quic
 `.githooks/pre-commit` runs: the record checks and the stdlib test suite, nothing over
 about twenty seconds. The full run is `.githooks/pre-push`'s, and adds whatever suites a
 build would otherwise be the first to fail on -- today the same two, since this tree has
-one area; the product areas arrive with the stack ADR and each brings its checks here.
+one area; the product areas arrive with the scaffold PR that builds ADR-0002's stack, and
+each brings its checks here.
 
 A check whose tool is not installed here is a notice, never a finding. Skipping loudly
 keeps the hook worth leaving on; failing there would teach every session to pass

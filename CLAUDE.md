@@ -99,7 +99,7 @@ few sessions the `retro` agent runs instead of new work. Both conventions are in
 | Path | What |
 |------|------|
 | `docs/adr/` | Decisions. Check status: Accepted, Proposed, Superseded or Parked. |
-| `docs/00`, `07`, `08` | Scope, roadmap, open questions. `02` (domain model) and `03` (architecture) arrive with M0's answers. |
+| `docs/00`, `03`, `07`, `08` | Scope, architecture, roadmap, open questions. `02` (domain model) arrives with Q-C's answer. |
 | `docs/investigations/` | **Parked** research. Nothing here influences a design decision until deliberately unparked. |
 | `docs/handoffs/` | One file per finished task: what was done, verified, and left open. |
 | `docs/friction/` | One note per time an agent's process failed it. Written by the agent, read by the `retro`. |
@@ -129,8 +129,9 @@ These are decided. Changing one needs an ADR, not a commit.
   Regenerate it after any change to the API surface (ADR-0002).
 - **One ingestion path.** Every source produces the same draft event and exactly one service
   persists it; a new source is an adapter, never a second write path (ADR-0002).
-- **One language per deployable.** Python for the API package, TypeScript for each client;
-  nothing crosses a language boundary but the contract (ADR-0002).
+- **One language per deployable.** Python for the API package; TypeScript for the website and
+  for the extension, each a deployable of its own; nothing crosses a language boundary but the
+  contract (ADR-0002).
 
 ## Style
 

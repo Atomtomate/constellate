@@ -68,7 +68,8 @@ Python 3.13, FastAPI, SQLAlchemy 2 with Alembic, Postgres; `api/openapi.json` co
 generated from; React + Vite + TypeScript in `web/`, built to static files; Caddy in front.
 
 *For it.* The ownership map is the sibling's with the package renamed, and the layering check
-ports with its constants changed, so the fleet runs on ground it already knows. The part that
+ports with its constants changed and one rule added, for `sources/`, so the fleet runs on ground
+it already knows. The part that
 must work is in the owner's fastest language. An extension, a phone app or whatever Q-F names is
 one more client of a contract that already exists, on equal terms with the website — the
 sibling's one structural rule. The rig (Caddy, a public name, `stack.py`) is there to reuse if
@@ -136,14 +137,16 @@ crash, or a morning on which nobody started anything.
   process, portable, one log. But it is a fourth process to keep alive, and after a reboot or a
   crash something has to start it again — `stack.py up` if somebody runs it, or an OS task at
   logon, at which point the OS scheduler is doing the work anyway.
-- **An OS scheduled task firing a one-shot command** — fetch, ingest, store the cursor, exit:
-  Task Scheduler on a Windows rig, a cron line or a systemd timer on a Linux one. It survives a
-  reboot and a crash with nothing of ours supervising it; a failed run is retried by the next
-  firing; every run starts clean. Task Scheduler has a setting to run a missed start as soon as
-  possible (`StartWhenAvailable` in its task XML) and one to wake the machine for a run
-  (`WakeToRun`) — the two a sleeping PC wants; named from memory of that schema, to be verified
-  when the task is written. The cost: the schedule lives in the OS rather than in the code unless
-  the repository commits the task's definition and a script installs it, and that definition is
+- **An OS scheduled task firing a one-shot command** — fetch, ingest, store the cursor, exit: Task
+  Scheduler on a Windows rig, a cron line or a systemd timer on a Linux one. It survives a reboot
+  and a crash with nothing of ours supervising it; a failed run is retried by the next firing; every
+  run starts clean. That holds only if the task runs whether or not the owner is signed in, which is
+  not Task Scheduler's default: registered the default way, it waits for a sign-in after a reboot,
+  exactly as the logon-started worker would. Task Scheduler also has a setting to run a missed start
+  as soon as possible (`StartWhenAvailable` in its task XML) and one to wake the machine for a run
+  (`WakeToRun`) — the two a sleeping PC wants. All three are named from memory, to be verified when
+  the task is written. The cost: the schedule lives in the OS rather than in the code unless the
+  repository commits the task's definition and a script installs it, and that definition is
   platform-specific. The command is the portable part.
 
 ### The store: Postgres or SQLite
@@ -190,8 +193,8 @@ The reasons, strongest first:
 
 1. **It is the only option whose ownership map is already proven.** M0 is done when an
    implementation agent can be briefed against a map (the roadmap), and A's is the sibling's
-   renamed, with the check that holds it. B collapses the three-way split to two; C makes it an
-   experiment run during the first milestone.
+   renamed, with the check that holds it once taught `sources/`. B collapses the three-way split to
+   two; C makes it an experiment run during the first milestone.
 2. **A contract is needed early whatever is chosen.** If Q-D confirms the extension, the website
    is not M1's only client; if it does not, Q-F's apps are the next. B's saving is repaid at the
    first of them.
@@ -224,12 +227,9 @@ The reasons, strongest first:
   the session with no specialist, as in the sibling.
 - **Two toolchains from M1**, Python and Node, and a generated client to keep in step. Accepted
   for the reasons above.
-- **Accepting this ADR is a PR of its own.** It moves the appendix's map into
-  `.claude/agents.local.md` and fills the overlay's contract and layering sections; ports
-  `check_layering.py`, and adds the appendix's areas to `scripts/gates.py` and the CI workflows;
-  writes `docs/03-architecture.md`; adds the committed contract and the one ingestion path to the
-  root `CLAUDE.md`'s standing constraints; and records Q-B as answered. The standard review pass
-  runs on that PR.
+- **The scaffold PR builds it; the accepting PR only recorded it.** Porting
+  `check_layering.py` to package `constellate` and adding the appendix's gate areas with their
+  workflows are code, so they are the scaffold PR's, the first work `impl-director` cuts.
 - **Not decided here**: the domain model (Q-C); where it runs (Q-E); what the apps are (Q-F); how
   the owner signs in, which M1 needs (the sibling's `ADR-0014` is a starting point, not a
   precedent); the poll interval, which is the Spotify document's to set.
@@ -239,11 +239,23 @@ The reasons, strongest first:
     TypeScript is on M1's critical path, which narrows C's gap without closing it, since the
     generated client gives the extension typed calls. If Takeout and the Data API suffice, the
     website is M1's only client, reason 2 rests on Q-F alone and B becomes more defensible; A
-    still holds on reason 1.
-  - *Whether Spotify can be polled at all, and how often* (`01-data-sources-spotify.md`). The
-    tail's length sets the interval, not the trigger. If the recently-played endpoint turns out
-    unusable, nothing polls — YouTube cannot be polled, per Q-D — and the requirement to run all
-    day disappears, with the scheduler question.
+    still holds on reason 1. The YouTube research in flight (PR #2, 2026-09-23, not merged) leans
+    the second way: the extension later, for measured seconds on desktop.
+  - *Whether Spotify can be polled, and how* (`01-data-sources-spotify.md`). The research in
+    flight (PR #3, 2026-09-23, not merged) recommends two cadences. `recently-played` every 30
+    minutes, as the backstop, is a one-shot on the OS schedule as written above. A playback-state
+    sampler for listened time — every 30 s while playing, every 3 min idle, an open play carried
+    between samples — is not: its interval is below the shortest a fixed OS schedule repeats at
+    (a minute for Task Scheduler, from memory). If the sampler is adopted, the leaning is that the
+    OS scheduler still fires and supervises the command, which becomes a bounded sampling run: it
+    samples until a fixed deadline, writes its open play to the store after every sample so a
+    killed run loses one interval at most, and a firing while one runs is skipped. That keeps
+    what chose the OS scheduler — nothing of ours supervises it; the alternative is the
+    long-running worker rejected above. **Which shape the poller takes is the owner's to confirm
+    when the Spotify document is accepted**, and until then nothing writes the sampler.
+  - *Whether YouTube can be polled.* Q-D's leaning was that it cannot. The research in flight
+    (PR #2) finds a daily path, Google's Data Portability API, if a spike passes: one more
+    one-shot on the OS schedule, once a day.
   - *How a polled play and an exported play are recognised as the same play.* That shapes the
     ingestion service's idempotency key, not the stack.
 
@@ -268,34 +280,22 @@ The reasons, strongest first:
 - **A time-series database or extension.** Named only to be excluded: half a million rows over a
   decade is not a time-series problem.
 
-## Appendix: File-ownership map (draft)
+## Appendix: File-ownership map
 
-The table the overlay's "File ownership" section takes when this ADR is accepted, for option A.
-`<pkg>` is `api/src/constellate/`. The line between database and backend is SQL: `repos/` is the
-only module that knows it.
-
-| Agent | Owns | Never touches |
-|-------|------|---------------|
-| `impl-database` | `<pkg>/models/`, `<pkg>/repos/`, `<pkg>/db.py`, `api/alembic/`, and their tests under `api/tests/` | routers, services, sources, the contract |
-| `impl-backend` | `<pkg>/api/`, `<pkg>/services/`, `<pkg>/domain/`, `<pkg>/sources/`, `<pkg>/main.py`, `<pkg>/poll.py`, `api/openapi.json`, and their tests under `api/tests/` | migrations, SQL |
-| `impl-frontend` | `web/`, and `extension/` if Q-D calls for one | anything under `api/` |
-
-No specialist owns `infra/` — the stack script, the Caddyfile, the scheduled task's definition and
-its installer — which is edited from the session as in the sibling; nor the record (`docs/`,
-`scripts/`, the `CLAUDE.md` files, the overlay).
+On acceptance the map moved to `.claude/agents.local.md`'s "File ownership", which is its only
+living copy. What this ADR decided in it: the line between database and backend is SQL, as in
+the sibling; `sources/`, `poll.py` and the contract are `impl-backend`'s; `web/`, and
+`extension/` if Q-D calls for one, are `impl-frontend`'s; `infra/` and the record are nobody's,
+and are edited from the session. The sibling's two rules that make its map a partition came
+with it.
 
 `sources/` is new against the sibling: one adapter per source — the Spotify Web API client, the
 Spotify export parser, the Takeout parser — each producing draft events and knowing HTTP or a file
 format, never SQL. It is reached only through an interface `services/` declares, so one source's
 outage degrades that source and nothing else (the sibling's rule for integrations, in its
-`docs/03-architecture.md`). `poll.py` is an entry point above `api/`, like the sibling's
-`seed.py`: it may reach `services/`, and nothing reaches it.
-
-The sibling's two rules that make its map a partition come with it, and the accepting PR copies
-them rather than deriving them again: a module the rows do not name belongs to the agent whose
-layer imports it, the lower where both do, with `config.py` belonging to whoever adds the
-setting; and a break in constructing a `models/` object in a test belongs to whoever changed the
-model.
+`docs/03-architecture.md`). The sibling's layering check has no place for it, so the port gains
+a rule for it (`docs/03-architecture.md`). `poll.py` is an entry point above `api/`, like the
+sibling's `seed.py`: it may reach `services/`, and nothing reaches it.
 
 **The CI areas `scripts/gates.py` would gain**, each with its workflow, in the sibling's shape:
 

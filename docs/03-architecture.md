@@ -31,7 +31,10 @@ Q-E's):
   for what is new since the cursor it stored, ingests it, stores the new cursor and exits. The OS
   scheduler fires it; it is the same code when the stack script, a test or the owner runs it. It
   stores its last successful run per source, so a poller failing silently cannot pass for a
-  quiet day. Which sources are pollable, and how often, is the data-source documents' to say.
+  quiet day. Which sources are pollable, and how often, is the data-source documents' to say;
+  whether Spotify's listened time needs a playback sampler, and with it a bounded sampling run
+  rather than a single fetch, is the owner's to confirm with the Spotify document (ADR-0002's
+  Consequences).
 - **The store**: Postgres. At this scale, around half a million events over a decade, it needs
   indexes and nothing more: no partitioning, no time-series extension, no rollups. It has to be a
   service that starts with its machine, because the poller fires unattended.
@@ -45,8 +48,9 @@ makes that recovery add nothing twice.
 
 ## The seams
 
-Three rules the whole design rests on. Each is a standing constraint in the root
-[`CLAUDE.md`](../CLAUDE.md), and changing one needs an ADR.
+Three rules the whole design rests on. The root [`CLAUDE.md`](../CLAUDE.md) holds them as
+standing constraints — the first as two, access and the committed file — and changing one needs
+an ADR. This section says what each means for the design.
 
 **The contract is the only path to data.** `api/openapi.json` is committed, checked in CI, and
 generated from; every client is a consumer of the client generated from it, on equal terms. No
@@ -88,14 +92,20 @@ sources/    one adapter per source: HTTP or a file format in, draft events out; 
 - **`sources/` is reached only through an interface `services/` declares.** Nothing in the four
   layers imports a module of `sources/`: a service calls the interface, and an entry point hands
   it the concrete adapter. One source's outage then degrades that source and nothing else. A
-  source knows an external API or a file format, and imports neither `repos/` nor `models/`.
+  source knows an external API or a file format, and imports only `domain/` and the leaves: it
+  satisfies the interface structurally rather than by subclassing it, so neither `services/` nor
+  `sources/` imports the other.
 - **Outside the layers, a module is a leaf or an entry point.** A module a layer reaches
   (`config.py`, `db.py`) is a leaf, usable by anything and importing none of the four. A module
   nothing reaches is an entry point, above `api/`: `main.py` wires `api/` together, and
-  `poll.py`, the poller, may reach `services/`. Nothing imports an entry point.
+  `poll.py`, the poller, and any importer run as a command may reach `services/`. Nothing imports
+  an entry point.
 
 `scripts/check_layering.py` enforces this and arrives with the scaffold PR, ported to package
-`constellate`; until it exists a reviewer reads the imports. The per-layer rules in detail go
+`constellate` and given a rule for `sources/`, which the sibling's check has no place for: a port
+that changes only its constants passes both an adapter importing `repos/` and a service
+importing an adapter, so the port carries a test for each. Until it exists a reviewer reads the
+imports. The per-layer rules in detail go
 in `api/src/constellate/CLAUDE.md`, which arrives with the same PR, and this page stays the
 summary it expands. The website's own layer rule arrives with `web/`.
 
@@ -109,5 +119,7 @@ Named so nobody fills the gap by typing:
   the two data-source documents.
 - The host, and what keeps Postgres and the scheduled task running there: Q-E.
 - How the owner signs in, which M1 needs.
-- The API's conventions — the error envelope's codes, pagination, how times travel — settled
-  with the first endpoints the scaffold writes.
+- The API's conventions — the error envelope's codes, pagination, how times travel. The
+  scaffold PR's plan writes them into this page before its first endpoint, where the plan's
+  review sees them; the sibling project's (one error envelope for every error, cursor
+  pagination, ISO-8601 UTC times) are where option A starts.

@@ -37,23 +37,38 @@ coordinating session; no code, no scaffold, no issue.
   character.
 - The draft's claims about the sibling project were read from its files at the time of writing.
   Nothing there, and nothing in the main checkout, was written to.
-- **Not verified**: the Task Scheduler setting names in ADR-0002 (`StartWhenAvailable`,
-  `WakeToRun`) are from memory, and the ADR says so. Whoever writes the task checks them.
+- **The standard review pass** ran at `b3aeb20`, in two waves of two; the reports are under
+  `docs/reviews/stack-adr/`, and the PR body's Review pass section says what was acted on and
+  what was dismissed. Architecture had nothing to review in a Markdown-only diff; direction
+  found six, parsimony four, tech three. Tech's first was verified by running the sibling's
+  layering check, ported with only its constants changed, against a fake package.
+- **Not verified**: the Task Scheduler settings in ADR-0002 — running whether or not the owner
+  is signed in, `StartWhenAvailable`, `WakeToRun`, and the one-minute shortest repetition — are
+  from memory, and the ADR says so. Whoever writes the task checks them, and the `infra` area's
+  tests should assert them once the definition exists.
 
 ## What remains open
 
 - **The scaffold PR, the next step.** Cut by `impl-director` and built by the specialists, not
   by this PR: the `api/` and `web/` skeletons laid out per the map; `scripts/check_layering.py`
-  ported to package `constellate`; the `api`, `web` and `infra` gate areas in
-  `scripts/gates.py` and their workflows; the per-directory `CLAUDE.md` files, starting with
-  `api/src/constellate/CLAUDE.md`, which the overlay and `docs/03` already point at.
-- **The data-source documents may still move details.** ADR-0002's Consequences name three:
-  whether YouTube needs an extension (which makes `extension/` and its gate area real), whether
-  Spotify can be polled and how often, and how a polled play and an exported play are
-  recognised as one. None of them reopens the stack.
-- **Q-E** decides where it runs, and with it what keeps Postgres and the scheduled task up.
-  ADR-0002 makes a database server that starts with the machine a requirement of that answer.
-
+  ported to package `constellate` **with a rule for `sources/`** and a test each for an adapter
+  importing `repos/` and a service importing an adapter, both of which a constants-only port
+  passes; the `api`, `web` and `infra` gate areas in `scripts/gates.py` and their workflows; the
+  per-directory `CLAUDE.md` files, starting with `api/src/constellate/CLAUDE.md`; and the API's
+  conventions written into `docs/03` before its first endpoint. When a file named as arriving
+  lands, its "arrives with the scaffold PR" markers go: the overlay's banner and sections,
+  `docs/03`, and the root `CLAUDE.md`'s banner.
+- **Which milestone the scaffold belongs to** is unrecorded: M0 says "no product code", and the
+  roadmap's M1 does not list it. The owner's call.
+- **The poller's shape, if Spotify's sampler is adopted.** The Spotify research (PR #3) recommends
+  a playback sampler at 30 s, below a fixed OS schedule's interval. ADR-0002 records the leaning
+  — a bounded sampling run the OS scheduler still fires — and leaves it to the owner to confirm
+  when that document is accepted. Nothing writes the sampler before then.
+- **Q-E's entry does not yet carry ADR-0002's requirement**, a database server that starts with
+  the machine. `docs/08` was left alone beyond Q-B, as briefed; the consolidating session adds it.
+- **The data-source documents may move smaller details**: whether an extension makes
+  `extension/` and its gate area real, and the key that recognises a polled play and an
+  exported play as one. None of them reopens the stack.
 ## Needs a decision
 
 Nothing further here: the stack was decided by the owner on 2026-09-23.
