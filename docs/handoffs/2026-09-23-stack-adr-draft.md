@@ -29,6 +29,10 @@ coordinating session; no code, no scaffold, no issue.
     existed. The owner approved these two instruction-file edits in the session before they
     were made;
   - adds a dated revision line to ADR-0001's "The implementation agents cannot run yet".
+- **The review pass's fold** also marked M0's stack bullet done in `docs/07-roadmap.md`, listed
+  `03` in the root `CLAUDE.md`'s and `docs/CLAUDE.md`'s tables, and changed "the stack ADR" to
+  the scaffold PR in `scripts/gates.py`'s docstring and `scripts/README.md`. It moved ADR-0002's
+  map table to the overlay alone.
 
 ## How it was verified
 
