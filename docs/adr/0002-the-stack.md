@@ -1,7 +1,8 @@
 # ADR-0002 — The stack: the sibling project's, with the poller as a scheduled command
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-09-23
+- **Accepted:** 2026-09-23, by the owner, over B, C and A-with-SQLite
 
 ## Context
 
@@ -167,8 +168,8 @@ one — is a migration of data, not only of code.
 
 ## Decision
 
-**Proposed: option A, the sibling's stack as is, with the poller as a one-shot command fired by
-the OS scheduler and Postgres as the store.** In full:
+**Option A, the sibling's stack as is, with the poller as a one-shot command fired by the OS
+scheduler and Postgres as the store.** In full:
 
 - Python 3.13, FastAPI, SQLAlchemy 2, Alembic and Postgres in `api/`, package `constellate`, laid
   out and layered as the sibling's `api/src/bgtracker/` is.

@@ -13,11 +13,13 @@ copying it; a rule stated twice is a rule that will eventually contradict itself
 stated here in full is what has no other home — the file-ownership map and the board
 numbers.
 
-**This project is at M0: no code, no stack, no schema.** Several sections below therefore
-say *not yet* rather than answer, and name the question in
-[`docs/08-open-questions.md`](../docs/08-open-questions.md) that will answer them. An agent
-that finds one of those sections empty reports it, as its definition says, rather than
-inventing the answer.
+**The stack is decided (ADR-0002); its code is not written yet.** The sections it decides —
+file ownership, the contract, the layers, the toolchain — are filled below, and a file that
+arrives with the scaffold PR is named as arriving, not as present. Two sections still say
+*not yet*, each naming the question in
+[`docs/08-open-questions.md`](../docs/08-open-questions.md) that will answer it: the domain
+invariants (Q-C) and the running stack (Q-E). An agent that finds one of those empty reports
+it, as its definition says, rather than inventing the answer.
 
 ## Modes
 
@@ -30,33 +32,55 @@ inventing the answer.
 
 ## File ownership (the implementation specialists)
 
-**Not yet.** The map is written by the PR that accepts the stack ADR (Q-B), because the
-paths are the stack's. Until it exists:
+`impl-*` agents are split by the files they own, not by topic, so two can run at once without
+colliding; the map is ADR-0002's. The line between database and backend is SQL: `repos/` is
+the only module that knows it. `<pkg>` is `api/src/constellate/`, which the scaffold PR lays
+out; until it does, the rows name ground that is about to exist.
 
 | Agent | Owns | Never touches |
 |-------|------|---------------|
-| `impl-database` | *(no ground yet)* | — |
-| `impl-backend` | *(no ground yet)* | — |
-| `impl-frontend` | *(no ground yet)* | — |
+| `impl-database` | `<pkg>/models/`, `<pkg>/repos/`, `<pkg>/db.py`, `api/alembic/`, and their tests under `api/tests/` | routers, services, sources, the contract |
+| `impl-backend` | `<pkg>/api/`, `<pkg>/services/`, `<pkg>/domain/`, `<pkg>/sources/`, `<pkg>/main.py`, `<pkg>/poll.py`, `api/openapi.json`, and their tests under `api/tests/` | migrations, SQL |
+| `impl-frontend` | `web/`, and `extension/` if Q-D calls for one | anything under `api/` |
 
-`impl-director`, asked to cut implementation work before this table is filled, reports
-that the task cannot be cut along an ownership map that does not exist — that is a finding
-about the task, per its definition — and names Q-B as what blocks it. Record work (docs,
-scripts, this overlay, the `CLAUDE.md` files) needs no specialist and is done from the
-session.
+**A module these rows do not name belongs to the agent whose layer imports it** — to the lower
+one where both do, which is the direction the layering already runs. The rows name only the
+modules the scaffold starts with, so the next one added does not need this table edited to
+have an owner. `config.py` is the exception the rule does not decide, since every layer reads
+it: a setting belongs to whoever is adding it — a migration's to `impl-database`, an endpoint's
+or a source's to `impl-backend`.
+
+**A break in constructing a `models/` object in a test belongs to whoever changed the model.**
+"Their tests under `api/tests/`" divides the suite but not its shared fixtures, which are built
+from `models/` objects. `impl-database` fixes the construction — in a fixture or in a test
+body, in whichever file it lives, the other agent's included — and nothing else in that file;
+the assertions around it, and what the test is about, stay with the file's owner.
+
+No specialist owns `infra/` — the stack script, the Caddyfile, the scheduled task's definition
+and its installer — which is edited from the session, nor the record: `docs/`, `scripts/`, the
+`CLAUDE.md` files, this overlay.
 
 ## The contract, and the order
 
-**Not yet.** The fleet's build order is schema → API and contract → clients; whether this
-project has an API contract at all, and of what kind, is the stack ADR's (Q-B). When it
-does, this section names the contract file and the command that regenerates it.
+- The contract is `api/openapi.json`, committed and checked in CI. Every client — the website,
+  the extension if Q-D calls for one — generates from it, and the API is the only path to data
+  (the root [`CLAUDE.md`](../CLAUDE.md#standing-constraints), ADR-0002).
+- The build order is **schema → API and contract → clients**, non-negotiable: a client built
+  against an unsettled shape is rework.
+- Regenerate after any change to the API surface: from `api/`, run
+  `python scripts/export_openapi.py` (that is `api/scripts/export_openapi.py`). The script and
+  the CI check that the committed file matches the code arrive with the scaffold PR.
 
 ## Layers, architecture, and the standard
 
-**Not yet.** No layer document and no layering check exist. `pr-architecture-review` runs
-the check its definition names only where this overlay names one; here it says so in its
-report and reads the imports itself, per its definition. The first architecture document is
-`docs/03-architecture.md`, written with the stack ADR.
+- The standard and its reasoning: [`docs/03-architecture.md`](../docs/03-architecture.md) —
+  the layer order, where `sources/` and the entry points sit, and the three seams.
+- The per-layer rules in detail: `api/src/constellate/CLAUDE.md`, which **arrives with the
+  scaffold PR**.
+- The layering check `pr-architecture-review` runs: `scripts/check_layering.py`, which **arrives
+  with the scaffold PR**, ported to package `constellate`. Until it exists the reviewer reads
+  the imports itself, per its definition, and says so in its report.
+- The web client's own layer rule arrives with `web/`.
 
 ## Project docs and record
 
@@ -128,11 +152,13 @@ review report's verdict line and `### N.` headings are what the script reads fro
 
 ## Domain invariants the reviewers enforce
 
-**None decided.** The root [`CLAUDE.md`](../CLAUDE.md#standing-constraints)'s standing
-constraints hold none about the product yet; the domain model (Q-C) produces the first,
-and the reviewer-facing checklist is written here when it does. Until then a reviewer holds
-a change against [`docs/00-vision-and-scope.md`](../docs/00-vision-and-scope.md)'s scope
-and non-goals alone.
+**None decided about the domain yet.** The root
+[`CLAUDE.md`](../CLAUDE.md#standing-constraints)'s standing constraints hold ADR-0002's
+structural ones — the API as the only path to data, the committed contract, one ingestion
+path, one language per deployable — and a reviewer holds a change to them. The domain model
+(Q-C) produces the first domain invariants, and the reviewer-facing checklist is written here
+when it does; until then a reviewer holds a change to those constraints and to
+[`docs/00-vision-and-scope.md`](../docs/00-vision-and-scope.md)'s scope and non-goals.
 
 ## The boards
 
@@ -147,10 +173,13 @@ fleet's to state, and the commands that drive both boards are `scripts/README.md
 
 ## Toolchain
 
-- The record scripts under `scripts/` are stdlib Python on a bare interpreter — Python 3.13
-  on the dev machine and in CI. No venv exists yet.
-- The product toolchain is the stack ADR's (Q-B). Until then the only test command is
-  `python -m unittest discover scripts/tests`, and there is no linter.
+- The record scripts under `scripts/` are stdlib Python on a bare interpreter — Python 3.13 on
+  the dev machine and in CI. Their tests: `python -m unittest discover scripts/tests`.
+- The product toolchain, **once the scaffold exists**: the venv at `api/.venv` — on Windows,
+  `api/.venv/Scripts/python.exe` — and a worktree needs its own; tests from `api/` with that
+  interpreter's `python -m pytest -q`; lint and format with `ruff check .` and `ruff format .`
+  in `api/`. The web client's commands arrive with `web/`.
+- Until then there is no venv and no linter, and the record scripts' tests are the only suite.
 
 ## The running stack (for `ops`)
 

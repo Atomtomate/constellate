@@ -1,64 +1,66 @@
-# The stack ADR, drafted as Proposed
-**Summary:** Drafted ADR-0002 (Proposed) arguing Q-B's options, with a recommendation and a draft file-ownership map, for the owner to decide.
-**State:** Open — the owner's decision on the stack; then the PR that accepts it and carries the map into the overlay.
+# The stack ADR, drafted and accepted
+**Summary:** ADR-0002 drafted, accepted by the owner as option A (the sibling's stack, a one-shot poller fired by the OS scheduler, Postgres), and carried into the overlay, the root `CLAUDE.md`, `docs/03` and `docs/08`.
+**State:** Open — the scaffold PR, cut by `impl-director` along the new map, is the next step.
 
 ## What was done
 
-Branch `claude/stack-adr`, from `main` at `07710fd`, in its own worktree; a draft PR against
-`main`. Briefed by the coordinating session; no code, no scaffold, no issue.
+Branch `claude/stack-adr`, from `main` at `07710fd`, in its own worktree; PR #1. Briefed by the
+coordinating session; no code, no scaffold, no issue.
 
-- `docs/adr/0002-the-stack.md`, Status Proposed. Its Context pulls the requirements from `00`,
-  `07` and `08` (Q-B, with Q-C to Q-F) and the constraints the fleet imposes: three implementers
-  split by file ownership, a contract the clients generate from, a layering the architecture
-  reviewer can check. It weighs three stacks — (A) the sibling project's as is, (B) Python only
-  with pages rendered on the server and SQLite, (C) TypeScript end to end — then what fires the
-  poller (APScheduler in the API, a long-running worker, or an OS scheduled task firing a
-  one-shot command) and whether the store is Postgres or SQLite. It says the time-series
-  concerns are small, and why, so that nobody adds machinery for them.
-- The same ADR's appendix drafts the file-ownership map the overlay takes on acceptance, and
-  the CI areas `scripts/gates.py` would gain. Neither `.claude/agents.local.md` nor
-  `scripts/gates.py` was edited.
-- `docs/adr/README.md` lists it under Proposed.
+- **The draft.** `docs/adr/0002-the-stack.md` weighed three stacks — (A) the sibling project's
+  as is, (B) Python only with pages rendered on the server and SQLite, (C) TypeScript end to
+  end — then what fires the poller (APScheduler in the API, a long-running worker, or an OS
+  scheduled task firing a one-shot command) and Postgres against SQLite. It recommended A with
+  the OS-scheduled one-shot poller and Postgres, and drafted the file-ownership map.
+- **The acceptance.** The owner chose option A on 2026-09-23. The same PR then:
+  - marks ADR-0002 Accepted — "over B, C and A-with-SQLite" — and moves its row in
+    `docs/adr/README.md`;
+  - moves Q-B to Answered in `docs/08-open-questions.md`, deleting its open section; nothing
+    else in `docs/08` changed, since other lanes are editing Q-C to Q-F;
+  - fills `.claude/agents.local.md`: the banner, the ownership map with the sibling's two
+    partition rules, the contract and the build order, the layers (pointing at `docs/03` and at
+    `api/src/constellate/CLAUDE.md` and `scripts/check_layering.py`, both named as arriving with
+    the scaffold), and the toolchain, marked "once the scaffold exists". The domain-invariants
+    paragraph now names ADR-0002's structural constraints, which it said did not exist;
+  - writes `docs/03-architecture.md`: the shape, the three seams, the layer order with
+    `sources/` and the entry points, and what is not decided here;
+  - edits the root `CLAUDE.md`: the M0 banner (it said "no stack"), the `impl-director` bullet,
+    and four standing constraints citing ADR-0002, in place of the sentence saying none
+    existed. The owner approved these two instruction-file edits in the session before they
+    were made;
+  - adds a dated revision line to ADR-0001's "The implementation agents cannot run yet".
 
 ## How it was verified
 
-- `python scripts/check_docs.py` is green, and the pre-commit hook passed on each commit.
-- Every line outside a table is at most 100 characters, counted by character, not by byte.
-- What the ADR says about the sibling project was read from its files at the time of writing:
-  its root, `api/` and package `CLAUDE.md`s, `docs/03-architecture.md`, `docs/04-tech-stack.md`,
-  `docs/06-infrastructure-and-ops.md`, `ADR-0013` and `ADR-0015`, its overlay and
-  `scripts/gates.py`. Nothing there was written to.
-- **Not verified**: the Task Scheduler setting names (`StartWhenAvailable`, `WakeToRun`) are
-  from memory of its task XML schema, and the ADR says so. Whoever writes the task checks them.
-- The scale estimate (about half a million events over a decade) is an order-of-magnitude
-  guess from a heavy day's listening and watching, stated as one; the data-source documents
-  may refine it, and nothing in the recommendation turns on it being exact.
+- `python scripts/check_docs.py` is green, and the pre-commit hook passed on every commit.
+- Every line outside a table and a handoff header is at most 100 characters, counted by
+  character.
+- The draft's claims about the sibling project were read from its files at the time of writing.
+  Nothing there, and nothing in the main checkout, was written to.
+- **Not verified**: the Task Scheduler setting names in ADR-0002 (`StartWhenAvailable`,
+  `WakeToRun`) are from memory, and the ADR says so. Whoever writes the task checks them.
 
 ## What remains open
 
-- **The owner's decision on the stack.** Below.
-- **The PR that accepts it**, once decided: the map into `.claude/agents.local.md` together with
-  the overlay's contract and layering sections; `check_layering.py` ported; the gate areas and
-  their workflows; `docs/03-architecture.md`; the standing constraints in the root `CLAUDE.md`;
-  Q-B moved to Answered. The standard review pass runs there, not on this PR.
-- **The two data-source documents may move it.** The ADR's Consequences name the three places:
-  whether YouTube needs an extension (the strongest), whether Spotify can be polled and how
-  often, and how a polled play and an exported play are recognised as one. Worth re-reading the
-  ADR against both documents before accepting it.
+- **The scaffold PR, the next step.** Cut by `impl-director` and built by the specialists, not
+  by this PR: the `api/` and `web/` skeletons laid out per the map; `scripts/check_layering.py`
+  ported to package `constellate`; the `api`, `web` and `infra` gate areas in
+  `scripts/gates.py` and their workflows; the per-directory `CLAUDE.md` files, starting with
+  `api/src/constellate/CLAUDE.md`, which the overlay and `docs/03` already point at.
+- **The data-source documents may still move details.** ADR-0002's Consequences name three:
+  whether YouTube needs an extension (which makes `extension/` and its gate area real), whether
+  Spotify can be polled and how often, and how a polled play and an exported play are
+  recognised as one. None of them reopens the stack.
+- **Q-E** decides where it runs, and with it what keeps Postgres and the scheduled task up.
+  ADR-0002 makes a database server that starts with the machine a requirement of that answer.
 
 ## Needs a decision
 
-**The stack (Q-B).** Leaning: **option A, the sibling's stack as is** — FastAPI, SQLAlchemy,
-Alembic, Postgres, an OpenAPI contract committed at `api/openapi.json`, React + Vite +
-TypeScript — **with the poller as a one-shot command fired by the OS scheduler, and Postgres as
-the store.** The strongest reason: it is the only option whose ownership map is already proven,
-and M0 is done when an implementation agent can be briefed against one. The condition that would
-flip the store: if Q-E cannot promise a database server that starts with the machine, SQLite is
-the better store, and it switches at no cost before the first migration.
+Nothing further here: the stack was decided by the owner on 2026-09-23.
 
 ## What carried it
 
 The overlay's three *not yet* sections — file ownership, the contract, the layering — at the
-moment of framing the Context: they turned "which stack" into three constraints every option
-could be scored against, which is what made B's and C's costs specific rather than a matter of
-taste.
+moment of framing the draft's Context: they turned "which stack" into three constraints every
+option could be scored against. At acceptance, the same sections became the checklist of what
+to fill.

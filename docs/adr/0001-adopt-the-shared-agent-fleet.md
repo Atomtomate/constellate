@@ -57,7 +57,9 @@ decisions, a record that a cold agent can read, and the checks that keep both ho
 - **The implementation agents cannot run yet.** Their ground is a file-ownership map, and
   the map is the stack's; until the stack ADR (Q-B) writes it, `impl-director` reports
   that work cannot be cut, and record work is done from the session. The reviewers, the
-  manager and the retro work from the first commit.
+  manager and the retro work from the first commit. *Revised 2026-09-23: ADR-0002 settled the
+  stack and filled the map in `.claude/agents.local.md`, so the implementation agents can now
+  be briefed against it.*
 - **`scripts/` is a fork and will drift from its source.** Whether the generic half moves
   into the fleet repository is recorded under "Smaller, for later" in
   `docs/08-open-questions.md`; until it is decided, a fix to one copy is carried to the

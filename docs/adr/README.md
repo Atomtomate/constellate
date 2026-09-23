@@ -9,14 +9,13 @@ Decisions actually made.
 | # | Decision |
 |---|----------|
 | [0001](0001-adopt-the-shared-agent-fleet.md) | The shared agent fleet is consumed as a submodule, with a project overlay |
+| [0002](0002-the-stack.md) | The stack: the sibling project's, with the poller as a scheduled command |
 
 ## Proposed
 
 Leanings to argue with; they are not settled.
 
-| # | Decision |
-|---|----------|
-| [0002](0002-the-stack.md) | The stack: the sibling project's, with the poller as a scheduled command |
+*(none)*
 
 ## Superseded
 
