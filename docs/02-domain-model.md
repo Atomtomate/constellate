@@ -163,6 +163,10 @@ before it is parsed.
 
 ## 2. The ingestion seam
 
+The decision this section details — one event per play, resolved by precedence from immutable
+observations — is proposed on its own as [ADR-0003](adr/0003-the-ingestion-seam.md), with the
+alternatives it rejected. What follows is its detail, not further decisions.
+
 ### The draft event
 
 Every adapter produces the same draft. The adapter knows HTTP or a file format and never SQL
@@ -513,7 +517,7 @@ create table cache.catalogue (
    considered. *One row per record, duplicates flagged*: a simpler insert, but every total must
    know the duplicate rules, and "the export wins" becomes an update of flags across rows. *An
    upsert where the last writer wins*: it loses the poller's context and any trace of why a
-   number is what it is. This choice wants an ADR before the schema is built on it.
+   number is what it is. ADR-0003 proposes this choice, so it can be accepted on its own.
 2. **An item is one source identity, merged within a service on ISRC only, never across
    services.** It is cheap to change today, because refs make merges reversible. Once atlas rows
    exist it is expensive: a favourite, a rating or a constellation membership on a merged item
