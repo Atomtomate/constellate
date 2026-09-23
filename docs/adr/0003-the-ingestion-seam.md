@@ -1,7 +1,8 @@
 # ADR-0003 — The ingestion seam: one event per play, resolved from kept observations
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-09-23
+- **Accepted:** 2026-09-23, by the owner, over a last-writer-wins upsert
 
 ## Context
 
@@ -33,6 +34,12 @@ forced it, from the two data-source documents (`01-data-sources-spotify.md`,
   be stored for 30 days at most (YouTube §4, S27). A duration "taken from the video's length"
   therefore cannot be copied onto a play. The play has to record *why* it has no measured number,
   and read the length from a cache when a total needs it.
+- **Spotify's Web API data may not be kept indefinitely.** Spotify's Developer Terms forbid
+  storing "Spotify Content" indefinitely, and that includes the listening events the poller
+  captures. They also require an app to delete a user's data within five days of a disconnect,
+  and they give no retention period (Spotify §6; S38 §IV, §V, Appendix A §5(c)). The export
+  comes from the privacy page, not through the Platform, so its fields may probably be kept
+  (Spotify §6, inferred there).
 - **Parsers will be wrong at first, and inputs are slow to replace.** Takeout's title verb is
   localised (YouTube §2, S15). The export's `offline_timestamp` changed units (Spotify §1, S4).
   Whether `played_at` is a start or an end is undocumented (S26). A Spotify export takes up to a
@@ -69,8 +76,11 @@ In full:
 - **A source's cursor commits in the same transaction as the observations it covers.** A crash
   re-reads rather than skips, and the key makes re-reading harmless. The playback poller emits a
   play only when it closes, so an observation never changes after it is written.
-- **Observations are deleted only with the ingest run that brought them**, to undo a bad import.
-  Their events are then re-resolved, and an event left with no observation is deleted.
+- **Observations are deleted only with the ingest run that brought them**, to undo a bad import,
+  **or where their source's terms require it.** Spotify's Web API observations are deleted once
+  an export observation joins their event, and all together within five days of a disconnect.
+  Their events are then re-resolved from what remains, and an event left with no observation is
+  deleted.
 
 The draft's fields, the matching table and the tables themselves are in `docs/02-domain-model.md`
 §2 and §7. They are the detail of this decision, not further decisions.
@@ -107,6 +117,18 @@ The draft's fields, the matching table and the tables themselves are in `docs/02
 - **Every record is kept verbatim, for years**, and with it whatever personal data it carries,
   such as the export's `ip_addr`. The stack ADR's size estimate already allows for keeping raw
   records. Whether to strip fields on import is open in `docs/02-domain-model.md` §8.
+- **Spotify's API plays are kept only until the export replaces them.** When the export
+  re-sources an event, the poller's more exact start and its playlist context go with the deleted
+  observation, and no later change of precedence can reach them. A disconnect deletes every API
+  observation at once, and the plays since the last export return only when the next export
+  arrives. The seam carries both because an event re-resolves from whatever observations remain
+  (`docs/02-domain-model.md` §4).
+
+*Amended 2026-09-23, in the pull request that accepts this ADR:* Spotify's Developer Terms
+(Spotify §6) arrived with the acceptance. They add the Context bullet on Spotify, the second
+reason to delete observations in the Decision, and the bullet above. The owner accepted the
+decision as proposed. The amendment narrows what is kept for one source's records and changes no
+other part of it.
 
 **What is expensive to reverse.**
 
@@ -122,9 +144,9 @@ The draft's fields, the matching table and the tables themselves are in `docs/02
 item. How refs are grouped into items is a separate choice, and the seam works under any answer:
 an item merge or split re-points refs and re-resolves the affected events. The model's answer is
 one item per source identity, merged within a service on ISRC only, never across services
-(`docs/02-domain-model.md` §3). It needs no ADR while the owner agrees; it becomes a standing
-constraint with Q-C's answer. If the owner wants one song merged across services, that is an ADR
-of its own, because every per-service total and every atlas row would follow it.
+(`docs/02-domain-model.md` §3). The owner chose no cross-service merging (2026-09-23). It needs
+no ADR of its own: it becomes a standing constraint with Q-C's answer. Reversing it would take an
+ADR, because every per-service total and every atlas row would follow it.
 
 ## Alternatives considered
 
@@ -137,8 +159,9 @@ of its own, because every per-service total and every atlas row would follow it.
 - **An upsert where the last writer wins.** One row per play, and each new record overwrites its
   fields. It is the simplest possible. It lost because arrival order runs backwards for quality.
   A `recently-played` poll that lands after the export would overwrite a measured duration with
-  none. The losing record's facts, such as the poller's playlist context and the extension's
-  playback rate, are gone. Nothing records why a number is what it is. Its repaired form,
+  none. The losing record's facts, such as the extension's playback rate, are gone for every
+  source, including those whose terms allow keeping them. Nothing records why a number is what it
+  is. Its repaired form,
   *overwrite only when the new source ranks higher*, fixes the first fault but still discards
   the records that lost. A parser fix or a change of precedence would then need a re-import, and
   the Spotify export takes up to a month to arrive.
