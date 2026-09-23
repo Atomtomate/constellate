@@ -14,7 +14,9 @@ Decisions actually made.
 
 Leanings to argue with; they are not settled.
 
-*(none yet)*
+| # | Decision |
+|---|----------|
+| [0002](0002-the-stack.md) | The stack: the sibling project's, with the poller as a scheduled command |
 
 ## Superseded
 
