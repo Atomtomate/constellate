@@ -1,6 +1,6 @@
 # Domain model: events, items, creators, sources
-**Summary:** Wrote `docs/02-domain-model.md`, Q-C's answer, and ADR-0003, its ingestion seam, accepted by the owner with no cross-service item merging; the review pass is folded, and one amendment to the ADR awaits the owner.
-**State:** Open — the owner confirms ADR-0003's 2026-09-23 amendment, and #1 merges first; then #4 rebases and goes ready, and the consolidation PR follows.
+**Summary:** Wrote `docs/02-domain-model.md`, Q-C's answer, and ADR-0003, its ingestion seam, accepted and amended by the owner with no cross-service item merging and Spotify captured by export, Last.fm and an optional poller; the review pass is folded.
+**State:** Open — #1 merges first; then #4 rebases, goes ready, and the consolidation PR follows.
 
 ## What was done
 
@@ -12,7 +12,10 @@
   last-writer-wins upsert, and the choice against cross-service merging were relayed by the
   coordinator session on 2026-09-23. A dated amendment follows the acceptance. It lets
   observations be deleted where a source's terms require it, pairs matches in order, and widens
-  the name-and-time fallback for Last.fm. The first of those is the owner's to confirm.
+  the name-and-time fallback for Last.fm. The owner confirmed it the same day, relayed the same
+  way, as the consequence of choosing Spotify's paths: the export as the record, Last.fm as the
+  backbone with no Spotify app, and the Web API poller as an optional source on top. The model's
+  §1 sources, §2 matching, §4 and §8 follow that choice.
 - `docs/07-roadmap.md`: M0's domain-model line is marked done.
 - The standard pre-review pass: four reports in `docs/reviews/domain-model/`. Everything
   real was folded, and the PR body's Review pass section lists what was acted on and dismissed.
@@ -27,21 +30,17 @@
 - Each reviewer finding was checked against the text before it was folded. The failure cases in
   the tech review (a repeated track, an ISRC row already deleted, an export before a late poll)
   were traced through the rules as written.
-- Not verified: the model has met no real data. The matching windows, the Last.fm window, the
-  scrobble's `to_end` basis and the shared Google key stay inferences until the owner's data
+- Not verified: the model has met no real data. The matching windows, the two Last.fm windows,
+  the scrobble's `to_end` basis and the shared Google key stay inferences until the owner's data
   arrives.
 
 ## What remains open
 
-- **The owner confirms or rejects ADR-0003's amendment**, above all the deletion of Spotify's
-  live observations on re-sourcing and on a disconnect.
-- **How Spotify captures live** (model §8): the Web API, the export plus Last.fm with no Spotify
-  app, or the export alone. It is the owner's choice under Q-D, and the model carries all three.
 - **#4 merges after #1.** #1 still says the stack ADR is Proposed; its acceptance has to be
   recorded there first, because ADR-0003 cites option A as accepted. Rebase then, keeping both
   rows of the ADR index.
 - **The consolidation PR**, after #1 and #4 merge:
-  - Q-C's answered entry in `docs/08`;
+  - Q-C's answered entry in `docs/08`, and Q-D's Spotify path as the owner chose it;
   - the two standing constraints in the root `CLAUDE.md`: the log holds no catalogue data, and
     items are never merged across services;
   - the overlay's "not yet written" line for the domain model and its "None decided" line on
