@@ -1,6 +1,6 @@
 # Domain model: events, items, creators, sources
-**Summary:** Drafted `docs/02-domain-model.md`, Q-C's proposed answer: one event per play resolved from kept observations, items per source identity, catalogue data as an expiring cache.
-**State:** Open — the owner accepts or corrects the model; the ingestion seam wants an ADR, and Q-C's answered entry in `docs/08` is the coordinator's.
+**Summary:** Drafted `docs/02-domain-model.md`, Q-C's proposed answer, and ADR-0003 (Proposed), its ingestion seam: one event per play resolved from kept observations, items per source identity, catalogue data as an expiring cache.
+**State:** Open — the owner accepts or corrects ADR-0003 and the model; Q-C's answered entry in `docs/08` and the standing constraints follow acceptance, and are the coordinator's.
 
 ## What was done
 
@@ -22,6 +22,12 @@
     refreshed at 25 days, deleted at 30, and read as absent after 30.
   - **Sanity check.** Websites and a fourth music service fit without migrating the event table.
     The cost lands on item identity.
+- `docs/adr/0003-the-ingestion-seam.md`, Proposed, listed in the ADR index. It states the seam
+  on its own so that the owner can decide it from one document: observations stored verbatim and
+  never changed; the event resolved by precedence; `record_key` dropping re-delivered records;
+  the cursor committed with its observations. It records three rejected alternatives. Item
+  identity stays out of it, as one paragraph under Consequences, because the seam works under
+  any grouping of refs into items. The model's §2 and §8 point at the ADR.
 - Nothing else changed. `docs/08` is left for the coordinator, and there is no code and no
   overlay edit.
 
@@ -50,21 +56,19 @@
 
 ## Needs a decision
 
-- **Accept or correct the model.** The leaning is as written. The two choices most expensive to
-  reverse are (1) one event per play, resolved from kept observations, and (2) item identity: one
-  source identity per item, merged only on ISRC, never across services.
-- **An ADR for the ingestion seam.** It covers the event and observation split, the record key
-  that recognises re-delivered records, the cursor committed with the observations it covers, and
-  matching with precedence. It needs one for four reasons:
+- **Accept ADR-0003, the ingestion seam, or correct it.** The leaning is to accept. It is the
+  most expensive choice in the model to reverse. It gets an ADR of its own for three reasons:
   - the root `CLAUDE.md` names "an import seam" among the things written down before they are
     built on;
   - the stack ADR delegated only the draft's *shape* to Q-C, not how duplicates resolve;
-  - its two rejected alternatives (a row per record with duplicate flags; an upsert where the
-    last writer wins) are exactly what a future implementer would propose again;
-  - it is the most expensive choice here to reverse.
-
-  Item identity needs no ADR if the owner agrees: it becomes a standing constraint and part of
-  Q-C's answer. If the owner wants one song merged across services, that is an ADR.
+  - its rejected alternatives (a row per record with duplicate flags; an upsert where the last
+    writer wins) are exactly what a future implementer would propose again.
+- **Accept or correct the rest of the model.** The second choice that is expensive to reverse is
+  item identity: one item per source identity, merged only on ISRC, never across services. It
+  needs no ADR if the owner agrees; it becomes a standing constraint and part of Q-C's answer. If
+  the owner wants one song merged across services, that is an ADR of its own.
+- **ADR numbering.** `0002` is the stack ADR on #1. Whichever of #1 and this PR merges second
+  takes a one-line conflict in the ADR index.
 
 ## What carried it
 
