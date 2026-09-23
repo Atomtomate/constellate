@@ -22,7 +22,8 @@ The repository, the agent fleet and the written plan — no product code.
   backfilled and kept current, with what fields and what limits, as
   `01-data-sources-spotify.md` and `01-data-sources-youtube.md`.
 - The domain model sketched — an event, an item, a creator, and the room the atlas needs
-  later (Q-C) — as `02-domain-model.md`.
+  later (Q-C) — as `02-domain-model.md` — **done** *(2026-09-23, with ADR-0003, the
+  ingestion seam)*.
 - The stack decided (Q-B), as an ADR, and with it the file-ownership map in
   `.claude/agents.local.md` that the implementation agents need before any of them can run —
   **done** *(2026-09-23, ADR-0002)*.

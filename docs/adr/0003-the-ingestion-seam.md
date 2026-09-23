@@ -39,7 +39,8 @@ forced it, from the two data-source documents (`01-data-sources-spotify.md`,
   captures. They also require an app to delete a user's data within five days of a disconnect,
   and they give no retention period (Spotify §6; S38 §IV, §V, Appendix A §5(c)). The export
   comes from the privacy page, not through the Platform, so its fields may probably be kept
-  (Spotify §6, inferred there).
+  (Spotify §6, inferred there). A path with no Spotify app would take the live tail from
+  Last.fm instead, whose scrobbles carry names but no URI (Spotify §6).
 - **Parsers will be wrong at first, and inputs are slow to replace.** Takeout's title verb is
   localised (YouTube §2, S15). The export's `offline_timestamp` changed units (Spotify §1, S4).
   Whether `played_at` is a start or an end is undocumented (S26). A Spotify export takes up to a
@@ -61,15 +62,18 @@ In full:
   produce the same key for the same watch; a re-requested export produces the key its first copy
   had.
 - **A record of a play already known joins that play's event.** A new observation attaches to the
-  event it also sees: the same item ref within a time window set per pair of streams, one-to-one,
-  nearest first, and never two observations from one stream on one event. For Spotify tracks
-  that were relinked, the match falls back to title, album artist and time. If nothing matches,
-  the observation starts a new event. The windows are parameters that are tuned on real data;
-  they are not part of this decision.
+  event it also sees: the same item ref within a time window set per pair of streams, one-to-one
+  and in order (within one item, the k-th play in one stream pairs with the k-th in the other),
+  and never two observations from one stream on one event. Where the two records share no ref —
+  a Spotify track that was relinked, or a Last.fm scrobble, which names no URI — the match falls
+  back to title, artist and time. If nothing matches, the observation starts a new event. The
+  windows are parameters that are tuned on real data; they are not part of this decision.
 - **Precedence resolves the event's columns.**
   - Duration: the export, then the extension, then the playback poller.
-  - Start: the poller or the extension, which see it; then Takeout's or Portability's `time`;
-    then the export's `ts − ms_played`; last, `recently-played`'s `played_at`.
+  - Start: the poller or the extension, which see it; then Takeout's or Portability's `time`,
+    probably the start; then the export's `ts − ms_played`, wrong by any time the play was
+    paused; last, `recently-played`'s `played_at`, which may be either end, and a scrobble's
+    time.
   - Item: the item of the highest-ranked observation that names one.
   - Basis: `measured` if any observation measured the duration, `to_end` if one says the play
     reached its end, and `start_only` otherwise. The event never stores a length.
@@ -77,10 +81,8 @@ In full:
   re-reads rather than skips, and the key makes re-reading harmless. The playback poller emits a
   play only when it closes, so an observation never changes after it is written.
 - **Observations are deleted only with the ingest run that brought them**, to undo a bad import,
-  **or where their source's terms require it.** Spotify's Web API observations are deleted once
-  an export observation joins their event, and all together within five days of a disconnect.
-  Their events are then re-resolved from what remains, and an event left with no observation is
-  deleted.
+  **or where their source's terms require it** (`docs/02-domain-model.md` §4). Their events are
+  then re-resolved from what remains, and an event left with no observation is deleted.
 
 The draft's fields, the matching table and the tables themselves are in `docs/02-domain-model.md`
 §2 and §7. They are the detail of this decision, not further decisions.
@@ -117,18 +119,26 @@ The draft's fields, the matching table and the tables themselves are in `docs/02
 - **Every record is kept verbatim, for years**, and with it whatever personal data it carries,
   such as the export's `ip_addr`. The stack ADR's size estimate already allows for keeping raw
   records. Whether to strip fields on import is open in `docs/02-domain-model.md` §8.
-- **Spotify's API plays are kept only until the export replaces them.** When the export
+- **Spotify's live plays are kept only until the export replaces them.** When the export
   re-sources an event, the poller's more exact start and its playlist context go with the deleted
-  observation, and no later change of precedence can reach them. A disconnect deletes every API
-  observation at once, and the plays since the last export return only when the next export
-  arrives. The seam carries both because an event re-resolves from whatever observations remain
-  (`docs/02-domain-model.md` §4).
+  observation, and no later change of precedence can reach them. A disconnect deletes every Web
+  API observation at once, and the plays since the last export return only when the next export
+  arrives. The seam carries both because an event re-resolves from whatever observations remain.
 
-*Amended 2026-09-23, in the pull request that accepts this ADR:* Spotify's Developer Terms
-(Spotify §6) arrived with the acceptance. They add the Context bullet on Spotify, the second
-reason to delete observations in the Decision, and the bullet above. The owner accepted the
-decision as proposed. The amendment narrows what is kept for one source's records and changes no
-other part of it.
+*Amended 2026-09-23, after the owner accepted this ADR as proposed, and awaiting the owner's
+confirmation.* The amendment makes three changes.
+
+1. Spotify's Developer Terms (Spotify §6), which arrived with the acceptance, add the Context
+   bullet on Spotify, the second reason to delete observations, and the bullet above. This is
+   the change that needs the owner: it deletes records that no recompute can restore.
+2. Matches pair in order, not nearest first. `played_at` may be a play's start, and nearest first
+   then splits a track played twice back to back into three plays
+   (`docs/reviews/domain-model/pr-tech-review.md`, finding 1).
+3. The title, artist and time fallback now covers any two records that share no ref. A Last.fm
+   scrobble needs it: the Spotify research's latest §6 names Last.fm as the live source for a
+   path with no Spotify app.
+
+None of the three changes the decision's sentence. The first narrows it.
 
 **What is expensive to reverse.**
 
@@ -141,12 +151,10 @@ other part of it.
   is tested on the owner's first real export before its first backfill.
 
 **Item identity is not part of this decision.** The seam needs only that one item ref names one
-item. How refs are grouped into items is a separate choice, and the seam works under any answer:
-an item merge or split re-points refs and re-resolves the affected events. The model's answer is
-one item per source identity, merged within a service on ISRC only, never across services
-(`docs/02-domain-model.md` §3). The owner chose no cross-service merging (2026-09-23). It needs
-no ADR of its own: it becomes a standing constraint with Q-C's answer. Reversing it would take an
-ADR, because every per-service total and every atlas row would follow it.
+item, and it works under any grouping of refs into items, because a merge or a split re-points
+refs and re-resolves the affected events. The grouping is `docs/02-domain-model.md` §3's. The
+owner chose no cross-service merging (2026-09-23). That needs no ADR of its own; it becomes a
+standing constraint with Q-C's answer.
 
 ## Alternatives considered
 
@@ -159,12 +167,13 @@ ADR, because every per-service total and every atlas row would follow it.
 - **An upsert where the last writer wins.** One row per play, and each new record overwrites its
   fields. It is the simplest possible. It lost because arrival order runs backwards for quality.
   A `recently-played` poll that lands after the export would overwrite a measured duration with
-  none. The losing record's facts, such as the extension's playback rate, are gone for every
-  source, including those whose terms allow keeping them. Nothing records why a number is what it
-  is. Its repaired form,
-  *overwrite only when the new source ranks higher*, fixes the first fault but still discards
-  the records that lost. A parser fix or a change of precedence would then need a re-import, and
-  the Spotify export takes up to a month to arrive.
+  none. The losing record's facts, such as the poller's playlist context and the extension's
+  playback rate, are gone. (For Spotify's Web API, its terms now remove the poller's record once
+  the export arrives. That is the amendment below, and the reason still holds for every source
+  whose terms allow keeping its records.) Nothing records why a number is what it is. Its
+  repaired form, *overwrite only when the new source ranks higher*, fixes the first fault but
+  still discards the records that lost. A parser fix or a change of precedence would then need
+  a re-import, and the Spotify export takes up to a month to arrive.
 - **Deduplicate by key only, and count one stream per service.** For example, totals would read
   only the Spotify export. It needs no matching. It lost because the export is weeks to months
   late, which fails "a day's listening and watching is in the log by the next morning"

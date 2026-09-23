@@ -59,7 +59,7 @@ One play or one watch. The row every total and the timeline read.
 | Field | Kind | Holds |
 |-------|------|-------|
 | `item_id` | column | The item played. Null only when no observation names one (below). |
-| `started_at` | column | UTC, from the observation that saw the start most directly (§2). |
+| `started_at` | column | UTC, from the observation that saw the start most directly. |
 | `duration_ms` | column | Time actually played. Set only when an observation measured it. |
 | `duration_basis` | column | What the observations say about the duration: see below. |
 
@@ -69,12 +69,13 @@ whether an item's length is known changes as the cache fills and empties, and th
 change with it (§4). The item's length also splits in two, because the sources give two
 different reasons to use it:
 
-| Basis | The observations say | A total reads | From |
-|-------|----------------------|---------------|------|
-| `measured` | how long it played | `duration_ms` | Spotify export; poller (± Δ); extension |
-| `to_end` | it played to its end | cached length: an estimate | `recently-played` |
-| `start_only` | only that it started | cached length: an upper bound | Takeout; Data Portability |
+| Basis | The observations say | A total reads |
+|-------|----------------------|---------------|
+| `measured` | how long it played | `duration_ms` |
+| `to_end` | it played to its end | the cached length, as an estimate |
+| `start_only` | only that it started | the cached length, as an upper bound |
 
+Which source gives which basis is the source table's "Gives" column (below).
 `to_end` rests on a report, not on Spotify's word: `recently-played` reportedly lists only plays
 that reached, or nearly reached, their end (`01-data-sources-spotify.md` §2, S24). With no cached
 length, a `to_end` or `start_only` event reads as unknown. So a total is three
@@ -95,10 +96,9 @@ total says how many such events it left out.
 ### Observation
 
 One source's record of one event: the draft an adapter produced (§2), stored. Immutable once
-written. It is deleted only with its ingest run, or where its source's terms require it:
-Spotify's Web API observations go once the export re-sources their event, and all at once on a
-disconnect (§4). It is the ground truth the event's columns are resolved from, so changing a
-precedence or the way a start is derived is a recompute over stored observations.
+written, and deleted only with its ingest run or where its source's terms require it (§4). It is
+the ground truth the event's columns are resolved from, so changing a precedence or the way a
+start is derived is a recompute over stored observations.
 
 Fields: its event; its source and ingest run; `record_key`, unique, the upstream record's
 identity (§2); the item ref the source named, if any; the source's own `started_at`,
@@ -113,7 +113,8 @@ name).
 The **title** comes from the owner's own records: the export's track name, or Takeout's title with
 the localised "Watched" stripped (`01-data-sources-youtube.md` §2). It never comes from a
 catalogue lookup, because a catalogue's data expires (§4). The one stand-in: a Spotify track the
-poller saw before any export named it carries the API's title until the export's replaces it.
+Web API or Last.fm reported before any export named it carries that title until the export's
+replaces it.
 
 The **length** is not a field of the item. It is a cached fact with a fetch date (§4).
 
@@ -125,7 +126,8 @@ track-to-album link. That adds a table and leaves the event table alone.
 ### Item ref
 
 An identity by which a source names an item: a namespace and a value, unique together.
-Namespaces to start with: `spotify:track`, `spotify:episode`, `spotify:chapter`, `youtube:video`.
+Namespaces to start with: `spotify:track`, `spotify:episode`, `spotify:chapter`, `youtube:video`,
+and `lastfm:track` if Last.fm is a source (§3).
 An item has one ref or more. Merging two items re-points one's refs to the other (§3).
 
 ### Creator
@@ -143,7 +145,9 @@ A YouTube video's channel id and name come from the owner's Takeout record, the 
 ### Source
 
 One row per path into the store. The brief's "Spotify poller" is two rows, because its two
-endpoints produce records with different keys and different bases.
+endpoints produce records with different keys and different bases. Which Spotify rows exist
+depends on the path the owner chooses for live capture (§4, §8): the three Web API rows, or
+Last.fm's, or neither.
 
 | Source | Service | Gives | Cursor |
 |--------|---------|-------|--------|
@@ -151,6 +155,7 @@ endpoints produce records with different keys and different bases.
 | `spotify-recent` | Spotify | observations, `to_end`; catalogue facts | newest `played_at` |
 | `spotify-playback` | Spotify | observations, `measured` ± Δ; catalogue facts | the open play |
 | `spotify-catalogue` | Spotify | catalogue facts (`GET /tracks/{id}`) | none |
+| `lastfm-scrobbles` | Spotify | observations, `to_end`, names but no URI | newest scrobble time |
 | `youtube-takeout` | YouTube | observations, `start_only` | none: files |
 | `google-portability` | YouTube | observations, `start_only` | end of the last export window |
 | `youtube-extension` | YouTube | observations, `measured` | none: it pushes |
@@ -171,7 +176,8 @@ before it is parsed.
 
 The decision this section details — one event per play, resolved by precedence from immutable
 observations — is [ADR-0003](adr/0003-the-ingestion-seam.md), accepted by the owner on
-2026-09-23, with the alternatives it rejected. What follows is its detail, not further decisions.
+2026-09-23. Its rules live there: the precedence, how matches pair, the cursor's transaction and
+when an observation may be deleted. What follows is their detail, not a second statement.
 
 ### The draft event
 
@@ -191,9 +197,6 @@ service never has to go back to the source.
 | `raw` | The record as sent, less the catalogue facts below. |
 | `catalogue` | Length, ISRC, per-track artists, when the response carried them. |
 
-The playback poller emits a draft only when a play closes, so no observation ever changes after
-it is written.
-
 ### What the service does with one
 
 In one transaction per draft, or per batch of them:
@@ -204,8 +207,6 @@ In one transaction per draft, or per batch of them:
 3. **Find the event it also sees** (below), or create one.
 4. **Store the observation**, and re-resolve the event's columns from all its observations.
 5. **Write `catalogue` to the cache**, never to the log (§4).
-
-The source's cursor advances in the same transaction as the observations it covers.
 
 ### Two kinds of duplicate
 
@@ -226,36 +227,26 @@ matches them to one event:
 | export and `recently-played` | the track URI | the track's length + 1 min of `ts` |
 | playback poller and `recently-played` | the track URI | the same |
 | Takeout or Portability, and extension | the video id | minutes |
+| export and Last.fm | title, artist and time | scrobble start within 1 min of `ts − ms_played` |
 
-Matches are one-to-one and nearest first, and an event never holds two observations from one
-stream (Takeout and Portability count as one), so a track played twice in a row stays two
-plays. When the track URIs differ because Spotify relinked the track
-(`01-data-sources-spotify.md` §4, S20), the match falls back to title, album artist and time.
-The windows are the data-source documents' own (Spotify §4, YouTube §5). Both mark them as
-inferences, to be tuned against the owner's first weeks.
-
-**Precedence** decides the event's columns:
-
-- **Duration**: the export, then the extension, then the playback poller. With none of them, the
-  basis says why there is no number.
-- **Start**: the poller or the extension, which see it. Then Takeout's `time`, which is probably
-  the start (YouTube §5, inferred). Then the export's `ts − ms_played`, which is wrong by any
-  time the play was paused. Last, `recently-played`'s `played_at`, which may be either end
-  (Spotify §2, S26).
-- **Item**: the item of the highest-ranked observation that names one.
-
-Arrival order does not matter. The poller's observation arrives today and the export's three
-months later; the export's attaches to the poller's event, and its `ms_played` replaces the
-estimate. The poller's observation is then deleted, as Spotify's terms ask (§4). Plays the poller
-never saw arrive as new events.
+How pairs are chosen is ADR-0003's: one-to-one and in order, with Takeout and Portability
+counting as one stream. In order, not nearest first, because `played_at` may be a play's start
+(Spotify §2, S26). A track played twice back to back then puts the first export play's end on
+the second play's start, and nearest first would pair the wrong two. Where two records share no
+ref — Spotify relinked the track (Spotify §4, S20), or the record is a Last.fm scrobble, which
+names no URI (Spotify §6) — the match falls back to title, artist and time. The windows are the
+data-source documents' own (Spotify §4, YouTube §5), and the Last.fm one is this model's. All
+are inferences, to be tuned against the owner's first weeks.
 
 ### The source cursor
 
 A source cursor is the position up to which a source's records are stored, so the next run asks
-only for what is newer: `recently-played`'s `after`, or the Data Portability API's
-`start_time` (Spotify §2; YouTube §3.2). It lives on the source row and commits with the
-observations it covers, so a crash re-reads rather than skips, and re-reading is harmless
-(step 1).
+only for what is newer: `recently-played`'s `after`, a scrobble time, or the Data Portability
+API's `start_time` (Spotify §2, §6; YouTube §3.2). It lives on the source row and commits with
+the observations it covers (ADR-0003). A run stores its drafts oldest first, so a crash leaves
+the cursor at the last one stored, and the next run asks for everything after it. Stored newest
+first, a crash after the first draft would move the cursor past the older plays of the same poll,
+and they would never be asked for again.
 
 File imports have no cursor, because a file is complete and step 1 absorbs the overlap. The
 extension pushes, so it has none either. The playback poller's cursor is its open play — item,
@@ -279,9 +270,18 @@ services.** The owner chose no cross-service merging on 2026-09-23, with
   free with every play the poller sees; for export-only tracks it costs one `GET /tracks/{id}`
   each. Until it arrives, the two URIs are two items. When it arrives, the second ref is
   re-pointed, its events are re-resolved, and the empty item is deleted. The merge is the
-  tracker's own conclusion and stays. The ISRC is catalogue data and lives in the cache (§4).
-  Whether a merge prompted by API data outlives a Spotify disconnect is one of the readings
-  Spotify §6 leaves open; if it does not, the disconnect splits the ISRC merges too.
+  tracker's own conclusion and stays. The ISRC is catalogue data and lives in the cache (§4),
+  which may already have deleted the row an earlier URI's ISRC was in. So when a URI's ISRC
+  arrives, the ISRCs of the items that share its title and album artist in the owner's records
+  are fetched again and compared. That is usually none or one request, and it is the only way a
+  relinked URI that turns up months later still finds its item. Whether a merge prompted by API
+  data outlives a Spotify disconnect is one of the readings Spotify §6 leaves open; if it does
+  not, the disconnect splits the ISRC merges too.
+- **A Last.fm scrobble names a track by title and artist only**, so its ref is a name ref,
+  `lastfm:track`. That ref points at the item an export already named with the same title and
+  album artist, when exactly one did, and otherwise at a stand-in item. When the export arrives,
+  precedence gives the event the export's item, and a stand-in left with nothing is deleted. A
+  name ref never re-points a URI ref, so no two Spotify items are ever merged on a name.
 - **A merge can be split.** Every observation keeps the ref it named, so a wrong merge is undone
   by re-pointing that ref and re-resolving its events. What does not split mechanically is an
   atlas row on the merged item (§8).
@@ -297,10 +297,9 @@ services.** The owner chose no cross-service merging on 2026-09-23, with
 - **A Spotify artist and the same artist's YouTube channel**: two creators, for the same reasons.
 
 **The exception: creators known only by name.** The export names a track's creator only by the
-album artist's name (Spotify §1, S34), and artist URIs come only from the Web API, whose data may
-not be kept indefinitely (§4). So the durable Spotify creator is that name, a ref of last resort,
-`spotify:artist-name`, and it is what totals by artist read. Artist URIs and the per-track artist
-list live in the cache, and a featured artist is known only while the cache holds the track.
+album artist's name (Spotify §1, S34), and artist URIs are cache (§1). So the durable Spotify
+creator is that name, a ref of last resort, `spotify:artist-name`, and it is what totals by
+artist read. A featured artist is known only while the cache holds the track.
 Two artists who share a name are one creator; the owner can correct that by hand, because an
 item–creator link the owner sets is the owner's own record. A podcast's show is handled the same
 way.
@@ -313,9 +312,8 @@ The line has three sides:
   Spotify export, Takeout, the Data Portability archive, and what the extension observes.
 - **What a catalogue said about an item is the cache**: the YouTube Data API's `videos.list`,
   Spotify's `GET /tracks/{id}`, and the track objects inside Spotify's player responses.
-- **The owner's plays as Spotify's Web API reported them** — the observations from
-  `recently-played` and the playback poller — are in the log only until the export re-sources
-  them (below).
+- **The owner's Spotify plays as a live source reported them** — the Web API's observations, or
+  Last.fm's scrobbles — are in the log only until the export re-sources them (below).
 
 The cache has one row per item ref, because a catalogue answers per identifier and two refs
 merged into one item may differ in length. A row holds: its source, `fetched_at`, a status
@@ -334,7 +332,7 @@ rest — category, ISRC, per-track artists, publish date.
 
 YouTube's developer policies allow API data to be stored "not longer than 30 calendar days",
 after which it is deleted or refreshed (YouTube §4, S27, verified 2026-09-23). It is honoured
-four ways:
+three ways, and by the backups below:
 
 - **Refresh**: a daily job re-fetches every row older than 25 days, 50 ids a call. That is 1,000
   units a month per 50,000 videos, a tenth of one day's quota (YouTube §4).
@@ -342,9 +340,6 @@ four ways:
   is deleted, not left stale.
 - **Read**: a read treats any row older than 30 days as absent, so a stuck job cannot put
   expired data on a page.
-- **Back up**: a database backup kept past 30 days would hold expired rows. The cache therefore
-  lives in a schema of its own that long-lived backups leave out; it rebuilds from the API in a
-  day. The plain-format export of the log (00's success criteria) leaves it out by construction.
 
 Title, channel name and channel id are not in the cache: they come from the owner's own Takeout
 record, which the YouTube document infers may be kept permanently (§4 there, inferred).
@@ -372,47 +367,63 @@ listening events the poller captures alike, and the events are also "Spotify Per
   fields may be durable columns of the log. This is an inference, because the definition of
   Spotify Content ends "or by Spotify", which read literally covers the export (Spotify §6).
 
+Read whole, the Developer Policy's §III goes further. On its text, both its analysis clause
+("derived listenership metrics") and its integration clause ("integrated with streams or content
+from another service") plausibly reach this tracker's totals and its timeline beside YouTube
+(Spotify §6; S39 §III, S44). The research therefore names a path that avoids Spotify's developer
+terms entirely: no Spotify app, the export for the record, and Last.fm for the live tail. Which
+path to take is the owner's choice (§8). The model carries all of them, because the Web API's
+plays and Last.fm's scrobbles are both sources that the export re-sources.
+
 What the model does with that:
 
 - **Catalogue facts** are cache, as for YouTube, but kept only while something needs them: the
-  length of a `to_end` event the export has not yet re-sourced, or an ISRC not yet compared
-  (§3). `recently-played` and the playback poller return a full track object, and the adapter
-  splits it: the URI and the play's times go into the observation, the track's length, ISRC and
-  artists into the cache. Every live play therefore refreshes its track's row at no extra
-  request. A row still needed after 25 days is re-fetched, at one request per track (Spotify §2,
-  S19) and within a quota one tool exhausted at about 600 a day (S28). A row no longer needed is
-  deleted, and any row is deleted at 30 days unless refreshed. Thirty days is the model's reading
-  of "kept current", not Spotify's number.
-- **The Web API's plays are re-sourced to the export.** When an export observation joins an
-  event that API observations also see, the event re-resolves without them and they are deleted,
-  so its duration, start and item rest on the owner's own record (Spotify §6). The poller's more
-  exact start and its playlist context are the cost. An API observation that an export covering
-  its date does not match is kept and counted in the ingest run, because a miss is likelier a
-  matching error than a play Spotify forgot. Until the next export arrives, the weeks since the
-  last one rest on API data.
-- **Items and creators first known through the API.** A track the poller saw before any export
-  named it takes its title from the API, and the export's title replaces it when the export
-  arrives. Artist URIs and per-track artists come only from the API, so they are catalogue facts
-  in the cache. The durable Spotify creator is the export's album-artist name (§3).
+  length of a `to_end` event the export has not yet re-sourced, or an ISRC comparison (§3).
+  `recently-played` and the playback poller return a full track object, and the adapter splits
+  it: the URI and the play's times go into the observation, the track's length, ISRC and artists
+  into the cache. Every live play therefore refreshes its track's row at no extra request. A row
+  still needed after 25 days is re-fetched, at one request per track (Spotify §2, S19) and
+  within a quota one tool exhausted at about 600 a day (S28). A row no longer needed is deleted,
+  and any row is deleted at 30 days unless refreshed. Thirty days is the model's reading of "kept
+  current", not Spotify's number.
+- **Live plays are re-sourced to the export.** An event that holds an export observation holds
+  no Web API observation and no scrobble. When the export arrives, the ones already there are
+  deleted; one that arrives after the export is not stored. The event's duration, start and item
+  then rest on the owner's own record (Spotify §6). The cost is the poller's more exact start and
+  its playlist context. A live observation that an export covering its date does not match is
+  kept and counted in the ingest run, because a miss is likelier a matching error than a play
+  Spotify forgot. Until the next export arrives, the weeks since the last one rest on live data.
 - **Deletable as a set.** Every row a Spotify Web API source supplied is deleted in one
-  transaction: its cache rows, its observations, and the events and items left with nothing
-  else. That statement is the disconnect mechanism the terms require, and the answer to
-  termination. A backup cut before a disconnect still holds that data, so a disconnect also
-  discards or re-cuts the backups.
+  transaction: its cache rows, its observations, and the events and items left with nothing else.
+  That statement is the disconnect mechanism the terms require, and the answer to termination.
+  An item an atlas row holds is not left with nothing. It stays, with a placeholder title in
+  place of the API's, until an export names it, because the atlas row is the owner's own record.
 
-The terms leave three readings open (Spotify §6, "What could not be verified"): whether the
-owner's totals of their own listening are prohibited "derived listenership metrics" (S39 §III);
-whether a timeline beside YouTube is "integrated with [...] content from another service"
-(S39 §III); and whether the export falls under the terms at all. Re-sourcing narrows the first
-two: once an export has covered a period, its totals and its timeline rest on the owner's own
-record. It does not settle them.
+### Last.fm: the live tail without a Spotify app
+
+On that path the owner connects Spotify to Last.fm, so Last.fm is the Spotify developer, and the
+tracker reads the owner's scrobbles under Last.fm's API terms (Spotify §6, S43). Those terms
+allow storage and non-commercial use. They cap Last.fm data held at 100 MB, require a credit and
+a link to Last.fm, and require deletion on termination. The tail the model holds is weeks of
+scrobbles, far below the cap, and it is re-sourced like the Web API's plays. A scrobble has a
+start time and names but no URI and no duration. Its basis is `to_end`, inferred from Last.fm's
+use of the Web API (Spotify §6), and the owner's first weeks can check that.
+
+### Backups
+
+A database backup holds whatever the log held when it was cut: cache rows past 30 days, and live
+plays the export has since replaced. So database backups are kept at most five days, which is
+inside both YouTube's 30 days and Spotify's five after a disconnect. What is kept longer is the
+plain-format export of the log (00's success criteria). It holds the owner's own records and the
+events they resolve, and it leaves out the cache and every live observation by construction.
 
 ### What the log never depends on
 
 No event's existence, start, measured duration, item or creator depends on a cache row. Emptying
 the cache costs precision: `to_end` and `start_only` events lose their lengths and read as
-unknown, and categories disappear. No play is lost. A Spotify disconnect is the one exception:
-the plays since the last export go with the API's data, and return when the next export arrives.
+unknown, and categories disappear. No play is lost. A Spotify disconnect, or leaving Last.fm, is
+the one exception: the plays since the last export go with the live data, and return when the
+next export arrives.
 
 ## 5. Room for the atlas
 
@@ -472,6 +483,10 @@ would have to follow (§8).
 
 **Podcasts and audiobooks** are already a test the model passes: the Spotify export holds them
 (Spotify §1, S1). They are episode and chapter items, with the show as a creator.
+
+**Last.fm** is the smaller test of a source with names and no identifiers (§3). It costs a name
+ref, a match on title, artist and time instead of on a ref, and a stand-in item until an export
+names the track. The event table does not notice.
 
 **The answer: yes, the event table survives both without a migration.** Its columns are an item,
 a start, a duration and a basis, and none of them names a service or a format. What a new source
@@ -565,8 +580,8 @@ create table observation (
 );
 create index on observation (event_id);
 
--- In a schema of its own, which long-lived backups leave out (section 4).
-create table cache.catalogue (
+-- Catalogue facts, never read as log (section 4).
+create table catalogue_cache (
   item_ref_id  bigint primary key references item_ref,
   source_id    smallint not null references source,
   fetched_at   timestamptz not null,        -- read as absent once 30 days old
@@ -580,13 +595,9 @@ create table cache.catalogue (
 
 **Expensive to reverse**, most expensive first:
 
-1. **One event per play, resolved from observations that are kept.** Every total, the matcher,
-   the timeline and the API contract are built on it. Going back to one row per source record
-   would rewrite all of them, even though no data would be lost. Two alternatives were
-   considered. *One row per record, duplicates flagged*: a simpler insert, but every total must
-   know the duplicate rules, and "the export wins" becomes an update of flags across rows. *An
-   upsert where the last writer wins*: it loses the poller's context and any trace of why a
-   number is what it is. ADR-0003 records this choice, accepted by the owner on 2026-09-23.
+1. **One event per play, resolved from observations that are kept**: ADR-0003, accepted by the
+   owner on 2026-09-23. Its Consequences say what reversing it would cost, and its Alternatives
+   say why the other designs lost.
 2. **An item is one source identity, merged within a service on ISRC only, never across
    services.** The owner chose no cross-service merging on 2026-09-23. It is cheap to change
    today, because refs make merges reversible. Once atlas rows exist it is expensive: a
@@ -602,12 +613,13 @@ to a column; a new source; a new item kind.
 
 **Open:**
 
-- **Spotify's terms, as Spotify would read them** (§4): what "indefinitely" allows for API plays
-  no export has yet replaced, whether the owner's own totals are prohibited analysis, whether a
-  timeline beside YouTube is a prohibited integration, and whether the export falls under the
-  terms at all. Spotify has published nothing on these (Spotify §6).
-- **The matching windows and the precedence order**: inferences from the data-source documents,
-  to be tuned on the owner's first weeks of data (§2).
+- **How Spotify captures live, the owner's choice under Q-D** (§4): the Web API, with measured
+  plays the same day and Spotify's developer terms; the export plus Last.fm, with no Spotify app,
+  completed plays the next morning, and durations only when the export arrives; or the export
+  alone, weeks behind but never without a measured duration. The model carries all three.
+- **Spotify's terms**: the readings §4 leaves open, which Spotify has published nothing on.
+- **The matching windows**: inferences from the data-source documents, to be tuned on the
+  owner's first weeks of data (§2).
 - **The owner's choices, which the model holds but does not make.** Whether to import
   private-session plays, podcasts, audiobooks and Spotify's video plays. Whether totals split
   YouTube Music listening from YouTube watching, which promotes `header`.
