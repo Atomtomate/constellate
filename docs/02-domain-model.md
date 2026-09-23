@@ -249,10 +249,10 @@ this model's. All of them are inferences, to be tuned against the owner's first 
 A source cursor is the position up to which a source's records are stored, so the next run asks
 only for what is newer: the newest scrobble time, passed as `user.getRecentTracks`'s `from`, or
 the Data Portability API's `start_time` (Spotify §3, S31; YouTube §3.2). It lives on the source
-row and commits with the observations it covers (ADR-0003). A run stores its drafts oldest first, so a crash leaves
-the cursor at the last one stored, and the next run asks for everything after it. Stored newest
-first, a crash after the first draft would move the cursor past the older plays of the same poll,
-and they would never be asked for again.
+row and commits with the observations it covers (ADR-0003). A run stores its drafts oldest
+first, so a crash leaves the cursor at the last one stored, and the next run asks for everything
+after it. Stored newest first, a crash after the first draft would move the cursor past the
+older plays of the same poll, and they would never be asked for again.
 
 File imports have no cursor, because a file is complete and step 1 absorbs the overlap. The
 extension pushes, so it has none either. The playback poller's cursor is its open play — item,
@@ -396,10 +396,10 @@ What the model does with that:
   splits it: the URI and the play's times go into the observation, the track's length, ISRC and
   artists into the cache. Every play the poller sees therefore refreshes its track's row at no
   extra request. Without the poller, a scrobble's `to_end` event has no length and reads as
-  unknown until the export measures it. A row still needed after 25 days is re-fetched, at one request per track (Spotify §2, S19) and
-  within a quota one tool exhausted at about 600 a day (S28). A row no longer needed is deleted,
-  and any row is deleted at 30 days unless refreshed. Thirty days is the model's reading of "kept
-  current", not Spotify's number.
+  unknown until the export measures it. A row still needed after 25 days is re-fetched, at one
+  request per track (Spotify §2, S19) and within a quota one tool exhausted at about 600 a day
+  (S28). A row no longer needed is deleted, and any row is deleted at 30 days unless refreshed.
+  Thirty days is the model's reading of "kept current", not Spotify's number.
 - **Live plays are re-sourced to the export.** An event that holds an export observation holds
   no Web API observation and no scrobble. When the export arrives, the ones already there are
   deleted; one that arrives after the export is not stored. The event's duration, start and item
