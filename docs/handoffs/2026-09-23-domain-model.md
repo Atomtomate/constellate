@@ -1,58 +1,61 @@
 # Domain model: events, items, creators, sources
-**Summary:** Wrote `docs/02-domain-model.md`, Q-C's answer, and ADR-0003, its ingestion seam, accepted by the owner: one event per play resolved from kept observations, items per source identity with no cross-service merging, catalogue data as a cache, Spotify's API plays kept until the export replaces them.
-**State:** Open — Q-C's answered entry in `docs/08` and the two standing constraints in the root `CLAUDE.md` wait for the consolidation PR after #1 and #4 merge; #4 rebases onto `main` once #1 has merged.
+**Summary:** Wrote `docs/02-domain-model.md`, Q-C's answer, and ADR-0003, its ingestion seam, accepted by the owner with no cross-service item merging; the review pass is folded, and one amendment to the ADR awaits the owner.
+**State:** Open — the owner confirms ADR-0003's 2026-09-23 amendment, and #1 merges first; then #4 rebases and goes ready, and the consolidation PR follows.
 
 ## What was done
 
-- `docs/02-domain-model.md`, the brief's eight sections. It was written against the three inputs
-  on open PRs: the Spotify research (#3, `cfbdb78`, and its terms section §6 at `3623499`), the
-  YouTube research (#2, `9543a9f`) and the stack ADR (#1, `e8677c7`, option A accepted by the
-  owner). The model in one line each:
-  - **Event and observation.** An event is one play. Each source's record of it is an
-    observation, stored verbatim and never changed. The event's columns are resolved by
-    precedence, so the export's `ms_played` wins in any arrival order.
-  - **Duration basis.** The event stores `measured`, `to_end` or `start_only`, never a length.
-    Length is catalogue data, read from the cache when a total needs it.
-  - **Identity.** One item per source identity, merged within a service on ISRC only. The owner
-    chose no cross-service merging.
-  - **Cache and terms.** YouTube: refreshed at 25 days, deleted at 30. Spotify: rows kept only
-    while needed, refreshed by live plays. The Web API's plays are re-sourced to the export once
-    it covers them, and everything from Spotify's API is deletable as a set within five days of
-    a disconnect.
-  - **Sanity check.** Websites and a fourth music service leave the event table alone.
-- `docs/adr/0003-the-ingestion-seam.md`, now **Accepted**. The owner's acceptance was relayed by
-  the coordinator session on 2026-09-23, over a last-writer-wins upsert. It carries one dated
-  amendment made in this PR: Spotify's terms add a second reason to delete observations.
-  Item identity stays out of it, as a Consequences paragraph recording the owner's choice.
-- Nothing in `docs/08`, the overlay or the root `CLAUDE.md`; the consolidation PR owns those.
+- `docs/02-domain-model.md`, the brief's eight sections, summarised in its own "The model in
+  brief". It was written against the inputs on open PRs: the Spotify research (#3, finally at
+  `ec00a85`, which adds Policy §III read whole and the Last.fm path), the YouTube research (#2,
+  `9543a9f`) and the stack ADR (#1, `e8677c7`).
+- `docs/adr/0003-the-ingestion-seam.md`, **Accepted**. The owner's acceptance, over a
+  last-writer-wins upsert, and the choice against cross-service merging were relayed by the
+  coordinator session on 2026-09-23. A dated amendment follows the acceptance. It lets
+  observations be deleted where a source's terms require it, pairs matches in order, and widens
+  the name-and-time fallback for Last.fm. The first of those is the owner's to confirm.
+- `docs/07-roadmap.md`: M0's domain-model line is marked done.
+- The standard pre-review pass: four reports in `docs/reviews/domain-model/`. Everything
+  real was folded, and the PR body's Review pass section lists what was acted on and dismissed.
 
 ## How it was verified
 
-- `python scripts/check_docs.py` passes. No prose line in the three files is wider than 100
-  columns.
-- Every citation of a data-source finding was checked against its document at the tip named
-  above. The Spotify terms were checked against §6 quote by quote.
-- Not verified: the model has met no real data. The matching windows, the precedence order and
-  the shared Google key stay inferences until the owner's exports arrive.
+- `python scripts/check_docs.py` passes. No prose line is wider than 100 columns.
+- Every citation of a data-source finding was checked against its document; the Spotify terms
+  and the Last.fm path against §6 at `ec00a85`, quote by quote.
+- Each reviewer finding was checked against the text before it was folded. The failure cases in
+  the tech review (a repeated track, an ISRC row already deleted, an export before a late poll)
+  were traced through the rules as written.
+- Not verified: the model has met no real data. The matching windows, the Last.fm window, the
+  scrobble's `to_end` basis and the shared Google key stay inferences until the owner's data
+  arrives.
 
 ## What remains open
 
-- **Consolidation PR** (the coordinator's), after #1 and #4 merge. It writes Q-C's answered entry
-  in `docs/08` and adds two standing constraints: the log holds no catalogue data, and items are
-  never merged across services.
-- **Rebase** of #4 onto `main` once #1 merges. The ADR index then takes a one-line conflict;
-  keep both rows.
-- **Spotify's terms as Spotify would read them** (model §8): "indefinitely" for API plays no
-  export has yet replaced, own totals as "analysis", a timeline beside YouTube as
-  "integration", and whether the export is covered at all.
-- The rest of the model's §8: the matching windows, the owner's import choices, `ip_addr`, the
-  time zone, null-item events, collection tables, a work layer. None blocks the schema.
+- **The owner confirms or rejects ADR-0003's amendment**, above all the deletion of Spotify's
+  live observations on re-sourcing and on a disconnect.
+- **How Spotify captures live** (model §8): the Web API, the export plus Last.fm with no Spotify
+  app, or the export alone. It is the owner's choice under Q-D, and the model carries all three.
+- **#4 merges after #1.** #1 still says the stack ADR is Proposed; its acceptance has to be
+  recorded there first, because ADR-0003 cites option A as accepted. Rebase then, keeping both
+  rows of the ADR index.
+- **The consolidation PR**, after #1 and #4 merge:
+  - Q-C's answered entry in `docs/08`;
+  - the two standing constraints in the root `CLAUDE.md`: the log holds no catalogue data, and
+    items are never merged across services;
+  - the overlay's "not yet written" line for the domain model and its "None decided" line on
+    product constraints (`.claude/agents.local.md`);
+  - Q-E's inherited requirements: database backups kept at most five days with the plain-format
+    export as the long-term copy (model §4), and encryption at rest if Data Portability is used.
+- **M1's first migration** should delete the model's §7 sketch and have §1 point at the schema,
+  so the two never drift.
+- The rest of the model's §8: `ip_addr`, the time zone, null-item events, collection tables, a
+  work layer. None blocks the schema.
 
 ## What carried it
 
-The data-source documents' paragraphs addressed to Q-C did most of the work: YouTube §5's
-"carry its duration together with the kind of duration", YouTube §4's point on cache against
-column, Spotify §4's "the export wins", and then Spotify §6's "re-sourced to the export". The
-30-day rule is what turned the duration's provenance into a basis stored on the event, rather
-than a length copied onto it. The same seam then absorbed Spotify's terms without a new table,
-because an event re-resolves from whatever observations remain.
+The data-source documents' paragraphs addressed to Q-C did most of the work. The 30-day rule
+turned the duration's provenance into a basis stored on the event, and the seam then absorbed
+Spotify's terms and Last.fm without a new table, because an event re-resolves from whatever
+observations remain. The review pass carried the rest. A repeated track traced through the
+matching rule, and an acceptance commit diffed against the text the owner had accepted, found
+what a re-read would not.
