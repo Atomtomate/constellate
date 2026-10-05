@@ -16,10 +16,6 @@ Decisions actually made.
 
 Leanings to argue with; they are not settled.
 
-*(none)*
-| # | Decision |
-|---|----------|
-| [0003](0003-the-ingestion-seam.md) | The ingestion seam: one event per play, resolved from kept observations |
 *(none yet)*
 
 ## Superseded
