@@ -5,10 +5,10 @@
 ## What was done
 
 - `docs/ideas/CLAUDE.md`, `_template.md` and `README.md`, modelled on the sibling project's and
-  adapted: Constellate's stack for a stub (ADR-0002); the domain model named in backticks while
-  PR #4 is in flight; research in the data-source documents' style; the roadmap proposed, never
-  edited; and why this index is a hand-kept table while the handoff and friction indexes are
-  derived.
+  adapted: Constellate's stack for a stub (ADR-0002); the domain model and ADR-0003 linked, after
+  PR #4 merged while this task ran; research in the data-source documents' style; the roadmap
+  proposed, never edited; and why this index is a hand-kept table while the handoff and friction
+  indexes are derived.
 - `docs/CLAUDE.md`: an `ideas/` row in "What lives where", and the word *idea* in the paragraph
   that tells the record's kinds apart.
 - `docs/ideas/concert-and-release-calendar.md` at `status: shaped`. The owner's words first.
@@ -40,8 +40,6 @@
 
 - The root `CLAUDE.md`'s "Where things are" table has no `docs/ideas/` row. The coordinator's
   consolidation PR owns that file.
-- `docs/ideas/CLAUDE.md` and the idea name `docs/02-domain-model.md` and `ADR-0003` in backticks;
-  once PR #4 merges they can become links.
 - The idea's *Not verified* list, chiefly: Ticketmaster's rate limit (5 or 2 a second), JamBase's
   German coverage, which of IGDB's FAQ and the Twitch agreement governs storage, Google
   Calendar's refresh interval, and whether Eventim's affiliate programme admits a private site.

@@ -38,12 +38,11 @@ even — for an idea to sit at `raw` for months.
 
 When you do develop one:
 
-- **Check it against the domain model**: `docs/02-domain-model.md` and the ingestion seam it
-  rests on, `ADR-0003` — both in flight as PR #4 when this file was written (2026-10-05), so
-  named here rather than linked. Either the idea fits, or the file names exactly what would
-  have to change. This is the single most valuable thing you can add to an idea, because it
-  converts "nice thought" into "one table the log never references" or "a migration of the
-  event table".
+- **Check it against the domain model** ([`02`](../02-domain-model.md)) and the ingestion seam
+  it rests on ([ADR-0003](../adr/0003-the-ingestion-seam.md)). Either the idea fits, or the
+  file names exactly what would have to change. This is the single most valuable thing you can
+  add to an idea, because it converts "nice thought" into "one table the log never references"
+  or "a migration of the event table".
 - **Name what it depends on.** Most ideas are gated on something — a milestone in
   [`07`](../07-roadmap.md), data that does not exist yet, another idea, a question in
   [`08`](../08-open-questions.md), a parked investigation.

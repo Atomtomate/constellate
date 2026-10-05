@@ -14,7 +14,7 @@ updated: YYYY-MM-DD
 - [ ] Problem stated — what is actually wrong today
 - [ ] Ambiguity resolved — we agree what this means
 - [ ] Approach sketched
-- [ ] Checked against the domain model (`docs/02-domain-model.md`)
+- [ ] Checked against the [domain model](../02-domain-model.md)
 - [ ] Stub or sketch written
 - [ ] Sized
 - [ ] Decision: adopt / park / drop

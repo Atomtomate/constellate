@@ -17,7 +17,7 @@ updated: 2026-10-05
 - [x] Problem stated — what is actually wrong today
 - [ ] Ambiguity resolved — waits on the owner's answers under Open questions
 - [x] Approach sketched
-- [x] Checked against the domain model (`docs/02-domain-model.md`, in flight as PR #4)
+- [x] Checked against the [domain model](../02-domain-model.md)
 - [x] Stub or sketch written — the occasion table, under Sketch
 - [x] Sized — roughly, under Size
 - [ ] Decision: adopt / park / drop — and where it sits, under Where it would sit in the roadmap
@@ -69,9 +69,9 @@ no change to the log, and it gives M2's favourites something to do on the day th
 
 ## How it fits the model
 
-Checked against `docs/02-domain-model.md` and `ADR-0003`, both in flight as PR #4 when this was
-written. The short answer: **it fits, and it costs one new noun that nothing in the log
-references.**
+Checked against [`02`](../02-domain-model.md) and [ADR-0003](../adr/0003-the-ingestion-seam.md),
+which merged as PR #4 on the day this was written. The short answer: **it fits, and it costs one
+new noun that nothing in the log references.**
 
 **A concert is by a creator the log already knows.** Totals by artist read the `creator` row
 with the ref `spotify:artist-name`, which comes from the owner's own export and needs no Spotify
@@ -267,8 +267,8 @@ Recorded, not resolved. The first three decide the shape; the rest decide detail
 - **The owner's location**, which nothing in the record states.
 - **Accounts the owner creates**: Ticketmaster, TMDB, a Twitch developer application for IGDB,
   RAWG if used; a Steam profile whose game details are public, or an exported wishlist.
-- **`docs/02-domain-model.md` merging** (PR #4): the item kinds and ref namespaces above extend
-  what it defines.
+- **The domain model as merged** (PR #4, 2026-10-05): the item kinds and ref namespaces above
+  extend what it defines, and are proposed here rather than added there.
 
 ## Sketch
 
