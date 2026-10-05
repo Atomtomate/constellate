@@ -10,12 +10,13 @@ Decisions actually made.
 |---|----------|
 | [0001](0001-adopt-the-shared-agent-fleet.md) | The shared agent fleet is consumed as a submodule, with a project overlay |
 | [0002](0002-the-stack.md) | The stack: the sibling project's, with the poller as a scheduled command |
+| [0003](0003-the-ingestion-seam.md) | The ingestion seam: one event per play, resolved from kept observations |
 
 ## Proposed
 
 Leanings to argue with; they are not settled.
 
-*(none)*
+*(none yet)*
 
 ## Superseded
 
