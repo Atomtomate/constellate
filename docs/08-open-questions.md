@@ -6,16 +6,6 @@
 
 ## Still open
 
-### Q-B — Which stack?
-
-Undecided, and nothing is built until it is. What the tracker needs is a scheduled job that
-talks to two APIs, a store that holds years of events, and a website that reads them back.
-Known from the sibling project: the owner is fastest in Python and already has a FastAPI +
-Postgres + React/Vite stack that the fleet's implementation agents know how to cut across.
-Reusing it is the cheap leaning; the brief's "system of apps" may argue for something else
-(Q-F). Decided by ADR, and that ADR also writes the file-ownership map in
-`.claude/agents.local.md`.
-
 ### Q-C — What is the domain model?
 
 The nouns the brief implies, the tracker's first: an **event** (one play or one watch — an
@@ -80,3 +70,10 @@ different cost, and none is designed until the website has proved the model (M4)
 **Q-A — Is the name Constellate?** → **Yes** *(2026-09-23)*. Confirmed by the owner the
 day the repository was created; the alternatives offered were Fundgrube, Mixtape,
 Wunderkammer and Cairn. No ADR: a name decides nothing an ADR would.
+
+**Q-B — Which stack?** → **The sibling's stack** *(2026-09-23)* → ADR-0002. The board-game
+tracker's FastAPI, SQLAlchemy, Alembic and Postgres, with a committed OpenAPI contract and a
+React + Vite + TypeScript client; the poller a one-shot command fired by the OS scheduler.
+Chosen by the owner over a Python-only stack with pages rendered on the server, TypeScript end
+to end, and the same stack on SQLite, chiefly because the fleet's file-ownership map for it is
+already proven. The map is in `.claude/agents.local.md`; where the store runs is still Q-E's.

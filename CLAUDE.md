@@ -7,9 +7,10 @@ thematic constellations between their creators, so that "what would you recommen
 tracker first, the atlas after, apps last. The brief, and everything derived from it, is
 [`docs/00-vision-and-scope.md`](docs/00-vision-and-scope.md).
 
-**The project is at M0.** There is no code, no stack and no schema; what exists is the
-written plan, the agent fleet and the record. The open questions that unblock the first
-line of code are `docs/08-open-questions.md`'s Q-B to Q-D.
+**The project is at M0.** The stack is decided (ADR-0002) and its scaffold is the next PR;
+there is no product code and no schema yet. What exists is the written plan, the agent fleet
+and the record. The open questions the first schema and the first source wait on are
+`docs/08-open-questions.md`'s Q-C and Q-D.
 
 ## Working agreement
 
@@ -48,9 +49,8 @@ does not route work itself:
 
 - **`impl-director`** — implementation work by default, including work inside a single
   layer. It plans across the layers, says what each owns and in what order, and hands off;
-  it writes no code. **Until the stack ADR writes the file-ownership map** in
-  `.claude/agents.local.md`, it has nothing to cut along and says so; record work is done
-  from this session in the meantime.
+  it writes no code. Its file-ownership map is in `.claude/agents.local.md` (ADR-0002), and
+  the scaffold PR is the first work it cuts.
 - **`manager`** — every few sessions, and always before a retro: reads the record since its
   last digest and writes one under `docs/digests/`, judged and ranked. The owner reads it
   first; the retro takes its list first. It changes nothing.
@@ -99,7 +99,7 @@ few sessions the `retro` agent runs instead of new work. Both conventions are in
 | Path | What |
 |------|------|
 | `docs/adr/` | Decisions. Check status: Accepted, Proposed, Superseded or Parked. |
-| `docs/00`, `07`, `08` | Scope, roadmap, open questions. `02` (domain model) and `03` (architecture) arrive with M0's answers. |
+| `docs/00`, `03`, `07`, `08` | Scope, architecture, roadmap, open questions. `02` (domain model) arrives with Q-C's answer. |
 | `docs/investigations/` | **Parked** research. Nothing here influences a design decision until deliberately unparked. |
 | `docs/handoffs/` | One file per finished task: what was done, verified, and left open. |
 | `docs/friction/` | One note per time an agent's process failed it. Written by the agent, read by the `retro`. |
@@ -122,9 +122,16 @@ These are decided. Changing one needs an ADR, not a commit.
   fleet anything (ADR-0001).
 - **A decision is written down before it is built on.** A stack, a schema, an import seam:
   an ADR or an answered question in `docs/08` first, code second.
-
-Product constraints — what an item is, what the model guarantees — do not exist yet. They
-arrive with `docs/02-domain-model.md` and the stack ADR, and this list grows then.
+- **The API is the only path to data.** Every client — the website, an extension, any app —
+  consumes the contract on equal terms, and none gets privileged access; the poller and the
+  importers reach the data through `services/` inside the API's own package (ADR-0002).
+- **`api/openapi.json` is committed and CI-checked**, and every client generates from it.
+  Regenerate it after any change to the API surface (ADR-0002).
+- **One ingestion path.** Every source produces the same draft event and exactly one service
+  persists it; a new source is an adapter, never a second write path (ADR-0002).
+- **One language per deployable.** Python for the API package; TypeScript for the website and
+  for the extension, each a deployable of its own; nothing crosses a language boundary but the
+  contract (ADR-0002).
 
 ## Style
 
