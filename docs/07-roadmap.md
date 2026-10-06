@@ -2,31 +2,34 @@
 
 > **Exploratory plan.** Ordering is the useful part; nothing here has an estimate yet.
 
-*Last updated: 2026-09-23*
+*Last updated: 2026-10-06*
 
 Ordered by dependency, not by date. Written on the day the repository was created and
-reordered the same day, when the owner named the tracker as the first priority. The GitHub
-milestones mirror the headings here, and `scripts/check_board.py` says when they do not.
+reordered the same day, when the owner named the tracker as the first priority; the calendar
+was inserted as M3 on 2026-10-06, at the owner's direction. The GitHub milestones mirror the
+headings here, and `scripts/check_board.py` says when they do not.
 
 ---
 
-## M0 — Foundations
+## M0 — Foundations — **done** *(2026-10-05)*
 
 The repository, the agent fleet and the written plan — no product code.
 
 - Repository on GitHub, the agent fleet mounted as a submodule, the overlay, the hooks and
   the record scripts — **done** *(2026-09-23, the first commit)*.
 - The name — **done** *(Constellate, confirmed by the owner 2026-09-23)*.
-- The scope in [00](00-vision-and-scope.md) corrected by the owner.
+- The scope in [00](00-vision-and-scope.md) corrected by the owner — **done** *(2026-10-05,
+  from the owner's answers on the capture paths; the M0 consolidation)*.
 - The data sources researched (Q-D): how Spotify's and YouTube's history is obtained,
   backfilled and kept current, with what fields and what limits, as
-  `01-data-sources-spotify.md` and `01-data-sources-youtube.md`.
+  `01-data-sources-spotify.md` and `01-data-sources-youtube.md` — **done** *(2026-09-23,
+  PRs #2 and #3)*.
 - The domain model sketched — an event, an item, a creator, and the room the atlas needs
-  later (Q-C) — as `02-domain-model.md` — **done** *(2026-09-23, with ADR-0003, the
+  later (Q-C) — as `02-domain-model.md` — **done** *(2026-09-23, PR #4, with ADR-0003, the
   ingestion seam)*.
 - The stack decided (Q-B), as an ADR, and with it the file-ownership map in
   `.claude/agents.local.md` that the implementation agents need before any of them can run —
-  **done** *(2026-09-23, ADR-0002)*.
+  **done** *(2026-09-23, PR #1, ADR-0002)*.
 
 **Done when:** the questions above have answers written down, and an implementation agent
 can be briefed against an ownership map.
@@ -37,9 +40,16 @@ can be briefed against an ownership map.
 
 The owner's first priority: what was listened to and watched, when, and for how long.
 
-- Spotify listening history into the store: backfill from what Spotify already holds, then
-  ongoing capture, each play with track, artist, album, start time and duration.
-- YouTube watch history into the store the same way: video, channel, start time, duration.
+- **The scaffold**, first: `api/` and `web/` laid out along the overlay's ownership map, the
+  layering check, and the gate areas with their workflows — no product endpoint and no table
+  yet (ADR-0002).
+- Spotify listening history into the store, each play with track, artist, album, start time
+  and duration: the extended streaming-history export as the backfill and the record;
+  Last.fm's scrobbles as the live tail, with no Spotify app; the Web API playback poller as an
+  optional source on top, for measured listened time. The log never depends on the poller.
+- YouTube watch history into the store, each watch with video, channel, start time and
+  duration: Takeout as the backfill; the Data Portability API for daily capture, or scheduled
+  Takeout if its spike fails; lengths from the Data API's `videos.list`, held as a cache.
 - A timeline of both, and totals by day, week and month, and by artist, channel, track and
   video.
 - Private, single user; the owner signs in.
@@ -63,7 +73,27 @@ under thirty seconds.
 
 ---
 
-## M3 — Constellations and recommendations
+## M3 — The calendar
+
+The first feature that reads the atlas forward: upcoming concerts of the owner's bands and the
+release dates of the games and films they have bookmarked, as a calendar the phone subscribes
+to. Its origin and its research are
+[`ideas/concert-and-release-calendar.md`](ideas/concert-and-release-calendar.md); what it adds
+to the model is Q-G.
+
+- The calendar typed by hand: a table of occasions, and a page that lists them, where the
+  owner types one and marks one *going* or *not interested*.
+- An ICS feed of it, with reminders, subscribable from Proton Calendar and Google Calendar.
+- Then the feeds, which fill it with nothing typed: concerts from Ticketmaster Discovery for
+  the bands among the atlas's favourites; release dates from TMDB for films, and from Steam and
+  IGDB for games, for the releases the owner bookmarked.
+
+**Done when:** the next concert of a favourite band appears on the owner's phone without being
+typed.
+
+---
+
+## M4 — Constellations and recommendations
 
 The two questions the atlas exists for.
 
@@ -76,7 +106,7 @@ The two questions the atlas exists for.
 
 ---
 
-## M4 — The apps
+## M5 — The apps
 
 What "a system of apps" means is Q-F; this milestone is a placeholder for its answer.
 Nothing here is designed until M1 has proved the model.
