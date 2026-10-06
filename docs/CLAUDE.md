@@ -10,15 +10,17 @@ That only stays true if the record is maintained. Read the root `CLAUDE.md` firs
 | `00`, `03`, `07`, `08` (and `02` once it exists) | Scope, architecture, roadmap, open questions; later the domain model | The plan changes |
 | `adr/` | Decisions, with the reasoning that produced them | A decision is made |
 | `investigations/` | External constraints, researched then **parked** | Reality is discovered |
+| `ideas/` | Things we might want: one file per idea, captured fast and developed later or never; [`ideas/CLAUDE.md`](ideas/CLAUDE.md) says how | Someone has a thought |
 | `handoffs/` | One record per finished task: done, verified, still open, what carried it — a `**Summary:**`/`**State:**` header under the title, indexed by `scripts/record_index.py` | A task closes |
 | `friction/` | One note per time the process failed an agent: a wrong definition, a tool that fought back, an exclusion that dropped something real — an `**Agent:**`/`**Summary:**`/`**Retro:**` header under the title, indexed by `scripts/record_index.py` | An agent finishes with one to leave |
 | `reviews/` | A branch's pass: one file per reviewer, an earlier wave's kept beside it as `<agent>-first-wave.md`, and the implementation agents' plans, which `reviews.is_reviewer_report` tells apart | A review pass runs, or a lane is planned |
 | `digests/` | One file per `manager` run: the record since the last one, compressed and judged — a `**Covers:**`/`**Supersedes:**` header under the title, at most `record.DIGEST_CAP` lines | The manager runs, every few sessions and before a retro |
 
-The distinction that matters: an **investigation** is something the world imposes, an
-**ADR** is something we decided, a **handoff** is what one task left behind, a **friction
-note** is what the process cost the agent that ran it, a **digest** is the record read whole
-and judged, and the **roadmap** is what we committed to build.
+The distinction that matters: an **idea** is something we might want, an **investigation**
+is something the world imposes, an **ADR** is something we decided, a **handoff** is what one
+task left behind, a **friction note** is what the process cost the agent that ran it, a
+**digest** is the record read whole and judged, and the **roadmap** is what we committed to
+build.
 
 ## ADRs
 
