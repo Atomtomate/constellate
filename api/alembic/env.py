@@ -7,13 +7,15 @@ imports the models so ``--autogenerate`` sees the full metadata.
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import create_engine, pool
 
 from constellate.config import settings
 from constellate.models import Base
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# URL is not passed through config.set_main_option: ConfigParser's % interpolation
+# would reject a percent-encoded character (e.g. %40 in a password) with a ValueError
+# that prints the raw URL to stderr. The online path builds its engine directly.
 
 if config.config_file_name is not None:
     # disable_existing_loggers=False: keep loggers configured outside alembic.ini alive.
@@ -58,11 +60,7 @@ def run_migrations_online() -> None:
             context.run_migrations()
         return
 
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
-    )
+    connectable = create_engine(settings.database_url, poolclass=pool.NullPool)
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
