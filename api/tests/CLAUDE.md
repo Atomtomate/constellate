@@ -48,9 +48,9 @@ against the one it means now, so nothing changes when they diverge.
 ## Conventions
 
 - **A test name is its documentation.** `test_unknown_path_is_not_found_in_envelope` beats
-  `test_404` and a docstring. The `D1` docstring rules are off here for that reason; add a
-  docstring only where the *why* is not obvious from the name — usually to record the bug the
-  test exists to prevent.
+  `test_404` and a docstring. The `D1` docstring rules are off here under the root
+  `CLAUDE.md`'s Style, which exempts tests; add a docstring only where the *why* is not
+  obvious from the name — usually to record the bug the test exists to prevent.
 - **One reason to fail.** Shared setup helpers are encouraged; parametrisation that obscures
   which case broke is not.
 - **Duplication in tests is fine.** A test should be readable without scrolling to understand a

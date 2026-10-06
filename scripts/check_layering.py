@@ -251,7 +251,7 @@ def leaf_importers(entries_by_key: dict[str, list]) -> dict[str, str]:
     solely by `config.py` back in the entry-point default, free to import `api/` from a
     position under `services/` -- the gap this exists to close, one step further out. The
     entry-point side stays deliberately non-transitive: a module only `poll.py` imports is
-    below an entry point, which is no layer at all, so it is an entry point too.
+    below an entry point, which is no layer at all, so it stands with the entry points.
 
     `sources/` reaches too: a helper only an adapter imports is under the adapter, and an
     adapter may import only `domain/` and the leaves, so the helper has to be one -- held

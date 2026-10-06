@@ -139,11 +139,11 @@ These are decided. Changing one needs an ADR, not a commit.
 
 ## Style
 
-Applies everywhere. Language-specific rules go in the directory's own `CLAUDE.md` once a
-language is chosen.
+Applies everywhere. Language-specific rules are in the directory's own `CLAUDE.md`.
 
 - **Every public module, class and function carries a docstring.** Enforced by the linter
-  once there is one, not left to good intentions.
+  (ruff's `D1` rules, `api/pyproject.toml`), not left to good intentions. Tests are exempt, a test's name being its
+  documentation, and so are generated migration files.
 - **Docstrings say what and why; the signature says how.** Restating the parameter list in
   prose is noise. What earns its place: the constraint a caller must respect, the reason a
   surprising choice was made, what it does *not* do.

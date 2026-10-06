@@ -167,7 +167,9 @@ sharing a status is deliberate, since 422 *is* "well-formed but semantically wro
 per code except `internal_error`, each carrying no status of its own; `api/errors.py` maps class
 to status and code in one place, registers the handlers, and maps the few `HTTPException`s
 Starlette raises itself (an unroutable path, a rejected dependency) back to the same codes by
-status. A router raises a service error and never an `HTTPException`, and attaches `RESPONSES`
+status; a status the table does not list — Starlette's own 405 for a wrong method — travels as
+`invalid_request` with that status, the nearest generic code, until an endpoint advertises
+otherwise. A router raises a service error and never an `HTTPException`, and attaches `RESPONSES`
 so the contract advertises the error statuses it can return — without that the spec claims 200
 and 422, and every 404 is invisible to codegen.
 

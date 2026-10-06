@@ -158,7 +158,8 @@ with only `Base`, and `Owned` is added alongside `ids.py` in the first migration
 **Without a live Postgres (dev machine, no Docker needed):**
 ```
 cd api && .venv/Scripts/python.exe -m pytest tests/test_db_engine.py tests/test_migrations.py -q
-cd api && .venv/Scripts/python.exe -m ruff check . && .venv/Scripts/python.exe -m ruff format --check .
+cd api && .venv/Scripts/python.exe -m ruff check . &&
+    .venv/Scripts/python.exe -m ruff format --check .
 ```
 The venv is created by `impl-backend` as part of the pyproject.toml step; my files pass
 lint and the smoke tests without a database.

@@ -44,8 +44,8 @@ ownership).
 lint and tests, each of these exists because it covers a way the project can rot silently:
 
 - **`ruff check`** carries the `D1` docstring rules, the linter the root `CLAUDE.md`'s Style
-  promises; off for `tests/**`, where `tests/CLAUDE.md` says why, and `alembic/**`, which is
-  generated.
+  promises, off only where that rule exempts: `tests/**`, and the generated revisions under
+  `alembic/versions/**`.
 - **`openapi.json` must match the code** — `python scripts/export_openapi.py --check`.
   Regenerate it in the same commit as the change, then `web/`'s client from it
   (`web/CLAUDE.md`).

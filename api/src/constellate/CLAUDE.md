@@ -14,12 +14,12 @@ table expression — `text()` in a `server_default` — but never runs a query.
 module a placed directory imports through another such module is reached too — and
 `__init__.py` counts as reached, since no import names it but every import runs it: a re-export
 added there would have `models/` load `services/` at import time. Today the leaves are
-`config.py`, `db.py`, `ids.py` and `__init__.py`; the entry points are `main.py`, `poll.py` and
-`logging_config.py`, which only those two import and so stands with them — what lets it import
-`api/request_id.py` for its filter. The day a layer or a leaf reaches an entry point, it becomes
-a leaf and is held to a leaf's rule. `scripts/check_layering.py` derives the placement the same
-way, so what needs updating alongside a change here is that script's docstrings and its own
-tests.
+`config.py`, `db.py`, `ids.py` and `__init__.py`; the entry points are `main.py` and `poll.py`.
+`logging_config.py` is theirs alone — only they import it, and it stands with them above `api/`,
+which is what lets it import `api/request_id.py` for its filter. The day a layer or a leaf
+reaches an entry point, it becomes a leaf and is held to a leaf's rule. `scripts/check_layering.py`
+derives the placement the same way, so what needs updating alongside a change here is that
+script's docstrings and its own tests.
 
 **The seam is `services/sources.py`'s `SourceAdapter`, a `Protocol`.** An adapter has the right
 members and never subclasses it; a leaf imports no module of `sources/` any more than a layer
@@ -40,7 +40,9 @@ anywhere else, is a violation like any other.
 **Only `logging_config.py` configures logging** — a handler, a level, `basicConfig`,
 `dictConfig`, `.handlers`, `.propagate` — and `check_layering.py` holds every other module to
 it. An entry point calls `configure_logging()` once before it logs; `main.py` does at import.
-Everything else takes `logging.getLogger(__name__)` and installs nothing. The formatter writes
+Everything else takes `logging.getLogger(__name__)` and installs nothing — except a module run
+as a command, which names its logger (`constellate.poll`): under `python -m`, `__name__` is
+`__main__`, no child of `constellate`, and the handler would never see its records. The formatter writes
 one JSON object per record with a fixed key set and silently drops `extra=` fields, which is
 what keeps a careless call site from writing a token into a structured log; a message or an
 exception's text names the row's id, never a credential, a hash or an email.
