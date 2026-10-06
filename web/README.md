@@ -5,8 +5,8 @@ here on. Everything in this directory is the web client's; it never touches `api
 directly -- see the root `CLAUDE.md`'s standing constraints.
 
 At scaffold time there are no product screens. The shell shows the API health status at
-`/` and a not-found fallback at every other path. M1 brings the timeline, totals and
-sign-in screens.
+`/` and a not-found fallback at every other path. M1 brings the timeline and totals;
+sign-in arrives with M1's sign-in decision.
 
 ## Running it
 
