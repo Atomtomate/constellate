@@ -7,9 +7,9 @@ import { App } from "./App";
 import "./index.css";
 
 /**
- * The application root: QueryClient, BrowserRouter, App. Sign-in wiring (`RequireSession`,
- * session hooks, the 401→reset-["me"] query-invalidation rule) arrives with M1's sign-in
- * screen and is not in scope for the scaffold (impl-director.md "Not in scope").
+ * The application root: QueryClient, BrowserRouter, App. Sign-in wiring (the credential
+ * M1's sign-in decides, the 401-redirect rule) arrives with M1's sign-in screen and is
+ * not in scope for the scaffold.
  */
 const queryClient = new QueryClient();
 
