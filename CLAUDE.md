@@ -105,6 +105,10 @@ few sessions the `retro` agent runs instead of new work. Both conventions are in
 | `docs/friction/` | One note per time an agent's process failed it. Written by the agent, read by the `retro`. |
 | `docs/reviews/` | A branch's review pass: one report per reviewer, and the implementation agents' plans. |
 | `docs/digests/` | One file per `manager` run. |
+| `api/` | The API package, `constellate`: FastAPI, SQLAlchemy and Alembic on Postgres (ADR-0002) — the layers, the migrations, the tests, and `api/openapi.json`, the contract every client generates from. See `api/CLAUDE.md`. |
+| `web/` | The web client: React + Vite, TypeScript, a consumer of the client generated from the contract. See `web/README.md` and `web/CLAUDE.md`. |
+| `compose.yaml` | The development Postgres: one server on `127.0.0.1:5432` shared with the sibling project, this project's database and role on it. The API runs on the host. |
+| `infra/` | What runs the stack. Today the development database's bootstrap; the rig — the stack script, the Caddyfile, the scheduled task — is Q-E's and arrives with its answer. Edited from the session; no specialist owns it. See `infra/README.md`. |
 | `scripts/` | Repo-wide record checks: what the closing step and the `retro` run rather than re-derive. See `scripts/README.md`. |
 | `.claude/agents/` | The generic agent fleet, a git submodule (ADR-0001). Its `CLAUDE.md` is the fleet's process manual. |
 | `.claude/agents.local.md` | This project's answers to that fleet. |
@@ -158,6 +162,11 @@ covering only what is specific to it. Do not restate a parent's rules in a child
 |------|--------|
 | `CLAUDE.md` (this) | The project, the working agreement, standing constraints, style |
 | `docs/CLAUDE.md` | How the written record works |
+| `api/CLAUDE.md` | Running the API package: its venv and commands, Python conventions, what CI fails on |
+| `api/src/constellate/CLAUDE.md` | The layering: what belongs in which layer and why, the `sources/` seam, the entry points |
+| `api/alembic/CLAUDE.md` | Migration rules — small directory, dangerous mistakes |
+| `api/tests/CLAUDE.md` | Testing conventions: the two backends, which checks are CI's alone |
+| `web/CLAUDE.md` | The client's conventions — the generated client, its layer rule, how it is tested |
 | `.claude/agents/CLAUDE.md` | Writing and using the agents (the fleet's; read here, edited there) |
 
 When a rule changes, change it in the one file that owns it. A rule stated twice is a rule
