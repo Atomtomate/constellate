@@ -85,8 +85,8 @@ function isErrorEnvelope(raw: unknown): raw is { error: ErrorBody } {
  * `raw` coerced to an `ErrorBody` -- the envelope's own `error` when `raw` is actually
  * shaped like one (`isErrorEnvelope`), or a generic body built from the response's own
  * status when it is not, so a caller never has to guard against a malformed body itself.
- * `unexpected_response` is not a code the API issues; it exists so `describeError` and a
- * screen's `switch` still have something to match against instead of a `TypeError`.
+ * `unexpected_response` is not a code the API issues; it exists so a screen's `switch`
+ * still has something to match against instead of a `TypeError`.
  */
 function toErrorBody(raw: unknown, response: Response): ApiErrorInput {
   const requestId = response.headers.get(REQUEST_ID_HEADER);
@@ -103,11 +103,11 @@ function toErrorBody(raw: unknown, response: Response): ApiErrorInput {
 
 /**
  * Unwraps an `openapi-fetch` result. Every screen's query function ends with this rather
- * than reading `data`/`error` itself, so a 401 with no session surfaces the same way a 404
- * or a 500 would: as a thrown `ApiError` that `@tanstack/react-query` turns into query
- * `error` state. Checks `response.ok` rather than truthy `error` alone -- `openapi-fetch`
- * can hand back `error: undefined` on a non-2xx with an empty body (a 204-shaped error,
- * a HEAD), which a bare `if (result.error)` would misread as success.
+ * than reading `data`/`error` itself, so a 401 surfaces the same way a 404 or a 500 would:
+ * as a thrown `ApiError` that `@tanstack/react-query` turns into query `error` state.
+ * Checks `response.ok` rather than truthy `error` alone -- `openapi-fetch` can hand back
+ * `error: undefined` on a non-2xx with an empty body (a 204-shaped error, a HEAD), which a
+ * bare `if (result.error)` would misread as success.
  */
 export function unwrap<T>(result: FetchResult<T>): T {
   if (!result.response.ok || result.error !== undefined) {
@@ -119,99 +119,3 @@ export function unwrap<T>(result: FetchResult<T>): T {
   return result.data;
 }
 
-/**
- * `unwrap`, except one error `code` is folded into `null` instead of thrown -- for a
- * caller where that code is a legitimate answer ("there is no session"), not a failure to
- * report as one.
- */
-export function unwrapOrNull<T>(result: FetchResult<T>, code: string): T | null {
-  if (!result.response.ok || result.error !== undefined) {
-    const body = toErrorBody(result.error, result.response);
-    if (body.code === code) {
-      return null;
-    }
-    throw new ApiError(body);
-  }
-  if (result.data === undefined) {
-    throw new Error("the server answered success with no body");
-  }
-  return result.data;
-}
-
-/** `unwrap` for an endpoint whose success response carries no body (a 204) -- nothing to
- * return, only the chance to throw. */
-export function unwrapNoContent(result: { error?: unknown; response: Response }): void {
-  if (!result.response.ok || result.error !== undefined) {
-    throw new ApiError(toErrorBody(result.error, result.response));
-  }
-}
-
-/**
- * A short, user-facing line for the error codes a caller can actually hit mid-use.
- * Everything else falls through to the server's own `message` rather than a
- * hand-maintained code list -- the API already wrote it.
- */
-export function describeError(err: unknown): string {
-  if (err instanceof ApiError) {
-    switch (err.code) {
-      case "unauthenticated":
-        return "Signed out -- sign in again to see this.";
-      case "forbidden":
-        return "Not visible to this account.";
-      case "not_found":
-        return "That isn't here (any more).";
-      default:
-        return err.message;
-    }
-  }
-  return "Something went wrong loading this.";
-}
-
-/**
- * A `422`'s `fields` array turned into one line naming what failed -- the one place in
- * the client that reads `FieldError.location` (the contract's own "which field") rather
- * than discarding it. `errors.ts` is `ErrorBody`'s owner, so this lives beside
- * `describeError` rather than in whichever screen happens to be the first to render a
- * validation failure.
- *
- * Pydantic's own "Value error, " prefix -- raised from a custom validator, not a
- * length/type check -- is stripped as library internals nobody asked to see; the rest of
- * `message` is always the server's own text, never a replacement for it.
- */
-export function describeFieldErrors(fields: components["schemas"]["FieldError"][]): string {
-  return fields
-    .map((field) => {
-      const name = field.location.at(-1);
-      const message = field.message.replace(/^Value error,\s*/, "");
-      return name ? `${name}: ${message}` : message;
-    })
-    .join(" ");
-}
-
-/**
- * A form's error line: one screen-owned sentence for the codes that screen can name,
- * and the server's own words for everything else.
- *
- * `lines` is keyed by `ApiError.code`, deliberately a plain `string` rather than the
- * contract's closed union: this helper must also survive `toErrorBody`'s synthetic
- * `unexpected_response`. A code the caller does not name is not an omission -- it falls
- * through to the server's text, which is the correct default and the reason a screen names
- * only what it improves on.
- *
- * `describeError` is reached only by something that is not an `ApiError` at all: a
- * network failure, or a thrown non-error. An `ApiError` never gets its data-screen copy
- * ("Not visible to this account."), which is a non sequitur on a form.
- */
-export function describeFormError(error: unknown, lines: Record<string, string>): string {
-  if (error instanceof ApiError) {
-    const named = lines[error.code];
-    if (named !== undefined) {
-      return named;
-    }
-    if (error.fields && error.fields.length > 0) {
-      return describeFieldErrors(error.fields);
-    }
-    return error.message;
-  }
-  return describeError(error);
-}

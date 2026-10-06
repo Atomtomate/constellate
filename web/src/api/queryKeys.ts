@@ -6,6 +6,3 @@
  * Decision 4 (impl-director.md): this file exists from the scaffold so the layer test can
  * walk it. Product keys (session, timeline, totals) arrive with M1 screens.
  */
-
-/** The process-liveness cache key. Used by the health-status component in App.tsx. */
-export const HEALTH_QUERY_KEY = ["health"] as const;

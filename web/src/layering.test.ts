@@ -129,7 +129,7 @@ describe("src/ has files to check", () => {
     expect(allFiles.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("gives every top-level directory a row in MAY_NOT_IMPORT (#277)", () => {
+  it("gives every top-level directory a row in MAY_NOT_IMPORT", () => {
     // A directory `MAY_NOT_IMPORT` does not list is silently unruled in both directions:
     // nothing says what it may import, and nothing says whether it may be imported. Reads
     // `src/` off the filesystem, so a directory added later fails here rather than going
