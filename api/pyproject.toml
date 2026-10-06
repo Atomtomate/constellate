@@ -4,18 +4,22 @@ version = "0.1.0"
 description = "Constellate — activity log and atlas API"
 requires-python = ">=3.13"
 dependencies = [
-    # Database layer. impl-backend adds its own deps below.
+    # Database layer.
     "sqlalchemy>=2.0",
     "psycopg[binary]>=3.2",
     "alembic>=1.14",
-    # Settings. impl-backend adds pydantic[email] and fastapi when it amends this file.
+    # Settings and validation.
+    "pydantic>=2.10",
     "pydantic-settings>=2.6",
+    # HTTP layer.
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3",
-    # ASGI test client; needed by impl-backend's health tests.
+    # ASGI test client for the FastAPI health and endpoint tests.
     "httpx>=0.28",
     "ruff>=0.8",
 ]
@@ -47,5 +51,5 @@ convention = "pep257"
 "alembic/**" = ["D1"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src", "scripts"]
+pythonpath = ["src"]
 testpaths = ["tests"]

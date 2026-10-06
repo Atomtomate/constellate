@@ -15,10 +15,6 @@ class NotFound(ServiceError):
     """A referenced entity does not exist."""
 
 
-class Invalid(ServiceError):
-    """The request is well-formed but wrong — a rule the domain imposes."""
-
-
 class Conflict(ServiceError):
     """The request collides with something that already exists."""
 
