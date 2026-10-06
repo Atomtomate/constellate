@@ -1,0 +1,13 @@
+{
+  // Two project configs, not one: tsconfig.app.json checks src/ against DOM lib and
+  // bundler resolution; tsconfig.node.json checks vite.config.ts against Node's own
+  // types and module system. The options they share are duplicated verbatim rather than
+  // factored out -- npm create vite's default, kept because the two configs' targets
+  // (browser vs. Node) are different enough that a shared base would need its own
+  // per-file overrides to reintroduce the split it removed.
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ]
+}

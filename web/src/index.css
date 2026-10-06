@@ -1,0 +1,12 @@
+/* Minimal reset. Product styles arrive with the first screen (M1). */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}
