@@ -4,8 +4,9 @@ Tests run against SQLite in memory by default so they are fast and need no Docke
 also runs them against Postgres (see .github/workflows/api.yml) because that is what
 production uses and the two disagree about types often enough to matter.
 
-impl-database lays the model-built fixtures here. impl-backend adds the app-dependent
-fixtures (``client``, ``anon_client``) on top, once ``constellate.main`` exists.
+The model-built fixtures (``_pg_database``, ``engine``, ``session_factory``,
+``session_override``) live here. The app-dependent fixtures (``client``,
+``anon_client``) follow below them.
 """
 
 import os
@@ -117,11 +118,11 @@ def session_factory(engine):
 def session_override(session_factory):
     """Point the app at the test database for the length of one test.
 
-    Imports ``constellate.main`` lazily so this fixture's presence in the file does
-    not prevent the database-layer tests from collecting before ``main.py`` exists.
-    impl-backend creates ``main.py``; tests that use this fixture require it.
+    Imports ``constellate.main`` lazily to keep collection healthy if the app module
+    fails to import (an import error in a test body is a failure; one in a fixture used
+    by every test is a collection error). Tests that use this fixture require it.
     """
-    from constellate.main import app  # deferred: impl-backend creates this file
+    from constellate.main import app
 
     def override():
         # Mirrors production: no commit here, so a write path that forgets to
@@ -135,3 +136,30 @@ def session_override(session_factory):
     app.dependency_overrides[get_session] = override
     yield
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client(session_override):
+    """A test client wired to the test database.
+
+    Uses ``session_override`` so every request shares the test engine's schema. Tests
+    that only hit ``/health`` (no database) still go through this fixture so the full
+    app — middleware, error handlers — is exercised rather than a stripped-down version.
+    """
+    from fastapi.testclient import TestClient
+
+    from constellate.main import app
+
+    with TestClient(app, raise_server_exceptions=False) as c:
+        yield c
+
+
+@pytest.fixture
+def anon_client(client):
+    """A client that carries no authentication — the scaffold equivalent of an anonymous user.
+
+    At scaffold time there is no auth, so this is the same object as ``client``. It will
+    diverge once sign-in arrives (M1): ``client`` will carry a bearer token, ``anon_client``
+    will not.
+    """
+    return client

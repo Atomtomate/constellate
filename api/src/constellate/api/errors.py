@@ -1,7 +1,7 @@
 """One error shape for the whole API.
 
-``docs/03-architecture.md`` lists "a single error envelope" among the conventions to
-settle once and early, "because changing them later touches every client". FastAPI's
+``docs/03-architecture.md`` calls for one error envelope, settled before the first
+endpoint because a convention changed later is a change to every client. FastAPI's
 defaults are not single: ``HTTPException`` renders ``{"detail": "<string>"}`` while
 request validation renders ``{"detail": [ ... ]}``, both under 422. A generated client
 gets one error type and fails to deserialise the other shape — on the status code it
@@ -30,7 +30,6 @@ from constellate.api.request_id import HEADER_NAME, get_request_id
 from constellate.services.errors import (
     Conflict,
     Forbidden,
-    Invalid,
     Malformed,
     NotFound,
     ServiceError,
@@ -58,7 +57,6 @@ ErrorCode = Literal[
     "not_found",
     "conflict",
     "invalid_request",
-    "rule_violated",
     "unauthenticated",
     "forbidden",
     "internal_error",
@@ -84,7 +82,6 @@ class ErrorResponse(BaseModel):
 _STATUS = {
     NotFound: 404,
     Conflict: 409,
-    Invalid: 422,
     Malformed: 422,
     Unauthenticated: 401,
     Forbidden: 403,
@@ -92,7 +89,6 @@ _STATUS = {
 _CODE: dict[type[Exception], ErrorCode] = {
     NotFound: "not_found",
     Conflict: "conflict",
-    Invalid: "rule_violated",
     Malformed: "invalid_request",
     Unauthenticated: "unauthenticated",
     Forbidden: "forbidden",
@@ -147,10 +143,12 @@ def install(app: FastAPI) -> None:
     @app.exception_handler(ServiceError)
     def _service_error(request: Request, exc: ServiceError) -> JSONResponse:
         # Starlette walks the MRO, so one registration covers every subclass.
+        # A subclass not in _STATUS/_CODE means the handler map was not updated — treat it
+        # as an internal error so nothing unmapped silently leaves through a non-existent code.
         kind = type(exc)
-        status = _STATUS.get(kind, 422)
+        status = _STATUS.get(kind, 500)
         return _render(
-            status, _CODE.get(kind, "rule_violated"), str(exc), headers=_CHALLENGE.get(status)
+            status, _CODE.get(kind, "internal_error"), str(exc), headers=_CHALLENGE.get(status)
         )
 
     @app.exception_handler(RequestValidationError)

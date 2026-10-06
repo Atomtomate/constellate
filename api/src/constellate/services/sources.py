@@ -10,15 +10,15 @@ right method signatures, not by subclassing it. That way neither layer imports t
 other: ``sources/`` does not import ``services/`` to inherit from this class, and
 ``services/`` does not import any concrete adapter.
 
-No adapters exist yet: the draft event type that ``poll`` returns comes from
-``domain/``, which is Q-C's answer. This Protocol exists now so the seam is declared
-before any adapter is written.
+No adapters exist yet: the draft event type that adapters produce is defined in
+``domain/`` and arrives with the first migration after ``docs/02-domain-model.md``'s
+tables are added. This Protocol exists now so the seam is declared before any adapter
+is written.
 """
 
-from typing import Protocol, runtime_checkable
+from typing import Protocol
 
 
-@runtime_checkable
 class SourceAdapter(Protocol):
     """What every source adapter must look like.
 
@@ -26,19 +26,7 @@ class SourceAdapter(Protocol):
     reached only from an entry point (``poll.py``) or a service, never imported by
     another module in the four layers.
 
-    The method signatures here are placeholders. They will be replaced when Q-C
-    answers what a draft event is and Q-D answers what each source provides.
+    No members are declared yet: the draft event type, and the method that produces it,
+    arrive with the first migration after ``docs/02-domain-model.md``'s tables are added
+    and Q-D's answer confirms what each source provides.
     """
-
-    @property
-    def name(self) -> str:
-        """A short, stable identifier for this source, e.g. ``"spotify_poll"``."""
-        ...
-
-    def is_configured(self) -> bool:
-        """Whether this adapter has the credentials it needs to run.
-
-        ``poll.py`` calls this before asking for events; an unconfigured adapter is
-        skipped with a log line rather than crashing the whole run.
-        """
-        ...

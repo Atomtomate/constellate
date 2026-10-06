@@ -5,6 +5,6 @@ cursor, the creator, the item. No I/O of any kind — no SQLAlchemy, no HTTP, no
 access. Anything here is safe to import from ``services/``, ``sources/``, and
 ``models/`` alike.
 
-Nothing lives here yet: the domain model (Q-C) has not been written. Types arrive in a
-later PR once Q-C is answered and ``docs/02-domain-model.md`` is written.
+Nothing lives here yet: ``docs/02-domain-model.md`` describes the types as a sketch;
+they arrive as Python once the first migration adds the tables they map to.
 """
