@@ -1,0 +1,28 @@
+{
+  "comment": [
+    "What `npm run build` reads, declared by the half of the repo that owns it.",
+    "`stack.py status` reads this to date `dist/.built` against the tree; declaring it",
+    "here means infra/ does not need to enumerate web/'s layout by hand.",
+    "",
+    "`exclude` is what lives under an included path without reaching the bundle:",
+    "documentation, and the tests vitest runs but vite does not bundle. Editing one",
+    "changes no byte of `dist/`, so it must not report the build stale."
+  ],
+  "include": [
+    "src",
+    "public",
+    "index.html",
+    "package.json",
+    "package-lock.json",
+    "vite.config.ts",
+    "tsconfig.json",
+    "tsconfig.app.json",
+    "tsconfig.node.json"
+  ],
+  "exclude": [
+    "*.md",
+    "*.test.ts",
+    "*.test.tsx",
+    "src/test"
+  ]
+}
