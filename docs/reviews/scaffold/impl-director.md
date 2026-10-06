@@ -8,8 +8,9 @@ enough to carry them. This is the director's cut of record, folding the reconcil
 sync ownership named, sign-in plumbing added to Not-in-scope, and decision 5 (the `infra`
 area while Q-E is open) added. Updated once more at the review fold (2026-10-06): the owner's
 answers recorded under "Owner's answers", the Not-in-scope clause they reverse struck, and the
-two lines overtaken by PR #1's merge and the public repository corrected. It writes no code
-(fleet "Plan before code").*
+two lines overtaken by PR #1's merge and the public repository corrected. At the second wave's
+fold: the sibling's sign-in plumbing said not ported, and the record files this PR edits
+listed in full. It writes no code (fleet "Plan before code").*
 
 Branch `claude/scaffold`, planned stacked on PR #1 (`ADR-0002`). PR #1 merged on 2026-10-05
 before the code was written, so the branch is on `main` and the PR says "merge after" nothing.
@@ -139,11 +140,13 @@ envelope components and the `X-Request-ID` header.
 
 Any endpoint but health; any table or column (the schema is the migration chain alone until
 Q-C); the poller, the sampler, any source adapter or importer; the scheduled task; sign-in and its
-plumbing — the session-cookie test env, the 401->reset-`['me']` QueryClient wiring,
-`RequireSession`, session hooks, ported only with sign-in (M1); the extension (`extension/`, Q-D);
-the domain model (Q-C, PR #4). The in-flight PRs #2/#3/#4 and the post-merge consolidation
-PR also touch `docs/03`, the overlay, root `CLAUDE.md` and `docs/08`; this PR edits only the
-`docs/03` Conventions section and the "arrives with scaffold PR" markers, and keeps clear of
+plumbing — the sibling's session-cookie test env, 401->reset-`['me']` QueryClient wiring,
+`RequireSession` and session hooks are not ported, and sign-in's scheme is M1's decision, not a
+port; the extension (`extension/`, Q-D); the domain model (Q-C, PR #4). The in-flight PRs
+#2/#3/#4 and the post-merge consolidation PR also touch `docs/03`, the overlay, root
+`CLAUDE.md` and `docs/08`; this PR edits the `docs/03` Conventions section and the "arrives
+with scaffold PR" markers, and with them the root `CLAUDE.md`'s tables and Style, the overlay's
+filled sections and banner, and `docs/03`'s layering paragraph and 401 row, and keeps clear of
 the questions those PRs answer.
 
 ## Verification (by command)
