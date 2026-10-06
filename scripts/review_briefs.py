@@ -42,7 +42,7 @@ import git_cmd
 import reviews
 
 BRIEF = """\
-Review branch `{branch}` (PR #{pr}) of the board-game-tracker repository. Your definition says \
+Review branch `{branch}` (PR #{pr}) of `{repo}`. Your definition says \
 what you look for; this brief says only where, and what is already known.
 
 {where} Do not `cd` to the main checkout. Edit no file but your report, and commit nothing. \
@@ -188,6 +188,7 @@ def brief(
         measured = census(worktree, base)
     return BRIEF.format(
         agent=agent,
+        repo=gh_json.REPO,
         branch=branch,
         pr=pr,
         sha=sha,

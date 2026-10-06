@@ -34,6 +34,10 @@ class BriefTest(unittest.TestCase):
         for axis in ("correctness", "direction", "parsimony", "layering", "ownership"):
             self.assertNotIn(axis, text)
 
+    def test_the_repository_named_is_the_one_gh_json_asks(self):
+        # The template named the project these scripts were copied from until 2026-10-06.
+        self.assertIn("(PR #7) of `Atomtomate/constellate`.", _brief())
+
     def test_known_defaults_when_empty(self):
         self.assertIn("Nothing beyond the paragraph above.", _brief(agent="pr-direction-review"))
 
