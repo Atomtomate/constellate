@@ -7,7 +7,9 @@ dependencies = [
     # Database layer.
     "sqlalchemy>=2.0",
     "psycopg[binary]>=3.2",
-    "alembic>=1.14",
+    # 1.16.3: first version with the "module" hook type used in alembic.ini's
+    # post_write_hooks; earlier versions exit non-zero after writing the file.
+    "alembic>=1.16.3",
     # Settings and validation.
     "pydantic>=2.10",
     "pydantic-settings>=2.6",

@@ -10,8 +10,7 @@ random, which would make "newest first" wrong exactly when several events are in
 in one sitting. Guaranteed monotonic per process; across processes, ordering is only as
 good as the clock.
 
-Whether UUIDv7 is the right key type for this project's tables is decided in
-``docs/02-domain-model.md`` §7–§8, which was a placeholder at porting time.
+``Owned`` in ``models/base.py`` is the one caller; the key-type question lives there.
 """
 
 import os

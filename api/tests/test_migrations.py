@@ -62,11 +62,9 @@ def test_all_revisions_are_covered_or_no_rows():
 def test_upgrade_succeeds_with_percent_encoded_url(tmp_path, monkeypatch):
     """alembic upgrade head succeeds when the database URL contains a percent-encoded character.
 
-    Regression: env.py previously called config.set_main_option, which passes the URL
-    through ConfigParser's ``%`` interpolation. A ``%40`` (encoded ``@``) in the path
-    crashed with ValueError before connecting and printed the raw URL — password included
-    — to stderr. The fix builds the online engine directly from settings.database_url,
-    bypassing ConfigParser entirely.
+    What it pins: the online engine is built from the settings URL and never passes through
+    the ini's ``%`` interpolation, so an encoded ``@`` in the path neither crashes nor prints
+    the URL.
     """
     import alembic.command
 
