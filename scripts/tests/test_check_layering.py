@@ -489,12 +489,10 @@ class CheckLayeringTest(unittest.TestCase):
         )
 
     def test_a_module_only_an_entry_point_imports_is_a_leaf(self):
-        """`docs/03` has two kinds outside the layers and no third: a module `poll.py` imports
-        is reached, so it is a leaf and held to a leaf's rule. The first fixture is the shape
-        the check used to pass clean -- `logging_config.py` reaching `api/request_id.py` for
-        its filter, so the poller loaded `api/` to write one log line. The second is where
-        that import belongs: a leaf of its own, which both the middleware and the filter may
-        reach, and which `logging_config.py` may then import beside `config.py`."""
+        """A module only `poll.py` imports is reached, so it is a leaf held to a leaf's rule
+        (`docs/03`): `logging_config.py` reaching `api/request_id.py` for its filter is the
+        poller loading `api/` to write one log line. The second fixture is where that import
+        belongs -- a leaf of its own, which the middleware and the filter both reach."""
         findings, _ = self._run(
             {
                 "logging_config.py": "from constellate.api.request_id import get_request_id\n",
@@ -520,6 +518,62 @@ class CheckLayeringTest(unittest.TestCase):
             }
         )
         self.assertEqual(findings, [])
+
+    def test_an_entry_point_importing_its_sibling_stays_one(self):
+        """Placement is per module, not per top-level directory: an importer run as a command
+        that imports a helper beside it makes the helper a leaf and is itself still reached by
+        nothing. Placing the whole of `importers/` at once made the command its own reacher.
+        Both spellings, since `imported` resolves the relative one to the absolute."""
+        for spelling in (
+            "from constellate.importers.common import parse\n",
+            "from .common import parse\n",
+        ):
+            with self.subTest(spelling=spelling.strip()):
+                findings, _ = self._run(
+                    {
+                        "importers/spotify.py": (
+                            spelling + "from constellate.services import ingest\n"
+                        ),
+                        "importers/common.py": "from constellate.api import errors\n",
+                    }
+                )
+                # By prefix: the sibling's finding names `importers/spotify.py` as its reacher.
+                self.assertFalse(
+                    any(f.startswith("importers/spotify.py:") for f in findings), findings
+                )
+                self.assertTrue(
+                    any(
+                        "importers/common.py:1" in f and "importers/spotify.py imports it" in f
+                        for f in findings
+                    ),
+                    findings,
+                )
+
+    def test_what_an_import_runs_on_the_way_is_reached_too(self):
+        """Importing `constellate.helpers.clock` executes `helpers/__init__.py` first, and
+        `from constellate.helpers import clock` runs `helpers/clock.py` without the module
+        naming it -- each a leaf that placing by the dotted module alone would miss."""
+        findings, _ = self._run(
+            {
+                "helpers/__init__.py": "from constellate.api import errors\n",
+                "helpers/clock.py": "",
+                "services/x.py": "from constellate.helpers.clock import now\n",
+            }
+        )
+        self.assertTrue(
+            any("helpers/__init__.py:1" in f and "services/x.py imports it" in f for f in findings),
+            findings,
+        )
+        findings, _ = self._run(
+            {
+                "helpers/clock.py": "from constellate.api import errors\n",
+                "services/x.py": "from constellate.helpers import clock\n",
+            }
+        )
+        self.assertTrue(
+            any("helpers/clock.py:1" in f and "services/x.py imports it" in f for f in findings),
+            findings,
+        )
 
     def test_leaf_may_import_domain_and_another_leaf(self):
         """`domain/`'s rule, which the leaves take: usable by anything, importing none of
