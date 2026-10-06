@@ -171,8 +171,9 @@ def configure_logging() -> None:
     stops the process at startup rather than quietly logging at the wrong level.
 
     Nothing is installed on the root logger and ``propagate`` is left alone, so ``caplog``
-    still sees records. Deliberately not idempotent: ``main.py`` is the only caller and a
-    module is imported once per process, so a guard here could not fire and would go untested.
+    still sees records. Deliberately not idempotent: ``main.py`` calls it once at import and
+    ``poll.main()`` once per scheduled process (its test runs the command as a subprocess),
+    so a guard here could never fire and would go untested.
 
     ``uvicorn.error`` is routed through the same JSON formatter so the log file stays
     uniformly parseable. ``uvicorn.access`` is silenced at WARNING: its line format is not

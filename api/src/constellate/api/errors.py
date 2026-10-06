@@ -118,7 +118,7 @@ RESPONSES: dict[int | str, dict] = {
     403: {"model": ErrorResponse, "description": "Signed in, but not allowed"},
     404: {"model": ErrorResponse, "description": "Not found"},
     409: {"model": ErrorResponse, "description": "Conflict"},
-    422: {"model": ErrorResponse, "description": "Invalid request, or a rule was broken"},
+    422: {"model": ErrorResponse, "description": "Invalid request"},
     500: {"model": ErrorResponse, "description": "Unhandled server error"},
 }
 
@@ -143,13 +143,15 @@ def install(app: FastAPI) -> None:
     @app.exception_handler(ServiceError)
     def _service_error(request: Request, exc: ServiceError) -> JSONResponse:
         # Starlette walks the MRO, so one registration covers every subclass.
-        # A subclass not in _STATUS/_CODE means the handler map was not updated — treat it
-        # as an internal error so nothing unmapped silently leaves through a non-existent code.
         kind = type(exc)
-        status = _STATUS.get(kind, 500)
-        return _render(
-            status, _CODE.get(kind, "internal_error"), str(exc), headers=_CHALLENGE.get(status)
-        )
+        status = _STATUS.get(kind)
+        if status is None:
+            # A subclass not in the map — the map was not updated when the class was added.
+            # Log it and return the same fixed message _unhandled uses; docs/03's
+            # internal_error row forbids returning the exception's own text to a client.
+            logger.exception("Unmapped ServiceError subclass %r", kind.__name__, exc_info=exc)
+            return _render(500, "internal_error", "An unexpected error occurred.")
+        return _render(status, _CODE[kind], str(exc), headers=_CHALLENGE.get(status))
 
     @app.exception_handler(RequestValidationError)
     def _validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
