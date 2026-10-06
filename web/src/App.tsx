@@ -1,6 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 
-import { useHealth } from "./hooks/useHealth";
+import { Health } from "./routes/Health";
 import { NotFound } from "./routes/NotFound";
 
 /**
@@ -13,22 +13,8 @@ export function App() {
   return (
     <Routes>
       {/* Product routes (timeline, totals) arrive with M1 */}
-      <Route index element={<HealthStatus />} />
+      <Route index element={<Health />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
-}
-
-/**
- * Shows the result of `GET /health` via the typed client. Delegates to `useHealth` so
- * `api/client` stays behind the `hooks/` boundary (web/CLAUDE.md, layer rule 1).
- */
-function HealthStatus() {
-  const { data, isLoading, isError, error } = useHealth();
-
-  if (isLoading) return <p>Checking API&hellip;</p>;
-  if (isError) {
-    return <p>API unreachable: {error instanceof Error ? error.message : "Unknown error"}</p>;
-  }
-  return <p>API status: {data?.status}</p>;
 }

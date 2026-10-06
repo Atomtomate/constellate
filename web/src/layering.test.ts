@@ -1,10 +1,8 @@
 import { readFileSync, readdirSync } from "node:fs";
-import { dirname, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
-
-import { walkFiles } from "./test/walkFiles";
 
 /**
  * Enforces the layer rules described in `web/CLAUDE.md` across every non-test source
@@ -14,16 +12,15 @@ import { walkFiles } from "./test/walkFiles";
  *
  * Threshold is 5 at scaffold time (nine non-test files exist: main.tsx, App.tsx,
  * api/client.ts, api/errors.ts, api/queryKeys.ts, api/schema.d.ts, routes/NotFound.tsx,
- * test/walkFiles.ts, hooks/useHealth.ts). Raised each time a route is added until the
+ * routes/Health.tsx, hooks/useHealth.ts). Raised each time a route is added until the
  * test is no longer the binding constraint.
  */
 
 const SRC = dirname(fileURLToPath(import.meta.url));
 
-const allFiles = walkFiles(
-  SRC,
-  (name) => /\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name),
-);
+const allFiles = (readdirSync(SRC, { recursive: true }) as string[])
+  .filter((name) => /\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name))
+  .map((name) => join(SRC, name));
 
 /** Relative path from `src/`, forward-slash normalised, for readable failure messages. */
 function rel(filePath: string): string {
@@ -41,25 +38,17 @@ function inSection(filePath: string, section: string): boolean {
  * outside `hooks/` and `api/`, more strictly, so a duplicate clause could never fire on
  * its own.
  *
- * Scaffold contains four sections: `api`, `hooks`, `routes`, `test`. A new directory
- * added without a row here fails the "every top-level directory has a row" check below
- * rather than going unruled -- an empty row is still a row, so a directory with nothing
- * to forbid names that on purpose instead of by omission.
+ * Scaffold contains three sections: `api`, `hooks`, `routes`. A new directory added
+ * without a row here fails the "every top-level directory has a row" check below rather
+ * than going unruled -- an empty row is still a row, so a directory with nothing to
+ * forbid names that on purpose instead of by omission. Pure sections (`lib/`, `domain/`,
+ * `theme/`) add their rows here when they arrive.
  */
 const MAY_NOT_IMPORT: Record<string, readonly string[]> = {
   api: ["hooks", "routes", "components"],
   hooks: ["routes", "components"],
   routes: [],
-  test: ["hooks", "routes", "components"],
 };
-
-/**
- * The sections `web/CLAUDE.md` calls pure: the only ones whose `import type` from
- * `hooks/` or `routes/` is allowed. At scaffold time `test` is the only pure section
- * present; `lib`, `domain`, `theme` are added here and to MAY_NOT_IMPORT when they
- * arrive -- their exemption behaviour is the same as `test`'s.
- */
-const PURE_SECTIONS = new Set(["test"]);
 
 type LayerRule = {
   name: string;
@@ -73,8 +62,10 @@ const RULES: LayerRule[] = [
     name: "layer rule 1: api/client is only imported by hooks/ and api/",
     applies: (fp) => !inSection(fp, "hooks") && !inSection(fp, "api"),
     title: (r) => `${r} does not import api/client`,
+    // allowImportingTsExtensions is on, so "../api/client.ts" is valid TypeScript and
+    // must be caught alongside the extension-free spelling.
     offends: (src, _fp) =>
-      src.split("\n").filter((line) => /from\s+['"][^'"]*api\/client['"]/.test(line)),
+      src.split("\n").filter((line) => /from\s+['"][^'"]*api\/client(\.tsx?)?['"]/.test(line)),
   },
   {
     name: "layer rule 2: queryFn is only declared inside hooks/ and api/",
@@ -94,16 +85,9 @@ const RULES: LayerRule[] = [
     offends: (src, fp) => {
       const section = rel(fp).split("/")[0];
       const targets = MAY_NOT_IMPORT[section] ?? [];
-      const sourceIsPure = PURE_SECTIONS.has(section);
-      return src.split("\n").filter((line) => {
-        const isTypeImport = /^\s*import\s+type\b/.test(line);
-        return targets.some((target) => {
-          if (!new RegExp(`from\\s+['"][^'"]*\\/${target}\\/`).test(line)) return false;
-          const exemptTarget = target === "hooks" || target === "routes";
-          const exempt = isTypeImport && sourceIsPure && exemptTarget;
-          return !exempt;
-        });
-      });
+      return src.split("\n").filter((line) =>
+        targets.some((target) => new RegExp(`from\\s+['"][^'"]*\\/${target}\\/`).test(line)),
+      );
     },
   },
   {
@@ -144,54 +128,26 @@ describe("src/ has files to check", () => {
   });
 });
 
-describe("layer rule 3's import-type exemption", () => {
+describe("layer rule 1's api/client pattern", () => {
   // rel(fp) reads the section off the path, so a fabricated path under SRC exercises the
   // predicate without needing a file on disk for every case.
   const probe = (section: string) => `${SRC}/${section}/probe.ts`;
 
-  it("exempts a pure section's type-only import into hooks/", () => {
-    // test/ is the pure section present at scaffold time.
-    const offending = RULES[2].offends(
-      'import type { SessionContext } from "../hooks/useSession";\n',
-      probe("test"),
-    );
-    expect(offending).toHaveLength(0);
-  });
-
-  it("still flags a pure section's runtime import into hooks/", () => {
-    const offending = RULES[2].offends(
-      'import { useSessionContext } from "../hooks/useSession";\n',
-      probe("test"),
+  it("flags a routes/ import of api/client without extension", () => {
+    const offending = RULES[0].offends(
+      'import { api } from "../api/client";\n',
+      probe("routes"),
     );
     expect(offending).toHaveLength(1);
   });
 
-  it("flags a type-only upward import from api/ into hooks/", () => {
-    // api/ is not a pure section, so the exemption does not apply.
-    const offending = RULES[2].offends(
-      'import type { SessionContext } from "../hooks/useSession";\n',
-      probe("api"),
+  it("flags a routes/ import of api/client with .ts extension", () => {
+    // allowImportingTsExtensions is on; the .ts spelling is valid and must be caught.
+    const offending = RULES[0].offends(
+      'import { api } from "../api/client.ts";\n',
+      probe("routes"),
     );
     expect(offending).toHaveLength(1);
-  });
-
-  it("flags a type-only upward import from api/ into routes/", () => {
-    // api/ is not a pure section, so type-only imports from routes/ are still forbidden.
-    const offending = RULES[2].offends(
-      'import type { Foo } from "../routes/Account";\n',
-      probe("api"),
-    );
-    expect(offending).toHaveLength(1);
-  });
-
-  it("exempts a pure section's type-only import into routes/", () => {
-    // test/ is pure; type-only imports into routes/ are allowed (e.g. to reference a
-    // component's prop type without depending on its runtime).
-    const offending = RULES[2].offends(
-      'import type { Foo } from "../routes/NotFound";\n',
-      probe("test"),
-    );
-    expect(offending).toHaveLength(0);
   });
 });
 
