@@ -1,0 +1,37 @@
+# Local development only: Postgres, nothing else.
+#
+# The API runs on the host, from api/ with reload, because that is the faster loop while the
+# schema is churning; what serves the stack for real is Q-E's and arrives under infra/
+# (infra/README.md).
+#
+# One Postgres on 127.0.0.1:5432 serves this project and its sibling, the board-game tracker,
+# each in a database of its own under a role of its own (ADR-0002; the scaffold PR's decision 2).
+# This service and the sibling's are the same server described twice -- the same image family,
+# the same port -- so whichever is up is the one both projects use, and only one can be up, since
+# the port is the lock. On the dev PC today that is the sibling's container,
+# boardgame-tracker-db-1; this file is for a machine without it, and for the day it retires.
+# Either way the constellate database and role come from infra/postgres/init-constellate.sql:
+# the image's entrypoint runs it once when the volume is empty, through the mount below, and a
+# server that already holds data gets it by hand, with the command in infra/README.md.
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      # The server's bootstrap superuser, which the API never connects as: the role it uses is
+      # the one the init script creates, so a permission mistake fails in development too.
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init-constellate.sql:/docker-entrypoint-initdb.d/10-constellate.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

@@ -4,7 +4,7 @@
 > [ADR-0002](adr/0002-the-stack.md); where a detail waits on another question it names that
 > question rather than guessing. None of it exists as code yet: the scaffold PR lays it out.
 
-*Last updated: 2026-09-23*
+*Last updated: 2026-10-06*
 
 ## Shape
 
@@ -109,6 +109,85 @@ imports. The per-layer rules in detail go
 in `api/src/constellate/CLAUDE.md`, which arrives with the same PR, and this page stays the
 summary it expands. The website's own layer rule arrives with `web/`.
 
+## Conventions
+
+The API's conventions, settled 2026-10-05 by the owner with the scaffold PR's plan
+(`docs/reviews/scaffold/impl-director.md`, decision 1): the sibling project's, as they are. They
+are settled before the first endpoint because every client generates from the contract, so a
+convention changed later is a change to every client. What holds them is `api/openapi.json`; this
+section is where their meaning is written. Paths in it are inside the API package,
+`api/src/constellate/`.
+
+**One error envelope.** Every error, whatever raised it, leaves in one shape:
+
+```json
+{"error": {"code": "not_found", "message": "...", "fields": [...]}}
+```
+
+`fields` is present only on a malformed request, as a list of `{"location": [...], "message"}`
+naming each offending part; otherwise the key is omitted. `code` is a closed set, a `Literal` in
+`api/errors.py`, so that it reaches the contract as an enum and a generated client can switch on
+it exhaustively; stated as prose, each client would hand-copy the strings and drift alone. The
+scaffold ships the generic codes:
+
+| `code` | Status | Means |
+|--------|--------|-------|
+| `invalid_request` | 422 | Unreadable: a malformed body, a bad parameter. Carries `fields`. |
+| `not_found` | 404 | The thing referenced does not exist. |
+| `conflict` | 409 | Collides with something that already exists. |
+| `unauthenticated` | 401 | The caller is not signed in. Carries `WWW-Authenticate: Bearer`. How the owner signs in is M1's; the code exists now so the contract does not change when it arrives. |
+| `forbidden` | 403 | Signed in, but not allowed. |
+| `internal_error` | 500 | Nothing more specific caught it. A fixed message, never the exception's text, so no stack detail reaches a client. |
+
+A product code is added by the endpoint that needs it, in the same `Literal` and in this table.
+The sibling's `rule_violated` — 422, well-formed but breaking a rule — is the shape of the first
+one, which arrives with the first rule a request can break (`docs/02-domain-model.md`); two 422s
+sharing a status is deliberate, since 422 *is* "well-formed but semantically wrong", and the
+`code` separates them. Where the codes come from: `services/errors.py` holds one exception class
+per code except `internal_error`, each carrying no status of its own; `api/errors.py` maps class
+to status and code in one place, registers the handlers, and maps the few `HTTPException`s
+Starlette raises itself (an unroutable path, a rejected dependency) back to the same codes by
+status. A router raises a service error and never an `HTTPException`, and attaches `RESPONSES`
+so the contract advertises the error statuses it can return — without that the spec claims 200
+and 422, and every 404 is invisible to codegen.
+
+**Cursor pagination.** The pattern, since no list endpoint ships with the scaffold. A list
+endpoint takes `cursor`, an opaque string absent on the first page, and `limit`, bounded, with a
+default the endpoint states (the sibling's: 50, at most 200), and returns
+`{"items": [...], "next_cursor": ...}` — `next_cursor` is the string to pass back as `cursor`
+for the next page, and `null` on the last. Keyset, never offset: the cursor encodes the sort key
+of the last item returned (base64 of it, in a module beside the router, as the sibling's
+`api/cursor.py`), so a page costs the same at the end of a decade of events as at the start, and
+a row that arrives between two fetches — a poll landing mid-scroll — does not shift the pages
+behind it. A client never reads inside a cursor, and a malformed one is `invalid_request`. A
+keyset cursor only works over an order the endpoint fixes, so the order of a returned list is
+the endpoint's, published in its description, and no client re-sorts it. This cursor is a page's
+position in a response and nothing else; the *source cursor* of `docs/02-domain-model.md` is a
+different thing with a shared word.
+
+**Times.** Every instant on the wire is ISO-8601 in UTC with a trailing `Z` —
+`2026-10-05T14:00:00Z` — in a response and in a request alike. In the package an instant is an
+aware `datetime` in UTC and Pydantic writes the `Z`; a naive one is a bug. Which zone buckets an
+instant into a local day is `docs/02-domain-model.md`'s open point, and nothing here pre-empts
+it: a local day, where an endpoint returns one, is a date, and the instants it was built from
+travel as above.
+
+**`X-Request-ID`.** Every response carries an `X-Request-ID` header: an opaque id minted per
+request by an ASGI middleware in `api/request_id.py`, never read from the request, and the same
+id on every log line the request writes, so a client's report of a failure matches one line of
+the server's log. It is declared once in the contract, under `components.headers`, and
+referenced from every operation's responses, so a generated client sees it. The 500 path sets
+the header itself, because Starlette sends an unhandled error's response outside the
+middleware's wrapped `send`; the module says so where it does it.
+
+**Health.** The scaffold's two endpoints, and the first the conventions apply to. `GET /health`
+answers `200 {"status": "ok"}` and touches no database: the process is up. `GET /health/ready`
+answers `200 {"status": "ready"}` after one `select 1` through the session dependency: the
+process is up and can reach its database — and that `select 1` is the one sanctioned SQL outside
+`repos/`, named as such in `scripts/check_layering.py`. A database that does not answer is a 500
+in the envelope, `internal_error`, which is what a probe for whatever keeps the process running
+wants to see. Both carry the request id; neither is paginated or carries a time.
+
 ## Not decided here
 
 Named so nobody fills the gap by typing:
@@ -119,7 +198,3 @@ Named so nobody fills the gap by typing:
   the two data-source documents.
 - The host, and what keeps Postgres and the scheduled task running there: Q-E.
 - How the owner signs in, which M1 needs.
-- The API's conventions — the error envelope's codes, pagination, how times travel. The
-  scaffold PR's plan writes them into this page before its first endpoint, where the plan's
-  review sees them; the sibling project's (one error envelope for every error, cursor
-  pagination, ISO-8601 UTC times) are where option A starts.
