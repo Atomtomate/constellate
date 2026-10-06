@@ -1,9 +1,9 @@
 #!/bin/sh
 # Runs the fast half of the checks the staged change calls for, before the commit exists.
 #
-# `scripts/gates.py --staged --quick` decides which those are: today the record check and
-# the record scripts' own tests, each only when the change touches what it guards. Nothing
-# here takes much over twenty seconds.
+# `scripts/gates.py --staged --quick` decides which those are: the record check, the
+# layering check, ruff, and the record scripts' own tests, each only when the change
+# touches what it guards. Nothing here takes much over twenty seconds.
 #
 # Activate once per clone: `git config core.hooksPath .githooks`. To commit past it once,
 # `git commit --no-verify`; the push gate and the build both still stand behind it.
