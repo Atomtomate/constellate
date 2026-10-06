@@ -1,9 +1,8 @@
 """Per-request ID: ASGI middleware and contract declaration.
 
 The middleware mints one UUID per HTTP request, stores it in the contextvar
-(``request_context.py``), and sets ``X-Request-ID`` on every response. The 500 path
-is ``errors.py``'s: ``ServerErrorMiddleware`` bypasses the wrapped send, so the header
-is added there directly from the contextvar.
+(``request_context.py``), and sets ``X-Request-ID`` on every response; the 500 path sets
+it in ``errors.py``'s ``_unhandled``, which says why.
 
 ``install(app)`` is the public entry point for ``main.py``: it adds the middleware and
 declares the header in the OpenAPI contract.

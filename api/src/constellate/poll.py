@@ -5,10 +5,8 @@ this command asks each pollable source for what is new since the cursor it store
 ingests it through the service layer, stores the new cursor, and exits. A source that
 is not configured is skipped with a log line rather than aborting the whole run.
 
-No sources are configured yet: the draft event type arrives with the first migration,
-and the first source adapter with its data-source document. Until then the command logs
-once and exits 0, so the scheduling infrastructure can be wired up before the sources
-exist.
+No sources are configured yet; the command logs once and exits 0 so the scheduling
+infrastructure can be wired up before sources exist.
 """
 
 import logging

@@ -1,20 +1,10 @@
-"""Tests for the error envelope.
-
-Two things the health tests do not reach: that every ``ServiceError`` subclass is mapped
-in ``_WIRE``, so an unmapped class cannot silently return 500; and the unhandled
-exception path, where the handler sets the request-id header itself.
-"""
+"""Tests for the error envelope: complete ``_WIRE`` coverage and the unhandled path."""
 
 HEADER = "x-request-id"
 
 
 class TestServiceErrorMappingComplete:
-    """Every concrete ServiceError subclass must have an entry in _WIRE.
-
-    An unmapped class raises KeyError inside _service_error, which propagates to
-    _unhandled and returns 500 internal_error — the same as if no handler matched at
-    all. This test makes the gap a CI failure instead.
-    """
+    """Every concrete ServiceError subclass must have an entry in _WIRE."""
 
     def test_every_concrete_subclass_is_in_wire(self):
         from constellate.api.errors import _WIRE
@@ -38,14 +28,7 @@ def _concrete_subclasses(base):
 
 
 class TestUnhandledExceptionPath:
-    """The _unhandled handler — triggered when no other handler matches — returns 500.
-
-    Starlette places the Exception handler in ServerErrorMiddleware (outermost), which
-    bypasses RequestIdMiddleware's wrapped send. _unhandled compensates by reading the
-    contextvar directly and setting X-Request-ID itself. This test verifies the whole
-    path from a raised exception to the wire, including the header and the fixed message
-    (never the exception's own text, per docs/03's internal_error row).
-    """
+    """Unhandled exceptions return 500 with a fixed message and the request-id header."""
 
     def test_unhandled_exception_is_500(self):
         response = _make_raising_response()
@@ -65,8 +48,7 @@ class TestUnhandledExceptionPath:
         assert _RAISING_SENTINEL not in response.json()["error"]["message"]
 
     def test_unhandled_exception_carries_request_id(self):
-        # _unhandled sets the header directly from the contextvar because
-        # ServerErrorMiddleware bypasses RequestIdMiddleware's wrapped send.
+        # The one path where the handler sets the header itself; errors.py says why.
         response = _make_raising_response()
         assert HEADER in response.headers
 

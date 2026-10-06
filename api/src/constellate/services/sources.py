@@ -15,6 +15,7 @@ class SourceAdapter(Protocol):
     right members without subclassing. Reached only from an entry point (``poll.py``) or
     a service, never from another layer or leaf.
 
-    No members are declared yet: a method's signature waits on the draft event type the
-    first migration defines and the first adapter's confirmed shape.
+    No members are declared yet: a method's signature waits on the draft event type in
+    ``domain/`` (``docs/02-domain-model.md`` §2 names its fields) and the first
+    adapter's confirmed shape.
     """

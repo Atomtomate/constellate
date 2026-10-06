@@ -88,28 +88,24 @@ class TestValidationErrorRedaction:
 
 
 class TestRequestIdOnLogDuring500:
-    """A log line written during a request that 500s carries the response's X-Request-ID.
-
-    _unhandled sets the header from the contextvar directly (ServerErrorMiddleware
-    bypasses RequestIdMiddleware's wrapped send), and RequestIdFilter sets request_id on
-    every log record from the same contextvar. Both must read the same value.
-    """
+    """A log line written during a request that 500s carries the response's X-Request-ID."""
 
     def test_log_carries_response_request_id(self):
-        from constellate.logging_config import ConstellateFormatter, RequestIdFilter
-
-        buf = io.StringIO()
-        handler = logging.StreamHandler(buf)
-        handler.setFormatter(ConstellateFormatter())
-        handler.addFilter(RequestIdFilter())
-
-        logger = logging.getLogger("constellate")
-        logger.addHandler(handler)
-
+        # Import app first so configure_logging() has run and the production handler
+        # exists. Then redirect its stream to a buffer — deleting the filter or the
+        # formatter in configure_logging() turns the assertion at the end red.
         from fastapi.testclient import TestClient
 
         from constellate.db import get_session
+        from constellate.logging_config import ConstellateFormatter
         from constellate.main import app
+
+        logger = logging.getLogger("constellate")
+        prod_handler = next(
+            h for h in logger.handlers if isinstance(h.formatter, ConstellateFormatter)
+        )
+        buf = io.StringIO()
+        orig_stream = prod_handler.setStream(buf)
 
         def _raising():
             raise RuntimeError("boom")
@@ -120,7 +116,7 @@ class TestRequestIdOnLogDuring500:
                 response = client.get("/health/ready")
         finally:
             app.dependency_overrides.pop(get_session, None)
-            logger.removeHandler(handler)
+            prod_handler.setStream(orig_stream)
 
         assert response.status_code == 500
         response_rid = response.headers["x-request-id"]

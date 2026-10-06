@@ -1,12 +1,7 @@
 """Tests for the /api prefix convention (docs/03-architecture.md, "One origin").
 
-Three parts carry the prefix and each has a test here:
-- main.py passes root_path="/api" to the FastAPI constructor so routing, redirects and
-  the docs page all know the prefix (not a --root-path flag a launch script can forget).
-- main.py also passes servers=[{"url": "/api"}] to the constructor so app.openapi()
-  carries the entry directly; export_openapi.py writes it without injecting a copy.
-- A trailing-slash redirect's Location includes /api so it does not land in the website's
-  half of the origin when the proxy passes the full path through unstripped.
+Pins that root_path, servers, and trailing-slash redirect Locations all carry /api.
+Each reaches a different part of the convention; none is covered by the health tests.
 """
 
 import json
@@ -22,8 +17,6 @@ def test_app_root_path_is_api():
 
 
 def test_app_openapi_declares_servers():
-    # servers is passed to the FastAPI constructor so app.openapi() carries it directly,
-    # and the exporter writes the committed spec without needing to inject it separately.
     from constellate.main import app
 
     assert app.openapi()["servers"] == [{"url": app.root_path}]
