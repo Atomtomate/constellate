@@ -488,17 +488,38 @@ class CheckLayeringTest(unittest.TestCase):
             )
         )
 
-    def test_a_module_only_an_entry_point_imports_is_not_a_leaf(self):
-        """What makes a module a leaf is a layer (or an adapter) importing it. `poll.py`
-        importing `helpers.py` says nothing about where `helpers.py` sits, so it stays an
-        entry point and reaching down is fine."""
+    def test_a_module_only_an_entry_point_imports_is_a_leaf(self):
+        """`docs/03` has two kinds outside the layers and no third: a module `poll.py` imports
+        is reached, so it is a leaf and held to a leaf's rule. The first fixture is the shape
+        the check used to pass clean -- `logging_config.py` reaching `api/request_id.py` for
+        its filter, so the poller loaded `api/` to write one log line. The second is where
+        that import belongs: a leaf of its own, which both the middleware and the filter may
+        reach, and which `logging_config.py` may then import beside `config.py`."""
         findings, _ = self._run(
             {
-                "helpers.py": "from constellate.services import ingest\n",
-                "poll.py": "from constellate.helpers import thing\n",
+                "logging_config.py": "from constellate.api.request_id import get_request_id\n",
+                "poll.py": "from constellate.logging_config import configure_logging\n",
             }
         )
-        self.assertFalse(any("helpers.py" in f for f in findings))
+        self.assertTrue(
+            any(
+                "logging_config.py:1" in f and "imports api/" in f and "poll.py imports it" in f
+                for f in findings
+            ),
+            findings,
+        )
+        findings, _ = self._run(
+            {
+                "logging_config.py": (
+                    "from constellate.config import settings\n"
+                    "from constellate.request_context import get_request_id\n"
+                ),
+                "api/request_id.py": "from constellate.request_context import set_request_id\n",
+                "main.py": "from constellate.logging_config import configure_logging\n",
+                "poll.py": "from constellate.logging_config import configure_logging\n",
+            }
+        )
+        self.assertEqual(findings, [])
 
     def test_leaf_may_import_domain_and_another_leaf(self):
         """`domain/`'s rule, which the leaves take: usable by anything, importing none of

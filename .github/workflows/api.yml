@@ -4,11 +4,7 @@ name: API
 # AREAS, and scripts/tests/test_gates.py fails when this file and that list disagree; the
 # same test holds every local check's command to a run line here.
 #
-# The Postgres steps -- the Alembic round trip, the autogenerate drift check and the second
-# pass of the tests -- are this workflow's alone (gates.py's `ci_only` names the gap on the
-# hook's result line). All want a live database, and the drift check writes a revision into
-# alembic/versions/ to read it back, which is not a thing to leave behind in someone's
-# working tree when a run dies between the write and the delete.
+# The Postgres steps are CI's alone; api/alembic/CLAUDE.md and api/tests/CLAUDE.md say why.
 
 on:
   pull_request:
@@ -73,17 +69,14 @@ jobs:
         run: ruff format --check .
 
       - name: Migrations apply, revert and apply again on an empty database
-        # The round trip: every revision's downgrade is exercised, not only its upgrade,
-        # so a migration that cannot be reverted fails here and not on the day it has to be.
+        # The round trip: api/alembic/CLAUDE.md, "What CI checks".
         run: |
           alembic upgrade head
           alembic downgrade base
           alembic upgrade head
 
       - name: Migrations match the models
-        # A non-empty autogenerate diff means someone changed a model without writing the
-        # migration for it. The revision is written to be read and deleted; see the header
-        # for why that stays CI's.
+        # The drift check, and what a non-empty diff means: api/alembic/CLAUDE.md, "What CI checks".
         run: |
           alembic revision --autogenerate -m "drift check" --rev-id drift_check
           if grep -qE '^\s+op\.' alembic/versions/drift_check_*.py; then
@@ -111,9 +104,7 @@ jobs:
           EOF
 
       - name: Tests (Postgres)
-        # Both backends, deliberately: ADR-0002 chose Postgres for timestamptz and
-        # local-time bucketing, which SQLite does not have, so the SQLite pass alone cannot
-        # answer for the backend production uses. The local hook runs the SQLite pass only.
+        # The second backend, and why both: api/tests/CLAUDE.md, "How they run".
         env:
           CONSTELLATE_TEST_DATABASE_URL: >-
             postgresql+psycopg://constellate:constellate@localhost:5432/constellate_test
