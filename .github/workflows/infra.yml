@@ -1,0 +1,43 @@
+name: Infra
+
+# Triggered by changes under infra/, by compose.yaml, and by the workflow files themselves
+# -- a change to a workflow should be answered for by a run of one. The path list lives
+# once in scripts/gates.py's AREAS, and scripts/tests/test_gates.py fails when this file
+# and that list disagree.
+#
+# Only the compose file is checked while Q-E is open. ADR-0002's appendix gives this area
+# the stack script's tests and a Caddyfile that validates; both files carry Q-E's answer
+# (the host, the public name) and arrive with it, and so do their steps here.
+
+on:
+  pull_request:
+    paths:
+      - "infra/**"
+      - "compose.yaml"
+      - ".github/workflows/**"
+  push:
+    branches: [main]
+    paths:
+      - "infra/**"
+      - "compose.yaml"
+      - ".github/workflows/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A superseded pull-request run answers about a commit nobody waits on. Pushes to main
+  # are not cancelled: each merge is the only run that will ever vouch for it.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  infra:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: The compose file parses
+        # `config` resolves and validates compose.yaml without starting anything; the
+        # init script it mounts is checked by the database the day it is first run, not
+        # here.
+        run: docker compose config --quiet
