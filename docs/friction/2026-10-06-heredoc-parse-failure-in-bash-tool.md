@@ -24,6 +24,12 @@ Bash parses the whole `-c` string before running any of it, so the four commits 
 of the heredoc had not happened either; `git log` had to be checked before anything was
 assumed to have landed.
 
+A third time, later the same day and silently: `pr-tech-review` reported, in its return rather
+than a note (its brief allows it to write only the report), that "a quoted heredoc passed to the
+Bash tool silently altered a regex escape (`\s`) in a node probe script. That made rule 3 of
+`web/src/layering.test.ts` look as if it never matched. Rewriting the probe with the Write tool
+gave the true result." No parse error that time: a wrong answer.
+
 ## What it cost
 
 One turn each time to notice and re-issue the work through the Write tool, and for the
