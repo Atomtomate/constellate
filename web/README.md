@@ -19,9 +19,9 @@ npm run dev          # http://localhost:5173, proxying /api to the API
 
 The API must be running separately on `127.0.0.1:8000` -- from `api/`, activate its venv
 and run `uvicorn constellate.main:app --reload`. `vite.config.ts` proxies `/api` to it,
-matching what Caddy does in every other environment -- which matters because the session
-cookie is sent with `credentials: "include"` and a same-origin request is what makes the
-browser send it.
+matching what Caddy does in every other environment: the proxy decides which side answers
+`/api` requests and the website owns every other path, so neither side keeps a list of
+the other's routes (docs/03-architecture.md Conventions, "One origin").
 
 **Set `API_PROXY_TARGET`** to point the dev proxy at an API on another port instead of
 `127.0.0.1:8000` -- a branch's own uvicorn running beside the rig's, say. `vite.config.ts`
