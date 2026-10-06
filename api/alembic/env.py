@@ -10,7 +10,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from constellate.config import settings
-from constellate.models import Base  # noqa: F401  (registers every table on Base.metadata)
+from constellate.models import Base
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)

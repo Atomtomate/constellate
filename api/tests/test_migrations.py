@@ -30,14 +30,12 @@ NO_ROWS: dict[str, str] = {
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def _make_cfg() -> Config:
-    """Build an Alembic Config with an absolute script_location.
+    """Build an Alembic Config from the project ini file.
 
-    The absolute path prevents Alembic from resolving ``script_location`` relative
-    to the process cwd.
+    ``alembic.ini`` uses ``%(here)s/alembic`` for ``script_location``, so the path
+    is already absolute and correct from any working directory.
     """
-    cfg = Config(str(_ALEMBIC_INI))
-    cfg.set_main_option("script_location", str(_API_DIR / "alembic"))
-    return cfg
+    return Config(str(_ALEMBIC_INI))
 
 
 # ── Coverage registry test (runs on SQLite too) ───────────────────────────────
