@@ -28,8 +28,8 @@ and declares the header once — and `ApiError`, which every query function thro
 upward: `api/` does not reach into `hooks/`, `routes/` or `components/`. `api/client` is
 imported only by `hooks/` and `api/`, and a `queryFn` is declared only there: a route that
 calls the client directly names a cache key no hook can invalidate — which is why the
-scaffold's health status in `App.tsx` uses a bare `fetch` until the first hook arrives. A route
-module exports only its entry component.
+scaffold's health status reaches `GET /health` through `hooks/useHealth.ts`. A route module
+exports only its entry component.
 
 `src/layering.test.ts` enforces all of that at `npm test`, reading `src/` off the filesystem so
 a file added later is covered without being listed, and fails on any top-level directory under
@@ -41,7 +41,9 @@ threshold guards against the loops passing vacuously if the walk ever breaks; ra
 routes are added.
 
 A query key lives in `src/api/queryKeys.ts` as soon as a second module needs it; a key one
-module both reads and invalidates stays with that module.
+module both reads and invalidates stays with that module. The `health` key is there from the
+start although one hook reads it: the file exists from the scaffold for the layer test to walk
+(the plan's decision 4), and one real key is a better row than an empty module.
 
 ## Testing
 

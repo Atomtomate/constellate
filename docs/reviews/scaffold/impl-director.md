@@ -119,7 +119,8 @@ envelope components and the `X-Request-ID` header.
 Any endpoint but health; any table or column (the schema is the migration chain alone until
 Q-C); the poller, the sampler, any source adapter or importer; the scheduled task; sign-in and its
 plumbing — the session-cookie test env, the 401->reset-`['me']` QueryClient wiring,
-`RequireSession`, session hooks, ported only with sign-in (M1); the extension (`extension/`, Q-D); the domain model (Q-C, PR #4); `domain/` and `sources/`
+`RequireSession`, session hooks, ported only with sign-in (M1); the extension (`extension/`, Q-D);
+the domain model (Q-C, PR #4); `domain/` and `sources/`
 stubs and `poll.py` (decision 4). The in-flight PRs #2/#3/#4 and the post-merge consolidation
 PR also touch `docs/03`, the overlay, root `CLAUDE.md` and `docs/08`; this PR edits only the
 `docs/03` Conventions section and the "arrives with scaffold PR" markers, and keeps clear of
