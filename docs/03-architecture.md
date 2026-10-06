@@ -95,11 +95,11 @@ sources/    one adapter per source: HTTP or a file format in, draft events out; 
   source knows an external API or a file format, and imports only `domain/` and the leaves: it
   satisfies the interface structurally rather than by subclassing it, so neither `services/` nor
   `sources/` imports the other.
-- **Outside the layers, a module is a leaf or an entry point.** A module a layer reaches
-  (`config.py`, `db.py`) is a leaf, usable by anything and importing none of the four. A module
-  nothing reaches is an entry point, above `api/`: `main.py` wires `api/` together, and
-  `poll.py`, the poller, and any importer run as a command may reach `services/`. Nothing imports
-  an entry point.
+- **Outside the layers, a module is a leaf or an entry point.** A module anything reaches, an
+  entry point included (`config.py`, `db.py`, `logging_config.py`), is a leaf, usable by
+  anything and importing none of the four. A module nothing reaches is an entry point, above
+  `api/`: `main.py` wires `api/` together, and `poll.py`, the poller, and any importer run as a
+  command may reach `services/`. Nothing imports an entry point.
 
 `scripts/check_layering.py` enforces this, ported to package `constellate` and given a rule for
 `sources/`, which the sibling's check had no place for: a port that changed only its constants
@@ -131,10 +131,11 @@ passes the prefix through unstripped — Caddy `handle`, never `handle_path`; no
 Vite proxy — because Starlette builds a trailing-slash redirect's `Location` from the request
 path without re-adding `root_path`, and behind a stripping proxy `/api/health/` would redirect to
 a bare `/health`, into the website's half of the origin; and the contract declares
-`servers: [{"url": "/api"}]` explicitly, because FastAPI derives that entry from `root_path`
-only inside the `/openapi.json` route at request time, so `app.openapi()` — which
-`export_openapi.py` calls — never sees it, and the committed spec would differ from the served
-one through the one door the contract check cannot see. `openapi-fetch` does not read
+`servers: [{"url": "/api"}]` explicitly, passed to the app from the same constant as
+`root_path`, because FastAPI otherwise derives that entry only inside the `/openapi.json` route
+at request time, so `app.openapi()` — which `export_openapi.py` calls — would not carry it and
+the committed spec would differ from the served one through the one door the contract check
+cannot see. `openapi-fetch` does not read
 `servers`, so on the web side the prefix exists in one place, `web/src/api/client.ts`'s
 `baseUrl`.
 
@@ -155,7 +156,7 @@ scaffold ships the generic codes:
 | `invalid_request` | 422 | Unreadable: a malformed body, a bad parameter. Carries `fields`. |
 | `not_found` | 404 | The thing referenced does not exist. |
 | `conflict` | 409 | Collides with something that already exists. |
-| `unauthenticated` | 401 | The caller is not signed in. Carries `WWW-Authenticate: Bearer`. How the owner signs in is M1's; the code exists now so the contract does not change when it arrives. |
+| `unauthenticated` | 401 | The caller is not signed in. In the closed set now so the contract's enum does not change when sign-in arrives; what credential a caller presents, and what challenge the 401 carries, are M1's sign-in decision. |
 | `forbidden` | 403 | Signed in, but not allowed. |
 | `internal_error` | 500 | Nothing more specific caught it. A fixed message, never the exception's text, so no stack detail reaches a client. |
 
@@ -215,7 +216,7 @@ wants to see. Both carry the request id; neither is paginated or carries a time.
 Named so nobody fills the gap by typing:
 
 - The domain model — what an event, an item and a creator are, and how an item on two sources
-  is one item: Q-C, in `docs/02-domain-model.md` once written.
+  is one item: Q-C, in `docs/02-domain-model.md`.
 - What each source gives, how often the poller runs, and whether an extension exists: Q-D, in
   the two data-source documents.
 - The host, and what keeps Postgres and the scheduled task running there: Q-E.

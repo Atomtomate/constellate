@@ -6,9 +6,13 @@ enough to carry them. This is the director's cut of record, folding the reconcil
 `impl-director-check-1.md` round produced, and updated after `impl-director-check-2.md`
 (2026-10-05): the conftest env-var name pinned to `CONSTELLATE_TEST_DATABASE_URL`, venv
 sync ownership named, sign-in plumbing added to Not-in-scope, and decision 5 (the `infra`
-area while Q-E is open) added. It writes no code (fleet "Plan before code").*
+area while Q-E is open) added. Updated once more at the review fold (2026-10-06): the owner's
+answers recorded under "Owner's answers", the Not-in-scope clause they reverse struck, and the
+two lines overtaken by PR #1's merge and the public repository corrected. It writes no code
+(fleet "Plan before code").*
 
-Branch `claude/scaffold`, stacked on PR #1 (`ADR-0002`); the PR body says "merge after #1".
+Branch `claude/scaffold`, planned stacked on PR #1 (`ADR-0002`). PR #1 merged on 2026-10-05
+before the code was written, so the branch is on `main` and the PR says "merge after" nothing.
 
 ## Open decisions for the owner (settle before code starts)
 
@@ -44,6 +48,23 @@ Branch `claude/scaffold`, stacked on PR #1 (`ADR-0002`); the PR body says "merge
    stack-script-test checks arrive with Q-E's PR, which the overlay's gate-area table already
    frames as conditional. Surfaced by the backend plan's infra-area spec; the owner's call
    next to Q-E.
+
+## Owner's answers, 2026-10-05
+
+As the coordinator handoff of 2026-10-06 records them ("Decisions the owner took"), and what
+the code cites as "decision N":
+
+1. **API conventions**: the sibling's, as is. Written into `docs/03`'s Conventions section.
+2. **Development Postgres**: shared with the sibling's Docker instance, through a repo-root
+   `compose.yaml`.
+3. **Tests**: dual — SQLite by default, `CONSTELLATE_TEST_DATABASE_URL` for Postgres.
+4. **Empty modules**: **every layer scaffolded now**, against the director's leaning. So
+   `domain/`, `sources/` and `poll.py` ship with the scaffold — `poll.py` as the entry point
+   that logs no source is configured and exits 0; what the poller does against a source stays
+   out of scope with the adapters. The sub-calls go the same way: `Owned` and `ids.py` ported
+   now, `repos/__init__.py` now, `web`'s `queryKeys.ts` now.
+5. **The `infra` gate area**: checks only `compose.yaml` and the `docker` probe; the
+   Caddyfile and stack-script checks arrive with Q-E's PR.
 
 ## The cut (who owns what) and the order
 
@@ -120,8 +141,7 @@ Any endpoint but health; any table or column (the schema is the migration chain 
 Q-C); the poller, the sampler, any source adapter or importer; the scheduled task; sign-in and its
 plumbing — the session-cookie test env, the 401->reset-`['me']` QueryClient wiring,
 `RequireSession`, session hooks, ported only with sign-in (M1); the extension (`extension/`, Q-D);
-the domain model (Q-C, PR #4); `domain/` and `sources/`
-stubs and `poll.py` (decision 4). The in-flight PRs #2/#3/#4 and the post-merge consolidation
+the domain model (Q-C, PR #4). The in-flight PRs #2/#3/#4 and the post-merge consolidation
 PR also touch `docs/03`, the overlay, root `CLAUDE.md` and `docs/08`; this PR edits only the
 `docs/03` Conventions section and the "arrives with scaffold PR" markers, and keeps clear of
 the questions those PRs answer.
@@ -136,6 +156,7 @@ the questions those PRs answer.
 - From `web/`: `npm ci`, `npm run generate:api-types`, `npm test` (layering and error tests),
   `npm run build`, `npm run check:api-types`.
 - CI-only (live Postgres): `alembic upgrade head`, then `downgrade base`, then `upgrade head`,
-  and `alembic revision --autogenerate` producing an empty diff. GitHub Actions does not run on
-  this account; the `.githooks` pre-commit/pre-push are the CI that executes, so the Postgres
-  checks run only where a database is up.
+  and `alembic revision --autogenerate` producing an empty diff. GitHub Actions runs on this
+  repository since 2026-10-05, when it went public, so `api.yml` runs these against its Postgres
+  service; the `.githooks` pre-commit/pre-push run the rest, and name these as CI's alone on
+  their result line.

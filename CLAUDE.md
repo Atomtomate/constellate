@@ -49,8 +49,8 @@ does not route work itself:
 
 - **`impl-director`** — implementation work by default, including work inside a single
   layer. It plans across the layers, says what each owns and in what order, and hands off;
-  it writes no code. Its file-ownership map is in `.claude/agents.local.md` (ADR-0002), and
-  the scaffold PR is the first work it cuts.
+  it writes no code. It cuts along the file-ownership map in `.claude/agents.local.md`
+  (ADR-0002).
 - **`manager`** — every few sessions, and always before a retro: reads the record since its
   last digest and writes one under `docs/digests/`, judged and ranked. The owner reads it
   first; the retro takes its list first. It changes nothing.
@@ -99,7 +99,7 @@ few sessions the `retro` agent runs instead of new work. Both conventions are in
 | Path | What |
 |------|------|
 | `docs/adr/` | Decisions. Check status: Accepted, Proposed, Superseded or Parked. |
-| `docs/00`, `03`, `07`, `08` | Scope, architecture, roadmap, open questions. `02` (domain model) arrives with Q-C's answer. |
+| `docs/00`, `02`, `03`, `07`, `08` | Scope, domain model, architecture, roadmap, open questions. |
 | `docs/investigations/` | **Parked** research. Nothing here influences a design decision until deliberately unparked. |
 | `docs/handoffs/` | One file per finished task: what was done, verified, and left open. |
 | `docs/friction/` | One note per time an agent's process failed it. Written by the agent, read by the `retro`. |
@@ -141,9 +141,10 @@ These are decided. Changing one needs an ADR, not a commit.
 
 Applies everywhere. Language-specific rules are in the directory's own `CLAUDE.md`.
 
-- **Every public module, class and function carries a docstring.** Enforced by the linter
-  (ruff's `D1` rules, `api/pyproject.toml`), not left to good intentions. Tests are exempt, a test's name being its
-  documentation, and so are generated migration files.
+- **Every public module, class and function carries a docstring.** In the API it is enforced
+  by the linter (ruff's `D1` rules, `api/pyproject.toml`), not left to good intentions; the web
+  client has no docstring linter yet, and there the rule binds by review. Tests are exempt, a
+  test's name being its documentation, and so are generated migration files.
 - **Docstrings say what and why; the signature says how.** Restating the parameter list in
   prose is noise. What earns its place: the constraint a caller must respect, the reason a
   surprising choice was made, what it does *not* do.

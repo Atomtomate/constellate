@@ -13,13 +13,12 @@ copying it; a rule stated twice is a rule that will eventually contradict itself
 stated here in full is what has no other home — the file-ownership map and the board
 numbers.
 
-**The stack is decided (ADR-0002); its code is not written yet.** The sections it decides —
-file ownership, the contract, the layers, the toolchain — are filled below, and a file that
-arrives with the scaffold PR is named as arriving, not as present. Two sections still say
-*not yet*, each naming the question in
-[`docs/08-open-questions.md`](../docs/08-open-questions.md) that will answer it: the domain
-invariants (Q-C) and the running stack (Q-E). An agent that finds one of those empty reports
-it, as its definition says, rather than inventing the answer.
+**The stack is decided (ADR-0002) and laid out by the scaffold.** The sections it decides —
+file ownership, the contract, the layers, the toolchain — are filled below and name what
+exists. A section that still says *not yet* names the question in
+[`docs/08-open-questions.md`](../docs/08-open-questions.md) that will answer it; an agent
+that finds one of those empty reports it, as its definition says, rather than inventing the
+answer.
 
 ## Modes
 
@@ -108,7 +107,7 @@ and `pr-direction-review`:
   Superseded / Parked).
 - Parked research, off the roadmap and not to influence a design decision until unparked:
   [`docs/investigations/`](../docs/investigations/).
-- The domain model: `docs/02-domain-model.md`, **not yet written** (Q-C).
+- The domain model: [`docs/02-domain-model.md`](../docs/02-domain-model.md).
 - What is in flight — open PRs with the record files they carry, handoff items still open,
   friction notes unprocessed: `python scripts/open_work.py --fetch`
   ([`scripts/README.md`](../scripts/README.md)). The director reads it for what shares the
@@ -184,16 +183,12 @@ fleet's to state, and the commands that drive both boards are `scripts/README.md
 
 ## Toolchain
 
-- The record scripts under `scripts/` are stdlib Python on a bare interpreter — Python 3.13 on
-  the dev machine and in CI. Their tests: `python -m unittest discover scripts/tests`.
-- The API package: the venv at `api/.venv` — on Windows, `api/.venv/Scripts/python.exe` — and a
-  worktree needs its own, made from `api/` with `python -m venv .venv` and that interpreter's
-  `-m pip install -e ".[dev]"`. Tests from `api/` with it: `python -m pytest -q`, SQLite unless
-  `CONSTELLATE_TEST_DATABASE_URL` names a Postgres `*_test` database (`api/tests/CLAUDE.md`);
-  lint and format with `ruff check .` and `ruff format .` in `api/`; the contract with
-  `python scripts/export_openapi.py`. `api/CLAUDE.md` has the rest.
-- The web client: Node ^22.18 or >=24.2 and npm, from `web/` — `npm ci` once, then `npm test`,
-  `npm run build` and `npm run check:api-types`. `web/README.md` has the rest.
+- The record scripts under `scripts/` run on a bare Python 3.13, and their commands are
+  `scripts/README.md`'s.
+- The API package's venv is `api/.venv`, one per worktree; making it is `api/CLAUDE.md`'s
+  "Running it".
+- The API's commands — tests, lint, the contract export — are `api/CLAUDE.md`'s "Running it".
+- The web client's commands are `web/README.md`'s.
 - `scripts/gates.py` runs whichever of these the change calls for from the hooks, and a
   toolchain that is not installed in the worktree is a skip it reports, never a failure.
 
