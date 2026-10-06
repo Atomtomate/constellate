@@ -33,6 +33,17 @@ function inSection(filePath: string, section: string): boolean {
 }
 
 /**
+ * Key in MAY_NOT_IMPORT for a given rel path.
+ *
+ * Top-level src/ files (main.tsx, App.tsx, …) have no section directory; they map to "."
+ * so MAY_NOT_IMPORT["."] can hold their restrictions without a per-file row.
+ */
+function sectionKeyOf(relPath: string): string {
+  const parts = relPath.split("/");
+  return parts.length === 1 ? "." : parts[0];
+}
+
+/**
  * Forbidden import targets per source section, mirroring `web/CLAUDE.md`'s layer rule.
  * `api/client` is deliberately not a target here -- rule 1 already covers every file
  * outside `hooks/` and `api/`, more strictly, so a duplicate clause could never fire on
@@ -41,10 +52,13 @@ function inSection(filePath: string, section: string): boolean {
  * Scaffold contains three sections: `api`, `hooks`, `routes`. A new directory added
  * without a row here fails the "every top-level directory has a row" check below rather
  * than going unruled -- an empty row is still a row, so a directory with nothing to
- * forbid names that on purpose instead of by omission. Pure sections (`lib/`, `domain/`,
+ // A pure section's row arrives with it (web/CLAUDE.md, Layer rule).
  * `theme/`) add their rows here when they arrive.
  */
 const MAY_NOT_IMPORT: Record<string, readonly string[]> = {
+  // Top-level src/ files (main.tsx, App.tsx, …) pass context down to routes/ only;
+  // they may not reach into sub-layers directly.
+  ".": ["hooks", "api", "components"],
   api: ["hooks", "routes", "components"],
   hooks: ["routes", "components"],
   routes: [],
@@ -62,10 +76,15 @@ const RULES: LayerRule[] = [
     name: "layer rule 1: api/client is only imported by hooks/ and api/",
     applies: (fp) => !inSection(fp, "hooks") && !inSection(fp, "api"),
     title: (r) => `${r} does not import api/client`,
-    // allowImportingTsExtensions is on, so "../api/client.ts" is valid TypeScript and
-    // must be caught alongside the extension-free spelling.
+    // allowImportingTsExtensions is on, so "../api/client.ts" is valid TypeScript.
+    // moduleResolution: bundler also resolves "../api/client.js" to client.ts, so strip
+    // any extension from the specifier before testing rather than enumerate extensions.
     offends: (src, _fp) =>
-      src.split("\n").filter((line) => /from\s+['"][^'"]*api\/client(\.tsx?)?['"]/.test(line)),
+      src.split("\n").filter((line) => {
+        const m = line.match(/from\s+['"]([^'"]+)['"]/);
+        if (!m) return false;
+        return /\/api\/client$/.test(m[1].replace(/\.(tsx?|js)$/, ""));
+      }),
   },
   {
     name: "layer rule 2: queryFn is only declared inside hooks/ and api/",
@@ -80,11 +99,10 @@ const RULES: LayerRule[] = [
   },
   {
     name: "layer rule 3: a section imports only where MAY_NOT_IMPORT allows",
-    applies: (fp) => (MAY_NOT_IMPORT[rel(fp).split("/")[0]] ?? []).length > 0,
-    title: (r) => `${r} does not import from ${MAY_NOT_IMPORT[r.split("/")[0]].join(", ")}`,
+    applies: (fp) => (MAY_NOT_IMPORT[sectionKeyOf(rel(fp))] ?? []).length > 0,
+    title: (r) => `${r} does not import from ${MAY_NOT_IMPORT[sectionKeyOf(r)].join(", ")}`,
     offends: (src, fp) => {
-      const section = rel(fp).split("/")[0];
-      const targets = MAY_NOT_IMPORT[section] ?? [];
+      const targets = MAY_NOT_IMPORT[sectionKeyOf(rel(fp))] ?? [];
       return src.split("\n").filter((line) =>
         targets.some((target) => new RegExp(`from\\s+['"][^'"]*\\/${target}\\/`).test(line)),
       );
@@ -146,6 +164,26 @@ describe("layer rule 1's api/client pattern", () => {
     const offending = RULES[0].offends(
       'import { api } from "../api/client.ts";\n',
       probe("routes"),
+    );
+    expect(offending).toHaveLength(1);
+  });
+
+  it("flags a routes/ import of api/client with .js extension", () => {
+    const offending = RULES[0].offends(
+      'import { api } from "../api/client.js";\n',
+      probe("routes"),
+    );
+    expect(offending).toHaveLength(1);
+  });
+});
+
+describe("layer rule 3's top-level shell restriction", () => {
+  const probe = `${SRC}/probe.ts`;
+
+  it("flags a top-level file importing hooks/", () => {
+    const offending = RULES[2].offends(
+      'import { useHealth } from "./hooks/useHealth";\n',
+      probe,
     );
     expect(offending).toHaveLength(1);
   });

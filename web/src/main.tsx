@@ -7,9 +7,8 @@ import { App } from "./App";
 import "./index.css";
 
 /**
- * The application root: QueryClient, BrowserRouter, App. Sign-in wiring (the credential
- * M1's sign-in decides, the 401-redirect rule) arrives with M1's sign-in screen and is
- * not in scope for the scaffold.
+ * The application root: QueryClient, BrowserRouter, App. Sign-in, and what it adds here,
+ * arrives with M1's sign-in decision and is not in scope for the scaffold.
  */
 const queryClient = new QueryClient();
 
