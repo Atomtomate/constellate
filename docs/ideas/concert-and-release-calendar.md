@@ -1,7 +1,7 @@
 ---
 status: shaped
 created: 2026-10-05
-updated: 2026-10-05
+updated: 2026-10-06
 ---
 
 # A calendar of concerts and releases
@@ -20,7 +20,27 @@ updated: 2026-10-05
 - [x] Checked against the [domain model](../02-domain-model.md)
 - [x] Stub or sketch written — the occasion table, under Sketch
 - [x] Sized — roughly, under Size
-- [ ] Decision: adopt / park / drop — and where it sits, under Where it would sit in the roadmap
+- [x] Where it sits in the roadmap — its own milestone, M3 (the owner, 2026-10-06; Decisions)
+- [ ] Decision: adopt / park / drop
+
+## Decisions
+
+The owner's, relayed by the coordinating session:
+
+- **2026-10-06 — Where it sits: its own milestone.** Option B below. It is M3 in
+  [`07`](../07-roadmap.md), between the collection (M2) and constellations and recommendations,
+  now M4; the apps are now M5. The status stays `shaped`: an idea moves one status at a time,
+  and the open questions below still stand.
+- **2026-10-06 — Scraping: public pages, under each site's terms.** Public pages may be scraped
+  for the calendar's feeds, politely and without a login, once each site's terms have been read
+  and recorded. Scraping a service's private pages stays excluded
+  ([`00`](../00-vision-and-scope.md)). This answers open question 4 in principle; Eventim's
+  terms are still to read.
+- **2026-10-06 — Subscribable from Proton Calendar and Google Calendar.** The iCalendar feed is
+  the mechanism for both, since each subscribes to a calendar by its URL [S57, S59, verified].
+  The link is one-way: Proton Calendar has no public API [S60, reported], so it can only read
+  the feed, while Google Calendar's API could take writes later [S61, verified]. Whether it
+  should is open question 10.
 
 ## The idea
 
@@ -29,6 +49,10 @@ The owner's words, 2026-10-05, relayed by the coordinating session:
 > A calendar for the concerts I want to go to and releases (for games and movies, we later need
 > to build a scraper that fills this with my favorite bands and bookmarked game releases). We
 > should plan that out as well.
+
+And on 2026-10-06, relayed the same way:
+
+> a link to my proton and google calendar should probably be possible
 
 Three kinds of entry, one calendar:
 
@@ -46,7 +70,8 @@ where the owner marks one *going* or *not interested*, or types one that no feed
 The owner's word is "scraper". What the research below finds is that every usable source is an
 API with a key, which [`00`](../00-vision-and-scope.md)'s rule against scraping a service's
 private pages leaves alone. The one source with no API at all is Germany's dominant ticket
-seller, and whether its public pages may be scraped is a question for the owner (below).
+seller, and whether its public pages may be scraped was a question for the owner, answered in
+principle on 2026-10-06 (Decisions).
 
 **The order the owner implies** — the calendar first, filled by hand; the scrapers later, once
 the atlas knows the favourites and the bookmarks are in — holds up: the table and the feed are a
@@ -127,7 +152,11 @@ inside it for the reminder [S56, verified] — served at an unguessable URL whos
 the owner's row, the mechanism `docs/02` §5 already gives recommendation lists. Google Calendar
 subscribes to a URL from its web interface only, not from its phone apps [S57, verified]; the
 subscription then reaches the phone through the account (inferred). iOS subscribes in the
-Calendar app itself [S58, verified]. The output side is one endpoint and a text format; it
+Calendar app itself [S58, verified]. Proton Calendar adds a calendar from an iCal URL in its web
+app, shows it in its mobile and desktop apps, and syncs it "every 4-16 hours, depending on the
+provider" [S59, verified]. Both Proton and Google fetch the feed from their own servers, so its
+URL must be reachable from the internet, not only from the owner's network (inferred): a
+requirement on the host Q-E chooses. The output side is one endpoint and a text format; it
 touches none of Q-F's apps, and an app later would read the same occasions through the contract.
 
 ## Where the data would come from
@@ -137,7 +166,8 @@ touches none of Q-F's apps, and an app later would read the same occasions throu
 Every load-bearing claim cites a source from the list at the end, as [S*n*], with one of three
 marks, as the data-source documents do:
 
-- **verified**: read on that page on 2026-10-05 — by the three research agents this pass ran,
+- **verified**: read on that page on 2026-10-05 (S59 to S61 on 2026-10-06) — by the three
+  research agents this pass ran,
   one per column of the table, or by the author, who re-read the pages the leaning turns on:
   Songkick's closure, Bandsintown's terms, Ticketmaster's quota and terms, TMDB's terms and
   release types, Steam's terms and store endpoint, RAWG's plans, the Twitch agreement's caching
@@ -208,8 +238,8 @@ What could not be settled is under *Not verified*, below the tables.
   as closed.
 - **Films: TMDB**, `DE` rows of type 3 for cinema and type 4 for digital, with the owner's
   bookmarks or Letterboxd export as the list. Streaming arrival dates have no open source.
-- **Output: an iCalendar feed** with alarms, subscribed to from Google Calendar's web interface
-  or from iOS directly.
+- **Output: an iCalendar feed** with alarms, subscribed to from Proton Calendar's or Google
+  Calendar's web interface, or from iOS directly.
 
 ### Not verified
 
@@ -228,7 +258,7 @@ What could not be settled is under *Not verified*, below the tables.
   shows them; the default filters of `/movie/upcoming`.
 - Letterboxd: the watchlist file's name and columns, seen on third-party pages only.
 - Calendars: Google's refresh interval for a subscribed calendar, which its help page does not
-  state; whether Google and iOS honour `VALARM` in a subscribed feed.
+  state; whether Proton, Google and iOS honour `VALARM` in a subscribed feed.
 - Where the owner lives, and how far they will travel: not in the record.
 
 ## Open questions
@@ -242,9 +272,10 @@ Recorded, not resolved. The first three decide the shape; the rest decide detail
    the creators the owner favourites (M2); a hand list; or the first until the second exists.
 3. **Which stores and which films?** Steam alone, or GOG and consoles too, which no feed covers;
    cinema dates, digital dates, or both; TV season premieres through TMDB's series data, or not.
-4. **Is scraping Eventim's public pages acceptable?** [`00`](../00-vision-and-scope.md) excludes
-   scraping a service's *private* pages; these would be public listings, under terms this pass did
-   not read. Without it, German concerts are Ticketmaster's inventory alone.
+4. **Is scraping Eventim's public pages acceptable?** *Answered in principle on 2026-10-06
+   (Decisions): yes, politely, without a login, once its terms are read and recorded.* Eventim's
+   terms have not been read yet; until a scraper is built, German concerts are Ticketmaster's
+   inventory alone.
 5. **What does the calendar remember?** After a date passes: drop the feed's data (the terms'
    cheap reading), keep the owner's marks alone, or keep the occasion as "went" — which edges
    toward a log entry and is deliberately not proposed here.
@@ -256,6 +287,10 @@ Recorded, not resolved. The first three decide the shape; the rest decide detail
 8. **Reminders**: how long before a concert's on-sale date, before the concert, before a release.
 9. **An occasion typed by hand that a feed later also announces**: merge on title and date, or
    keep both.
+10. **Two-way with Google Calendar?** Its API could write occasions into one of the owner's
+    Google calendars, or read the owner's own events back [S61]. Proton Calendar has no public
+    API [S60], so with Proton the link stays one-way whatever is chosen. Whether two-way is
+    wanted at all is the owner's.
 
 ## Depends on
 
@@ -333,7 +368,8 @@ A month of evenings for all of it; a weekend for the first useful version.
 
 ## Where it would sit in the roadmap
 
-A proposal and a question for the owner; [`07`](../07-roadmap.md) is unchanged by this file.
+**Decided 2026-10-06: B**, its own milestone, now M3 in [`07`](../07-roadmap.md) (Decisions).
+The options as they were argued, with the milestone numbers of the time:
 
 - **A. A bullet in M2, the collection.** The occasion is atlas material, the favourites and the
   bookmarks it reads are M2's, and the hand-typed version needs nothing M2 does not already build.
@@ -352,7 +388,7 @@ chosen, nothing here moves before M1 ships; the roadmap's fourth rule stands.
 
 ## Sources
 
-All read on 2026-10-05.
+All read on 2026-10-05, except S59 to S61, read on 2026-10-06.
 
 - **S1**: Bandsintown PublicAPI 3.0.0 specification: artist and event endpoints and fields.
   https://api.swaggerhub.com/apis/Bandsintown/PublicAPI/3.0.0
@@ -474,3 +510,12 @@ All read on 2026-10-05.
   https://support.google.com/calendar/answer/37100
 - **S58**: Apple: subscribe to a calendar on iPhone.
   https://support.apple.com/en-us/102301
+- **S59**: Proton: subscribe to an external calendar — "Add calendar from URL" in the web app;
+  shown in the mobile and desktop apps; third-party calendars sync every 4-16 hours.
+  https://proton.me/support/subscribe-to-external-calendar
+- **S60**: Proton's feedback forum, "Calendar API": requested since 2021-03-16, 207 votes, no
+  answer from Proton, users still asking on 2026-09-07; third-party tools use Proton's
+  undocumented internal API instead.
+  https://protonmail.uservoice.com/forums/284483-proton-mail-calendar/suggestions/42931767-calendar-api
+- **S61**: Google Calendar API, `events.insert`: "Creates an event" (page updated 2026-07-07).
+  https://developers.google.com/workspace/calendar/api/v3/reference/events/insert
