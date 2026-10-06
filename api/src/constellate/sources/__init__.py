@@ -5,6 +5,6 @@ what the source gives into the draft event ``domain/`` defines. Each adapter is 
 only through the ``SourceAdapter`` protocol in ``services/sources.py``; nothing in the
 four layers imports a module from this package directly.
 
-No adapters exist yet; each will arrive in its own PR once the database migration that
-defines the event type it produces has merged.
+No adapters exist yet; ``SourceAdapter`` in ``services/sources.py`` says what one must
+satisfy and what it waits on.
 """

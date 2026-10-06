@@ -14,11 +14,8 @@ from constellate.logging_config import configure_logging
 
 configure_logging()
 
-# The prefix under which this app lives behind its reverse proxy (Caddy on the rig,
-# Vite in dev). Passed to both root_path (so routing, redirects and /docs all know the
-# prefix) and servers (so the committed contract carries the entry app.openapi() now
-# produces, rather than having the exporter inject it from a copy).
-# docs/03-architecture.md "One origin" explains why all three parts must agree.
+# The one constant behind root_path and the contract's servers entry; docs/03's "One origin"
+# says why those two and the proxy must agree.
 _ROOT_PATH = "/api"
 
 app = FastAPI(
