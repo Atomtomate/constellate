@@ -12,10 +12,10 @@ import { walkFiles } from "./test/walkFiles";
  * listed. Test files are excluded: a test legitimately mocks `api/client` (`vi.mock`),
  * and a `queryFn` in a fixture is not a layering breach.
  *
- * Threshold is 5 at scaffold time (eight non-test files exist: main.tsx, App.tsx,
+ * Threshold is 5 at scaffold time (nine non-test files exist: main.tsx, App.tsx,
  * api/client.ts, api/errors.ts, api/queryKeys.ts, api/schema.d.ts, routes/NotFound.tsx,
- * test/walkFiles.ts). Raised each time a route is added until the test is no longer the
- * binding constraint.
+ * test/walkFiles.ts, hooks/useHealth.ts). Raised each time a route is added until the
+ * test is no longer the binding constraint.
  */
 
 const SRC = dirname(fileURLToPath(import.meta.url));
@@ -41,13 +41,14 @@ function inSection(filePath: string, section: string): boolean {
  * outside `hooks/` and `api/`, more strictly, so a duplicate clause could never fire on
  * its own.
  *
- * Scaffold contains three sections: `api`, `routes`, `test`. A new directory added
- * without a row here fails the "every top-level directory has a row" check below rather
- * than going unruled -- an empty row is still a row, so a directory with nothing to
- * forbid names that on purpose instead of by omission.
+ * Scaffold contains four sections: `api`, `hooks`, `routes`, `test`. A new directory
+ * added without a row here fails the "every top-level directory has a row" check below
+ * rather than going unruled -- an empty row is still a row, so a directory with nothing
+ * to forbid names that on purpose instead of by omission.
  */
 const MAY_NOT_IMPORT: Record<string, readonly string[]> = {
   api: ["hooks", "routes", "components"],
+  hooks: ["routes", "components"],
   routes: [],
   test: ["hooks", "routes", "components"],
 };

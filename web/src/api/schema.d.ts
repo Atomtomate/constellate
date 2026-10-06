@@ -180,7 +180,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Invalid request, or a rule was broken */
+            /** @description Invalid request */
             422: {
                 headers: {
                     "X-Request-ID": components["headers"]["X-Request-ID"];
@@ -261,7 +261,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description Invalid request, or a rule was broken */
+            /** @description Invalid request */
             422: {
                 headers: {
                     "X-Request-ID": components["headers"]["X-Request-ID"];
