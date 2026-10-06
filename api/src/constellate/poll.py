@@ -15,7 +15,9 @@ import logging
 
 from constellate.logging_config import configure_logging
 
-logger = logging.getLogger(__name__)
+# Named, not __name__: run as `python -m constellate.poll` this module is `__main__`, which is
+# no child of the "constellate" logger the handler is installed on, and the line would be lost.
+logger = logging.getLogger("constellate.poll")
 
 
 def main() -> int:

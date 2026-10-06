@@ -213,7 +213,7 @@
                 }
               }
             },
-            "description": "Invalid request, or a rule was broken",
+            "description": "Invalid request",
             "headers": {
               "X-Request-ID": {
                 "$ref": "#/components/headers/X-Request-ID"
@@ -330,7 +330,7 @@
                 }
               }
             },
-            "description": "Invalid request, or a rule was broken",
+            "description": "Invalid request",
             "headers": {
               "X-Request-ID": {
                 "$ref": "#/components/headers/X-Request-ID"
