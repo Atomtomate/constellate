@@ -17,11 +17,9 @@ hook worth leaving on; failing there would teach every session to pass `--no-ver
 gate that is always bypassed is worse than none, since it also reads as cover. `PROBES` is
 where a toolchain's presence is asked.
 
-What stays CI's alone: the Alembic checks. Both want a live database, and the drift one
-writes a revision into `api/alembic/versions/` to read it back -- a file this has no
-business leaving in someone's working tree when a run dies between the write and the
-delete. Named on `api`'s `Area.ci_only`, which the result line carries, so a green run
-here says what it did not prove.
+What stays CI's alone is named on its area's `Area.ci_only`, which the result line
+carries, so a green run here says what it did not prove. Why each one does is its owner's
+to say (`api/alembic/CLAUDE.md`, `api/tests/CLAUDE.md`).
 """
 
 from __future__ import annotations
@@ -202,10 +200,8 @@ AREAS = [
                 needs="the api venv",
             ),
         ],
-        # The Alembic checks want a live database (module docstring), and the api tests
-        # run on the one backend `CONSTELLATE_TEST_DATABASE_URL` selects, SQLite unless it
-        # is set, while CI runs them on both: unconditional, unlike a skipped check, since
-        # none of it has ever had a local counterpart to skip.
+        # Unconditional, unlike a skipped check: none of it has a local counterpart. Why
+        # each stays CI's is `api/alembic/CLAUDE.md`'s and `api/tests/CLAUDE.md`'s to say.
         ci_only=(
             "the Alembic round trip and drift check, and the api tests on their other "
             "backend (CI-only — need a live database)"

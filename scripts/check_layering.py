@@ -15,9 +15,11 @@ Five questions a review would otherwise answer by reading every import in the pa
 The rules are `docs/03-architecture.md`'s -- "Layers inside the API package", and the
 Conventions' "Health" for the one sanctioned query; this only answers them the same way
 every run. Reports; never fixes. Outside the layers a module is a leaf or an entry point,
-and which is derived from what reaches it rather than listed: `main.py` and `poll.py` are
-reached by nothing and sit above `api/`, free to reach down, and the day something imports
-one of them it becomes a leaf and is held to a leaf's rule.
+those two kinds and no third, and which is derived from what reaches it rather than listed:
+`main.py` and `poll.py` are reached by nothing and sit above `api/`, free to reach down;
+everything anything imports is a leaf and held to a leaf's rule, a module only the entry
+points import included -- so `logging_config.py` may reach `domain/` and the other leaves,
+never a layer. The day something imports an entry point it becomes a leaf the same way.
 
 A line carrying `allowed:` is a sanctioned exception, printed with what sanctions it so it
 stays visible and a *new* one of the same shape still shows up as a violation. Every other
@@ -235,23 +237,25 @@ PACKAGE_ROOT_UNIT = "__init__"
 
 
 def leaf_importers(entries_by_key: dict[str, list]) -> dict[str, str]:
-    """Each leaf outside the placed directories, and why it is one: what reaches it from inside.
+    """Each leaf outside the placed directories, and why it is one: what in the package imports it.
 
     A module outside the four layers, `domain/` and `sources/` is one of two kinds, and
-    which one is derivable rather than listed. A **leaf** is reached *from* one of them --
-    `ids.py` because `models/base.py` reaches for `uuid7`, `db.py` because `api/deps.py`
-    reaches for `get_session` -- so it sits under whatever reaches it and takes `domain/`'s
-    rule: usable by anything, importing none of the four and no adapter. An **entry point**
-    (`main.py`, `poll.py`) is reached by none of them and sits above `api/`, reaching down
-    into the layers and handing a service its adapter, which is the chain rather than a
-    breach of it.
+    which one is derivable rather than listed. A **leaf** is reached by something in the
+    package -- `ids.py` because `models/base.py` reaches for `uuid7`, `db.py` because
+    `api/deps.py` reaches for `get_session`, `logging_config.py` because `main.py` and
+    `poll.py` reach for `configure_logging` -- so it sits under whatever reaches it and
+    takes `domain/`'s rule: usable by anything, importing none of the four and no adapter.
+    An **entry point** (`main.py`, `poll.py`) is reached by nothing and sits above `api/`,
+    reaching down into the layers and handing a service its adapter, which is the chain
+    rather than a breach of it.
 
-    Reached, not imported directly: the set is closed to a fixpoint, because what a leaf
-    imports is under the same rule the leaf is. One hop only would put a module imported
-    solely by `config.py` back in the entry-point default, free to import `api/` from a
-    position under `services/` -- the gap this exists to close, one step further out. The
-    entry-point side stays deliberately non-transitive: a module only `poll.py` imports is
-    below an entry point, which is no layer at all, so it stands with the entry points.
+    Reached by anything, the entry points included -- `docs/03`'s "nothing imports an entry
+    point" read from the other end. A module only `poll.py` imports is below `poll.py`,
+    which is above `api/`, so there is no position for it but a leaf's; a third kind, below
+    an entry point yet free to reach a layer, would be the opening through which the
+    poller's helper loads `api/` to write one log line. With every module a reacher, one
+    pass over the package is the whole closure: what a leaf imports is reached by that leaf
+    directly, so a module imported solely by `config.py` is a leaf with no second hop.
 
     `sources/` reaches too: a helper only an adapter imports is under the adapter, and an
     adapter may import only `domain/` and the leaves, so the helper has to be one -- held
@@ -262,28 +266,14 @@ def leaf_importers(entries_by_key: dict[str, list]) -> dict[str, str]:
     leaf so a finding can name what makes the module one, and the first reacher in sorted
     order wins -- there may be several, and one is enough to prove the direction.
     """
-    keys_by_unit: dict[str, list[str]] = {}
-    for key in sorted(entries_by_key):
-        unit = outside_unit(key)
-        if unit is not None:
-            keys_by_unit.setdefault(unit, []).append(key)
-
     leaves: dict[str, str] = {}
-    if PACKAGE_ROOT_UNIT in keys_by_unit:
+    if any(outside_unit(key) == PACKAGE_ROOT_UNIT for key in entries_by_key):
         leaves[PACKAGE_ROOT_UNIT] = "every import of the package runs it"
-
-    frontier = [key for key in sorted(entries_by_key) if file_layer(key) is not None]
-    frontier += keys_by_unit.get(PACKAGE_ROOT_UNIT, [])
-    while frontier:
-        reached: list[str] = []
-        for key in frontier:
-            for _lineno, module, _names in entries_by_key[key]:
-                unit = import_unit(module)
-                if unit is None or unit in leaves:
-                    continue
+    for key in sorted(entries_by_key):
+        for _lineno, module, _names in entries_by_key[key]:
+            unit = import_unit(module)
+            if unit is not None and unit not in leaves:
                 leaves[unit] = f"{key} imports it"
-                reached.append(unit)
-        frontier = [key for unit in reached for key in keys_by_unit.get(unit, ())]
     return leaves
 
 
