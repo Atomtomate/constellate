@@ -18,6 +18,7 @@ import io
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -300,6 +301,50 @@ class PushRefsTest(unittest.TestCase):
         gating, elsewhere = gates.gating_split(gates.ROOT, ["HEAD", "origin/main"], head)
         self.assertEqual(gating, ["HEAD"])
         self.assertEqual(elsewhere, ["origin/main"])
+
+
+class ProductAreasTest(unittest.TestCase):
+    """The three areas the scaffold brought beside `record`, and the gap CI alone closes."""
+
+    def test_the_contract_pulls_in_the_client(self):
+        # The web client's types are generated from api/openapi.json, so the contract
+        # changing starts the web build too -- without touching a file under web/.
+        areas = [area.name for area in gates.areas_for(["api/openapi.json"])]
+        self.assertEqual(areas, ["record", "api", "web"])
+
+    def test_a_workflow_edit_runs_the_infra_area(self):
+        # A change to a workflow is answered for by a run of one (ADR-0002's appendix).
+        areas = [area.name for area in gates.areas_for([".github/workflows/api.yml"])]
+        self.assertIn("infra", areas)
+
+    def test_an_api_change_names_what_only_ci_runs(self):
+        # The Alembic checks want a live database and never run here; a green result line
+        # for an api change has to say so, since that line is what a PR body pastes.
+        self.assertIn("Alembic", gates.not_run_here(gates.areas_for(["api/x.py"])))
+
+    def test_a_record_only_change_names_no_gap(self):
+        # record's paths are ["**"], so it is touched by everything -- api's gap must not
+        # leak into a change that never touched api/.
+        self.assertEqual(gates.not_run_here(gates.areas_for(["scripts/gates.py"])), "")
+
+    def test_main_folds_the_gap_into_the_result_line(self):
+        # Nothing else calls `main`, so the two lines wiring `not_run_here` in could be
+        # deleted with the rest of the suite still green.
+        class _Capture(io.StringIO):
+            def reconfigure(self, **_kwargs):
+                pass
+
+        out = _Capture()
+        with (
+            mock.patch.object(sys, "argv", ["gates.py", "--staged"]),
+            mock.patch.object(sys, "stdout", out),
+            mock.patch.object(gates, "staged", return_value=["api/x.py"]),
+            mock.patch.object(gates, "run", return_value=([], [])),
+        ):
+            gates.main()
+        last_line = out.getvalue().strip().splitlines()[-1]
+        self.assertIn("gates: consistent", last_line)
+        self.assertIn("Alembic", last_line)
 
 
 if __name__ == "__main__":

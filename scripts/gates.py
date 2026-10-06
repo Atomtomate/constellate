@@ -6,22 +6,26 @@ when a workflow's `paths:` and the area here disagree -- so the question "what d
 change need checked" has one answer, and the hook and the build read the same one.
 
 Two depths, because a gate nobody waits for is a gate everyone bypasses. `--quick` is what
-`.githooks/pre-commit` runs: the record checks and the stdlib test suite, nothing over
-about twenty seconds. The full run is `.githooks/pre-push`'s, and adds whatever suites a
-build would otherwise be the first to fail on -- today the same two, since this tree has
-one area; the product areas arrive with the scaffold PR that builds ADR-0002's stack, and
-each brings its checks here.
+`.githooks/pre-commit` runs: the record checks, the layering check, ruff, and the stdlib
+test suite, nothing over about twenty seconds. The full run is `.githooks/pre-push`'s, and
+adds whatever suites a build would otherwise be the first to fail on -- pytest, the
+contract check, vitest, the client build, the compose file.
 
-A check whose tool is not installed here is a notice, never a finding. Skipping loudly
-keeps the hook worth leaving on; failing there would teach every session to pass
-`--no-verify`, and a gate that is always bypassed is worse than none, since it also reads
-as cover. `PROBES` is where a toolchain's presence is asked; it is empty until a check
-needs one.
+A check whose tool is not installed here is a notice, never a finding: a worktree with no
+venv, a clone with no `node_modules`, a machine with Docker down. Skipping loudly keeps the
+hook worth leaving on; failing there would teach every session to pass `--no-verify`, and a
+gate that is always bypassed is worse than none, since it also reads as cover. `PROBES` is
+where a toolchain's presence is asked.
+
+What stays CI's alone is named on its area's `Area.ci_only`, which the result line
+carries, so a green run here says what it did not prove. Why each one does is its owner's
+to say (`api/alembic/CLAUDE.md`, `api/tests/CLAUDE.md`).
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 from dataclasses import dataclass, field
@@ -33,6 +37,22 @@ import trunk
 
 ROOT = Path(__file__).resolve().parent.parent
 PREFIX = "gates"
+
+
+#: The interpreter of `api/.venv`, which is where ruff, pytest and the API package live.
+#: A worktree gets its own (the overlay's Toolchain); until it has one these checks skip
+#: rather than run the main checkout's package and report *its* behaviour as this branch's.
+VENV = ROOT / "api" / ".venv" / ("Scripts" if os.name == "nt" else "bin")
+
+
+def _venv_tool(name: str) -> Path:
+    """Where `api/.venv` would put `name`, installed or not -- `PROBES` decides whether it runs.
+
+    Deliberately unconditional: returning None for a missing tool would make "nothing to
+    run" a second way of saying "nothing installed", and the message would come from the
+    wrong one -- a venv that existed but had no ruff in it would report the venv as absent.
+    """
+    return VENV / (f"{name}.exe" if os.name == "nt" else name)
 
 
 @dataclass(frozen=True)
@@ -66,16 +86,43 @@ class Check:
         return PROBES[self.needs]() if self.needs else True
 
 
+def _docker_up() -> bool:
+    """Does a Docker daemon answer? Wrapped in a timeout: a starting Desktop hangs, not fails."""
+    try:
+        done = subprocess.run(
+            ["docker", "version", "--format", "{{.Server.Version}}"],
+            capture_output=True,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return done.returncode == 0
+
+
 #: What each `needs` means, asked once. A row here rather than a branch in `probe`, so a
 #: new toolchain costs a line; the key is also the words the skip is reported in, which is
-#: why each one should name the thing a reader would go and install. Empty until a check
-#: needs something a bare interpreter does not have.
-PROBES: dict[str, object] = {}
+#: why each one names the thing a reader would go and install.
+PROBES = {
+    "ruff": lambda: _venv_tool("ruff").exists(),
+    "the api venv": lambda: _venv_tool("python").exists(),
+    "web/node_modules": lambda: (ROOT / "web" / "node_modules").exists(),
+    "docker": _docker_up,
+}
 
 
 def _py(*args: str) -> list[str]:
     """A bare-interpreter command -- the stdlib-only checks, which need no venv at all."""
     return [sys.executable, *args]
+
+
+def _venv(tool: str, *args: str) -> list[str]:
+    """A command run by one of `api/.venv`'s tools, whether or not it is installed there."""
+    return [str(_venv_tool(tool)), *args]
+
+
+def _npm(*args: str) -> list[str]:
+    """An npm command. `npm` is a shim on Windows, so it is run through the shell there."""
+    return ["npm.cmd", *args] if os.name == "nt" else ["npm", *args]
 
 
 @dataclass(frozen=True)
@@ -91,6 +138,12 @@ class Area:
     workflow: str
     paths: list[str]
     checks: list[Check] = field(default_factory=list)
+    #: What this area's workflow runs that has no local counterpart at all, worded for the
+    #: result line's "not run here" tail -- empty for an area with none. A fact about the
+    #: area, so it lives beside the paths and checks that are also the area's: a step added
+    #: to or removed from the workflow is a one-line diff here, not a new branch keyed on
+    #: the area's name further down.
+    ci_only: str = ""
 
 
 AREAS = [
@@ -106,11 +159,82 @@ AREAS = [
         checks=[
             Check("the written record", _py("scripts/check_docs.py"), quick=True),
             Check(
+                "the layering",
+                _py("scripts/check_layering.py"),
+                quick=True,
+                # Its subject is `api/`, but it is itself a script here, and an edit to the
+                # checker is answered for by running it rather than by its fixtures alone.
+                paths=["api/**", "scripts/check_layering.py"],
+            ),
+            Check(
                 "the record scripts' own tests",
                 _py("-m", "unittest", "discover", "scripts/tests"),
                 quick=True,
                 paths=["scripts/**", ".github/workflows/**", ".githooks/**"],
             ),
+        ],
+    ),
+    Area(
+        name="api",
+        workflow="api.yml",
+        paths=["api/**"],
+        checks=[
+            Check("lint", _venv("ruff", "check", "."), cwd=ROOT / "api", quick=True, needs="ruff"),
+            Check(
+                "formatting",
+                _venv("ruff", "format", "--check", "."),
+                cwd=ROOT / "api",
+                quick=True,
+                needs="ruff",
+            ),
+            Check(
+                "the api tests",
+                _venv("python", "-m", "pytest", "-q"),
+                cwd=ROOT / "api",
+                needs="the api venv",
+            ),
+            Check(
+                "the OpenAPI contract",
+                _venv("python", "scripts/export_openapi.py", "--check"),
+                cwd=ROOT / "api",
+                needs="the api venv",
+            ),
+        ],
+        # Unconditional, unlike a skipped check: none of it has a local counterpart. Why
+        # each stays CI's is `api/alembic/CLAUDE.md`'s and `api/tests/CLAUDE.md`'s to say.
+        ci_only=(
+            "the Alembic round trip and drift check, and the api tests on their other "
+            "backend (CI-only — need a live database)"
+        ),
+    ),
+    Area(
+        name="web",
+        workflow="web.yml",
+        # `api/openapi.json` too: the client's types are generated from that contract, so a
+        # change to it can break this client without touching a file under `web/`.
+        paths=["web/**", "api/openapi.json"],
+        checks=[
+            Check(
+                "the generated client",
+                _npm("run", "check:api-types"),
+                cwd=ROOT / "web",
+                needs="web/node_modules",
+            ),
+            Check("the web tests", _npm("test"), cwd=ROOT / "web", needs="web/node_modules"),
+            Check(
+                "the web build", _npm("run", "build"), cwd=ROOT / "web", needs="web/node_modules"
+            ),
+        ],
+    ),
+    Area(
+        name="infra",
+        workflow="infra.yml",
+        # The workflow files too: a change to a workflow should be answered for by a run
+        # of one. Only the compose file is checked while Q-E is open (ADR-0002's appendix
+        # names the stack script's tests and the Caddyfile; both arrive with Q-E's answer).
+        paths=["infra/**", "compose.yaml", ".github/workflows/**"],
+        checks=[
+            Check("the compose file", ["docker", "compose", "config", "--quiet"], needs="docker"),
         ],
     ),
 ]
@@ -124,9 +248,11 @@ def ci_fragment(check: Check) -> str:
     workflow's old line would keep the test green while the hook checked something
     narrower than the build did.
 
-    One normalisation, because CI and a worktree spell the same command differently: the
-    interpreter is dropped, and so is a `-m` before a module, since the workflow's `run:`
-    line names the script or module and not the `python` that starts it.
+    Two normalisations, because CI and a worktree spell the same command differently and
+    for good reason: CI installs into the runner's own interpreter, so there is no
+    `api/.venv` to name and no `python -m` before a console script. The interpreter is
+    dropped, and so is a `-m` before a module, since the workflow's `run:` line names the
+    script or module and not the `python` that starts it.
     """
     argv = list(check.argv)
     head, rest = Path(argv[0]).stem, argv[1:]
@@ -179,6 +305,19 @@ def checks_for(changed: list[str], *, quick: bool) -> list[Check]:
             elif check.quick and _touches(changed, check.paths or area.paths):
                 chosen.append(check)
     return chosen
+
+
+def not_run_here(areas: list[Area]) -> str:
+    """The result line's own tail: what no run here can prove that CI will, or "".
+
+    Folded into `consistent=` by `main` rather than printed as a notice: the result line is
+    what a handoff or a PR body pastes as evidence, and a gap named above it never reaches
+    the reader of the paste. Each touched area supplies its own unconditional gap
+    (`Area.ci_only`); a toolchain this run skipped is a notice, since it is this machine's
+    gap and not the change's.
+    """
+    gaps = [area.ci_only for area in areas if area.ci_only]
+    return f"; not run here — {', '.join(gaps)}" if gaps else ""
 
 
 def staged(root: Path) -> list[str]:
@@ -315,13 +454,13 @@ def main() -> int:
         )
 
     findings, notices = run(checks)
-    notices = owed + notices
+    tail = not_run_here(areas)
     return report.verdict(
         PREFIX,
         findings,
         failed=f"{len(findings)} of {len(checks)} check(s) failed",
-        consistent=f"{', '.join(a.name for a in areas)} — {len(checks)} check(s)",
-        notices=notices,
+        consistent=f"{', '.join(a.name for a in areas)} — {len(checks)} check(s){tail}",
+        notices=owed + notices,
     )
 
 
