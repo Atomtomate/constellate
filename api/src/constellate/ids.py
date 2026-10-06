@@ -4,7 +4,8 @@ Python 3.13 has no ``uuid.uuid7``; it arrives in 3.14. This is a small local
 implementation so ids are time-ordered, which keeps index locality sane and makes
 creation order recoverable from the id alone.
 
-Ids are public and immutable once handed out — see docs/02-domain-model.md once written.
+Ids are public and immutable once handed out — see docs/02-domain-model.md for the
+identity guarantees the domain requires.
 
 Ordering holds *within a millisecond* too, via the monotonic counter RFC 9562 permits
 in place of ``rand_a``. Without it, two ids minted in the same millisecond sort at

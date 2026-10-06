@@ -1,8 +1,8 @@
 """SQLAlchemy tables. The database's shape, and nothing else.
 
-No table classes exist yet — the domain model (Q-C) has not been written. Table
-classes are added here as they arrive in later PRs, so alembic/env.py always sees the
-full metadata by importing this module alone.
+No table classes exist yet — they arrive in the next PR once ``docs/02-domain-model.md``
+is accepted. ``alembic/env.py`` imports this module to register all tables on
+``Base.metadata``; keeping the import here means every table is visible to autogenerate.
 """
 
 from constellate.models.base import Base, Owned

@@ -16,10 +16,9 @@ config = context.config
 config.set_main_option("sqlalchemy.url", settings.database_url)
 
 if config.config_file_name is not None:
-    # disable_existing_loggers=False: do not silence loggers configured outside
-    # alembic.ini (e.g. the constellate handler the test suite sets up). The default
-    # of True would disable them each time alembic.command.upgrade/downgrade is called
-    # programmatically in tests, causing caplog-based assertions to stop seeing records.
+    # disable_existing_loggers=False: keep loggers configured outside alembic.ini alive.
+    # The default of True would silence them each time upgrade/downgrade is called
+    # programmatically, which breaks caplog-based assertions in tests.
     fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata

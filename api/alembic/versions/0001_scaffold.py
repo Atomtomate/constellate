@@ -4,9 +4,9 @@ Revision ID: 0001_scaffold
 Revises:
 Create Date: 2026-10-06
 
-No tables exist yet; the domain model (Q-C) has not been written. This revision's
-only purpose is to anchor the chain at a known id so that the first real table
-migration has a down_revision to point at.
+No tables exist yet; table migrations arrive once ``docs/02-domain-model.md`` is
+accepted. This revision's only purpose is to anchor the chain at a known id so that
+the first real table migration has a ``down_revision`` to point at.
 """
 
 from collections.abc import Sequence

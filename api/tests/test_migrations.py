@@ -1,9 +1,8 @@
 """Harness proving each data migration handles rows correctly.
 
-Postgres-only migration tests skip when CONSTELLATE_TEST_DATABASE_URL is not a
-Postgres ``*_test`` URL. The coverage registry test (``test_all_revisions_are_covered_or_no_rows``)
-runs on SQLite too: it reads the chain from ScriptDirectory without a database
-connection.
+The coverage registry test (``test_all_revisions_are_covered_or_no_rows``) runs on
+SQLite and on Postgres alike: it reads the revision chain from ScriptDirectory without
+a database connection.
 
 Each covered revision gets at least one test case. Revisions that touch no existing
 rows are listed in NO_ROWS with a reason. Any revision in neither set is an error —
@@ -12,13 +11,8 @@ the registry fails loudly so that a new migration cannot slip through untested.
 
 import pathlib
 
-import sqlalchemy as sa
-from alembic import command as alembic_cmd
 from alembic.config import Config
 from alembic.script import ScriptDirectory
-from sqlalchemy.engine import make_url
-
-from conftest import TEST_DATABASE_URL, is_disposable
 
 # ── Path constants ────────────────────────────────────────────────────────────
 _API_DIR = pathlib.Path(__file__).parent.parent  # api/
@@ -35,15 +29,6 @@ NO_ROWS: dict[str, str] = {
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
-def _pg_url() -> str | None:
-    """Return TEST_DATABASE_URL if it is a Postgres *_test URL, else None."""
-    if not is_disposable(TEST_DATABASE_URL):
-        return None
-    if make_url(TEST_DATABASE_URL).get_backend_name() != "postgresql":
-        return None
-    return TEST_DATABASE_URL
-
-
 def _make_cfg() -> Config:
     """Build an Alembic Config with an absolute script_location.
 
@@ -53,22 +38,6 @@ def _make_cfg() -> Config:
     cfg = Config(str(_ALEMBIC_INI))
     cfg.set_main_option("script_location", str(_API_DIR / "alembic"))
     return cfg
-
-
-def _up(eng: sa.Engine, rev: str) -> None:
-    """Upgrade to *rev*, migrating the database *eng* is connected to."""
-    cfg = _make_cfg()
-    with eng.connect() as conn:
-        cfg.attributes["connection"] = conn
-        alembic_cmd.upgrade(cfg, rev)
-
-
-def _down(eng: sa.Engine, rev: str) -> None:
-    """Downgrade to *rev*, migrating the database *eng* is connected to."""
-    cfg = _make_cfg()
-    with eng.connect() as conn:
-        cfg.attributes["connection"] = conn
-        alembic_cmd.downgrade(cfg, rev)
 
 
 # ── Coverage registry test (runs on SQLite too) ───────────────────────────────
@@ -90,6 +59,7 @@ def test_all_revisions_are_covered_or_no_rows():
 
 
 # ── Postgres-only fixtures and cases live here as they are added ──────────────
-# The first real table migration goes here with a _mig_engine fixture and a test
-# that seeds rows, upgrades, asserts, and downgrades. See the sibling project's
+# The first real table migration goes here. Add a ``pytest.mark.skipif`` guard on
+# ``_RUN_DATABASE_URL.get_backend_name() != "postgresql"``, a session-scoped engine
+# fixture that runs up/down, and the test itself. See the sibling project's
 # test_migrations.py for the full pattern.

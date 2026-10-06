@@ -1,7 +1,7 @@
 """Queries. The only part of the project that knows SQL.
 
-Every data access goes through a function in this package. A service that imports
-directly from ``models/`` has skipped this layer; ``scripts/check_layering.py``
-enforces the boundary. No functions exist yet — the domain model (Q-C) has not been
-written, so there are no tables and no queries. They arrive in later PRs.
+Every data access goes through a function in this package. SQL lives here and nowhere
+else; ``scripts/check_layering.py``'s ``check_sql`` enforces it. No functions exist yet
+— table definitions arrive in the next PR once ``docs/02-domain-model.md`` is accepted
+and the first migration lands.
 """
