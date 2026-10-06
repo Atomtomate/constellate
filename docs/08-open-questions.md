@@ -2,57 +2,45 @@
 
 > **Exploratory plan.** Answered questions move to the bottom rather than being deleted.
 
-*Last updated: 2026-09-23*
+*Last updated: 2026-10-06*
 
 ## Still open
-
-### Q-C — What is the domain model?
-
-The nouns the brief implies, the tracker's first: an **event** (one play or one watch — an
-item, a start time, a duration, the source it came from), an **item** (a track, an album, a
-video, later a website), its **source** (Spotify, YouTube, later the web), a **creator**
-(artist, channel, later author or site). The atlas adds a **theme**, a **constellation**
-(a group of items or creators with its reason) and a **recommendation list**. Open:
-whether an event references an item or carries its own copy of the item's fields at the
-time; whether a creator is an item in its own right; whether a theme and a constellation
-are one thing at two sizes; how an item that exists on two sources is one item. Answered
-in `02-domain-model.md` when it is written, and not before the two data-source documents
-(`01-data-sources-spotify.md`, `01-data-sources-youtube.md`) say what fields the sources
-actually give.
-
-### Q-D — How does the history get out of Spotify and YouTube?
-
-For each source, two paths are needed: a **backfill** of what the service already holds,
-and **ongoing capture** from the day the tracker runs. Leanings to verify, not facts:
-
-- **Spotify.** The Web API's recently-played endpoint returns a short tail of plays with
-  their start times but not how long each was listened to, so it must be polled often to
-  miss nothing; the account's privacy page offers an extended streaming-history export
-  that holds every play for the life of the account with milliseconds listened, but arrives
-  by email days or weeks after it is requested.
-- **YouTube.** The Data API has no watch-history endpoint at all. Google Takeout gives the
-  watch history as a file with titles, URLs and timestamps but no durations, so a duration
-  is either the video's length from the Data API or a guess. Live capture with a real
-  duration needs something running where the watching happens — a browser extension or
-  userscript — which is also the only route to "how long" rather than "how long the video
-  is".
-
-What "how long" means — milliseconds actually listened, or the length of the track or
-video — is decided per source by what it can give, and stated in that source's document:
-`01-data-sources-spotify.md` and `01-data-sources-youtube.md`, one per source so the two
-can be researched at once. The research writes them; the leanings above are what it
-starts from, and every claim in them is dated and points at the page that says so.
 
 ### Q-E — Where does it run?
 
 The tracker's poller has to run somewhere all day. The sibling project serves from a PC
-the owner controls; the same rig could serve this. Open until M1 needs it.
+the owner controls; the same rig could serve this. Open until M1 needs it. Whatever host is
+chosen has to give what the decisions so far require of it:
+
+- **A database server that starts with the machine**, because the poller fires unattended.
+  Where that cannot be promised, the store is SQLite instead, a switch that costs nothing
+  before the first migration (ADR-0002, Consequences).
+- **Database backups kept at most five days**, with the plain-format export of the log as the
+  long-term copy, because a backup holds cache rows and live plays past what the services'
+  terms allow (ADR-0003's amendment; `02-domain-model.md` §4).
+- **Encryption at rest**, if the Data Portability API carries YouTube's daily capture: its
+  policy requires it (`02-domain-model.md` §4; `01-data-sources-youtube.md` §3.2).
+- **A scheduler that fires the poller every few minutes, all day**, as a bounded sampling run
+  (the owner, 2026-09-23; ADR-0002), registered to run whether or not the owner is signed in,
+  with the daily jobs beside it. If the Spotify poller runs, the owner signs in to Spotify
+  every six months (`01-data-sources-spotify.md` §2).
 
 ### Q-F — What is "a system of apps"?
 
-A phone app for capturing; a browser extension for capturing the current page or video —
-which Q-D may need for YouTube anyway; a share-sheet target; a desktop app. Each is a
-different cost, and none is designed until the website has proved the model (M4).
+A phone app for capturing; a browser extension for capturing the current page or video; a
+share-sheet target; a desktop app. Each is a different cost, and none is designed until the
+website has proved the model (M5). The extension's role has narrowed: if the Data Portability
+API's spike passes, it captures what was watched and when without one, which leaves the
+extension the route to seconds watched on desktop (`01-data-sources-youtube.md` §6).
+
+### Q-G — What does the calendar add to the model?
+
+The calendar (M3) brings what the log has never held: a future-dated **occasion**, a concert
+or a release. It is not a log event — it has not happened, nobody measured it, and its date
+moves — and it references a creator (a concert) or an item (a release). Whether it is one noun
+or two, and what the ICS feed reads, is decided with `02-domain-model.md`'s revision when M3
+starts. The argument so far is the idea file's "How it fits the model" and "Open questions"
+([`ideas/concert-and-release-calendar.md`](ideas/concert-and-release-calendar.md)).
 
 ### Smaller, for later
 
@@ -77,3 +65,26 @@ React + Vite + TypeScript client; the poller a one-shot command fired by the OS 
 Chosen by the owner over a Python-only stack with pages rendered on the server, TypeScript end
 to end, and the same stack on SQLite, chiefly because the fleet's file-ownership map for it is
 already proven. The map is in `.claude/agents.local.md`; where the store runs is still Q-E's.
+
+**Q-C — What is the domain model?** → **One event per play, resolved from kept observations;
+one item per source identity** *(2026-09-23)* → ADR-0003. The model is
+[`02-domain-model.md`](02-domain-model.md). Every source's record of a play is an immutable
+observation, and the play is one event whose item, start and duration are resolved from its
+observations by precedence. An event references its item rather than copying it; a creator is
+not an item; a theme and a constellation share a shape, not a meaning. Items are kept per
+source identity, merged within a service only on an identifier it gives (a Spotify ISRC) and
+never across services, the owner's choice of 2026-09-23. What the model leaves open is its §8.
+
+**Q-D — How does the history get out of Spotify and YouTube?** → **The two research
+documents' paths, Spotify's as the owner chose them** *(2026-09-23; Premium confirmed
+2026-10-05)*. The documents are
+[`01-data-sources-spotify.md`](01-data-sources-spotify.md) and
+[`01-data-sources-youtube.md`](01-data-sources-youtube.md). **Spotify**: the extended
+streaming-history export is the record; Last.fm's scrobbles of Spotify are the live tail and
+the backbone, which work with no Spotify app; the Web API playback poller is optional on top,
+for measured listened time, its policy risk accepted. The log never depends on the poller.
+**YouTube**: Takeout is the backfill, the Data Portability API the daily capture (scheduled
+Takeout if its spike fails), `videos.list` gives lengths as a cache refreshed within 30 days,
+and a browser extension comes later, only for seconds watched on desktop. "How long" is time
+actually played where a source measures it, and each event's basis says when it is not
+(`02-domain-model.md` §1). No ADR: each path is a source adapter under ADR-0003's seam.
