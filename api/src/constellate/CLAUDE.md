@@ -10,24 +10,16 @@ the first router with genuinely no logic to put in a service brings the list bac
 the rule that sanctions it, rather than an empty table waiting for one. `models/` may build a
 table expression — `text()` in a `server_default` — but never runs a query.
 
-**Leaf or entry point is derived from the package, not listed.** A module anything in the
-package imports — a layer, another leaf, an entry point — is a leaf, and `__init__.py` counts
-as one, since no import names it but every import runs it: a re-export added there would have
-`models/` load `services/` at import time. A module nothing imports is an entry point. There is
-no third kind: a module only the entry points reach is a leaf held to a leaf's rule, which is
-why the request id's contextvar lives in the leaf `request_context.py` — `api/request_id.py`'s
-middleware sets it, `logging_config.py`'s filter reads it — rather than the filter importing
-`api/`. Today the leaves are `config.py`, `db.py`, `ids.py`, `logging_config.py`,
-`request_context.py` and `__init__.py`; the entry points are `main.py` and `poll.py`. The day
-something imports an entry point, it becomes a leaf the same way. `scripts/check_layering.py`
-derives the placement the same way, so what needs updating alongside a change here is that
-script's docstrings and its own tests.
+**`__init__.py` counts as a leaf**, since no import names it but every import runs it: a
+re-export added there would have `models/` load `services/` at import time. The request id's
+contextvar lives in the leaf `request_context.py` for the rule's other half, that a leaf
+imports none of the four: `logging_config.py`'s filter reads what `api/request_id.py`'s
+middleware sets, and a value both reach lives below both rather than the filter importing
+`api/`.
 
 **The seam is `services/sources.py`'s `SourceAdapter`, a `Protocol`.** An adapter has the right
 members and never subclasses it; a leaf imports no module of `sources/` any more than a layer
-does, and a helper only an adapter imports is a leaf too, held to a leaf's rule. The protocol
-carries no members yet: its one method, producing draft events, arrives with the first adapter,
-and the draft event type in `domain/` with it.
+does, and a helper only an adapter imports is a leaf too, held to a leaf's rule.
 
 **`poll.py` is the poller** `docs/03` describes, `python -m constellate.poll`. Today it logs
 that no source is configured and exits 0, so the scheduled task can be wired before a source

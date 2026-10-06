@@ -37,12 +37,12 @@ from `hooks/`, `routes/` or `api/client`, and the `import type` allowance from `
 filesystem so a file added later is covered without being listed, and fails on any top-level
 directory under `src/` without a row in its `MAY_NOT_IMPORT` table — an empty row is still a
 row, recording that the section has nothing to forbid on purpose. A new section brings its row
-in the same commit; the first pure one brings `PURE_SECTIONS` and the `import type` exemption
-back with it. Of the shell's rule it checks only what applies to every file — no `api/client`,
-no `queryFn`; that the shell imports `routes/` alone is held by review. Test files are
-excluded from every per-file check: a test legitimately mocks the client, and the test file
-says why. The file-count threshold guards against the loops passing vacuously if the walk ever
-breaks; raise it as routes are added.
+in the same commit. The shell has a row too, keyed `.` for the top-level files under `src/`,
+which forbids `hooks/`, `api/` and `components/`: that the shell imports `routes/` alone is
+held by the test, beside the rules that bind every file — no `api/client`, no `queryFn`. Test
+files are excluded from every per-file check: a test legitimately mocks the client, and the
+test file says why. The file-count threshold guards against the loops passing vacuously if the
+walk ever breaks; raise it as routes are added.
 
 A query key lives in `src/api/queryKeys.ts` as soon as a second module needs it; a key one
 module both reads and invalidates stays with that module. The `health` key is there from the

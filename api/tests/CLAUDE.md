@@ -42,8 +42,8 @@ Two halves, two owners (`.claude/agents.local.md`, file ownership): the ones bui
 **not** commit, so a write path that forgets to commit fails a test instead of passing on the
 fixture's goodwill. `client` goes through the whole app — middleware, error handlers — even for
 `/health`, so a test sees what a client would. `anon_client` is the same object as `client`
-until sign-in (M1), when `client` gains the credential M1's sign-in decides and `anon_client`
-does not; write a test against the one it means now, so nothing changes when they diverge.
+until sign-in (M1), when they diverge as the fixture's docstring says; write a test against the
+one it means now, so nothing changes then.
 
 ## Conventions
 

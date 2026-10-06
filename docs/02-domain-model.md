@@ -649,4 +649,9 @@ backbone with no Spotify app, and the Web API poller is optional, on top, for me
   would group items, and so would not contradict the owner's choice against merging them.
 - **Spotify's account-data package** (past year, names only) is not an input. Names are not
   identifiers (Spotify §1), and the extended history covers the same year with URIs.
+- **The key type of every single-key table**: UUIDv7 minted by the application, which the
+  scaffold's `Owned` mixin ports from the sibling, or the `bigint` identity §7 sketches. Decided
+  before the first table migration, which inherits it. The coordinator leans to UUIDv7 — public,
+  stable ids across devices and imports, and a time-ordered key keeps the index local — at
+  sixteen bytes a row against eight. Filed as issue #10.
 - **An owner column** stays with docs/08's "Smaller, for later". Nothing here depends on it.
