@@ -2,7 +2,7 @@
 
 > **The standard a change is held to.** What this page states was decided by
 > [ADR-0002](adr/0002-the-stack.md); where a detail waits on another question it names that
-> question rather than guessing. None of it exists as code yet: the scaffold PR lays it out.
+> question rather than guessing.
 
 *Last updated: 2026-10-06*
 
@@ -101,13 +101,13 @@ sources/    one adapter per source: HTTP or a file format in, draft events out; 
   `poll.py`, the poller, and any importer run as a command may reach `services/`. Nothing imports
   an entry point.
 
-`scripts/check_layering.py` enforces this and arrives with the scaffold PR, ported to package
-`constellate` and given a rule for `sources/`, which the sibling's check has no place for: a port
-that changes only its constants passes both an adapter importing `repos/` and a service
-importing an adapter, so the port carries a test for each. Until it exists a reviewer reads the
-imports. The per-layer rules in detail go
-in `api/src/constellate/CLAUDE.md`, which arrives with the same PR, and this page stays the
-summary it expands. The website's own layer rule arrives with `web/`.
+`scripts/check_layering.py` enforces this, ported to package `constellate` and given a rule for
+`sources/`, which the sibling's check had no place for: a port that changed only its constants
+would pass both an adapter importing `repos/` and a service importing an adapter, so the port
+carries a test for each under `scripts/tests/`. It runs in CI (`record.yml`) and from the
+pre-commit hook on any change under `api/`. The per-layer rules in detail are
+`api/src/constellate/CLAUDE.md`'s, and this page stays the summary it expands; the website's
+own layer rule is `web/CLAUDE.md`'s, enforced by `web/src/layering.test.ts`.
 
 ## Conventions
 
@@ -117,6 +117,26 @@ are settled before the first endpoint because every client generates from the co
 convention changed later is a change to every client. What holds them is `api/openapi.json`; this
 section is where their meaning is written. Paths in it are inside the API package,
 `api/src/constellate/`.
+
+**One origin, the API under `/api`.** The website and the API share one origin, and a reverse
+proxy in front of both — `web/vite.config.ts`'s in development, Caddy on the rig once Q-E names
+it — decides per request which answers: everything under `/api` is the API's, and the website
+owns every other path, so neither side keeps a list of the other's routes. Every path in the
+contract is relative to that base — `GET /health` is `GET /api/health` from a browser — and
+everything the API serves moves with it, FastAPI's `/docs` included, since one route left at the
+root is a one-entry path list. Three parts carry it, and a test under `api/tests/` holds each:
+`main.py` passes `root_path="/api"` to the `FastAPI(...)` constructor, not a `--root-path` flag a
+launch path can forget, so routing, redirects and the docs page all know the prefix; the proxy
+passes the prefix through unstripped — Caddy `handle`, never `handle_path`; no `rewrite` in the
+Vite proxy — because Starlette builds a trailing-slash redirect's `Location` from the request
+path without re-adding `root_path`, and behind a stripping proxy `/api/health/` would redirect to
+a bare `/health`, into the website's half of the origin; and the contract declares
+`servers: [{"url": "/api"}]` explicitly, because FastAPI derives that entry from `root_path`
+only inside the `/openapi.json` route at request time, so `app.openapi()` — which
+`export_openapi.py` calls — never sees it, and the committed spec would differ from the served
+one through the one door the contract check cannot see. `openapi-fetch` does not read
+`servers`, so on the web side the prefix exists in one place, `web/src/api/client.ts`'s
+`baseUrl`.
 
 **One error envelope.** Every error, whatever raised it, leaves in one shape:
 
