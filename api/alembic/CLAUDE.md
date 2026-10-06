@@ -12,10 +12,9 @@ migration that stops with a list a person can act on is worth more than one that
 succeeds.
 
 Right now the chain is one empty revision, `0001_scaffold`, anchoring it at a known id so the
-first table migration has a `down_revision` to point at; the tables wait on the first schema,
-which `docs/02-domain-model.md` sketches and Q-C — the owner accepting that sketch, still open in
-`docs/08-open-questions.md` — settles. Mistakes are free until the first deploy, and the habits
-formed now are the ones that will be in place after it.
+first table migration has a `down_revision` to point at; the tables arrive with that migration,
+cut from `docs/02-domain-model.md`'s schema. Mistakes are free until the first deploy, and the
+habits formed now are the ones that will be in place after it.
 
 ## Writing one
 

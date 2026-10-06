@@ -14,10 +14,10 @@ stated here in full is what has no other home — the file-ownership map and the
 numbers.
 
 **M0 is done (2026-10-05).** The stack (ADR-0002), the ingestion seam (ADR-0003) and the
-domain model ([`docs/02-domain-model.md`](../docs/02-domain-model.md)) are decided, and the
-sections they decide — file ownership, the contract, the layers, the toolchain, the domain
-invariants — are filled below; a file that arrives with the scaffold PR is named as
-arriving, not as present. One section still says *not yet*: the running stack, until Q-E in
+domain model ([`docs/02-domain-model.md`](../docs/02-domain-model.md)) are decided, the
+scaffold lays the stack out, and the sections they decide — file ownership, the contract, the
+layers, the toolchain, the domain invariants — are filled below and name what exists. One
+section still says *not yet*: the running stack, until Q-E in
 [`docs/08-open-questions.md`](../docs/08-open-questions.md) says where it runs. An agent that
 finds it empty reports it, as its definition says, rather than inventing the answer.
 
@@ -205,16 +205,12 @@ fleet's to state, and the commands that drive both boards are `scripts/README.md
 
 ## Toolchain
 
-- The record scripts under `scripts/` are stdlib Python on a bare interpreter — Python 3.13 on
-  the dev machine and in CI. Their tests: `python -m unittest discover scripts/tests`.
-- The API package: the venv at `api/.venv` — on Windows, `api/.venv/Scripts/python.exe` — and a
-  worktree needs its own, made from `api/` with `python -m venv .venv` and that interpreter's
-  `-m pip install -e ".[dev]"`. Tests from `api/` with it: `python -m pytest -q`, SQLite unless
-  `CONSTELLATE_TEST_DATABASE_URL` names a Postgres `*_test` database (`api/tests/CLAUDE.md`);
-  lint and format with `ruff check .` and `ruff format .` in `api/`; the contract with
-  `python scripts/export_openapi.py`. `api/CLAUDE.md` has the rest.
-- The web client: Node ^22.18 or >=24.2 and npm, from `web/` — `npm ci` once, then `npm test`,
-  `npm run build` and `npm run check:api-types`. `web/README.md` has the rest.
+- The record scripts under `scripts/` run on a bare Python 3.13, and their commands are
+  `scripts/README.md`'s.
+- The API package's venv is `api/.venv`, one per worktree; making it is `api/CLAUDE.md`'s
+  "Running it".
+- The API's commands — tests, lint, the contract export — are `api/CLAUDE.md`'s "Running it".
+- The web client's commands are `web/README.md`'s.
 - `scripts/gates.py` runs whichever of these the change calls for from the hooks, and a
   toolchain that is not installed in the worktree is a skip it reports, never a failure.
 
