@@ -48,7 +48,7 @@ convention = "pep257"
 # obvious from the name, which is a judgement rather than a rule.
 "tests/**" = ["D1"]
 # Alembic revisions are generated, and adding docstrings to generated files is noise.
-"alembic/**" = ["D1"]
+"alembic/versions/**" = ["D1"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
