@@ -11,8 +11,8 @@ import traceback
 from datetime import UTC, datetime
 from types import TracebackType
 
-from constellate.api.request_id import get_request_id
 from constellate.config import settings
+from constellate.request_context import get_request_id
 
 
 def _sqlstate(exc: BaseException) -> str | None:

@@ -1,7 +1,7 @@
 """Tests for the error envelope.
 
-Two things the health tests do not reach: that every ``ServiceError`` subclass is mapped to
-a status and a code, so ``_service_error``'s fallback has nothing to catch; and the unhandled
+Two things the health tests do not reach: that every ``ServiceError`` subclass is mapped
+in ``_WIRE``, so an unmapped class cannot silently return 500; and the unhandled
 exception path, where the handler sets the request-id header itself.
 """
 
@@ -9,34 +9,22 @@ HEADER = "x-request-id"
 
 
 class TestServiceErrorMappingComplete:
-    """Every concrete ServiceError subclass must have an entry in _STATUS and _CODE.
+    """Every concrete ServiceError subclass must have an entry in _WIRE.
 
-    The unmapped fallback in _service_error logs and returns internal_error — but
-    that path should never be reachable because a new error class that ships without
-    a map entry is a silent internal error that docs/03 forbids leaking. This test
-    makes the gap a CI failure instead.
+    An unmapped class raises KeyError inside _service_error, which propagates to
+    _unhandled and returns 500 internal_error — the same as if no handler matched at
+    all. This test makes the gap a CI failure instead.
     """
 
-    def test_every_concrete_subclass_is_in_status_map(self):
-        from constellate.api.errors import _STATUS
+    def test_every_concrete_subclass_is_in_wire(self):
+        from constellate.api.errors import _WIRE
         from constellate.services import errors as svc_errors
 
         concrete = _concrete_subclasses(svc_errors.ServiceError)
         for cls in concrete:
-            assert cls in _STATUS, (
-                f"{cls.__name__} has no entry in api/errors._STATUS; "
-                "add it or the fallback renders 500 internal_error"
-            )
-
-    def test_every_concrete_subclass_is_in_code_map(self):
-        from constellate.api.errors import _CODE
-        from constellate.services import errors as svc_errors
-
-        concrete = _concrete_subclasses(svc_errors.ServiceError)
-        for cls in concrete:
-            assert cls in _CODE, (
-                f"{cls.__name__} has no entry in api/errors._CODE; "
-                "add it or the fallback renders 500 internal_error"
+            assert cls in _WIRE, (
+                f"{cls.__name__} has no entry in api/errors._WIRE; "
+                "add it or the unmapped class leaves through _unhandled as 500 internal_error"
             )
 
 

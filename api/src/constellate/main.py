@@ -14,14 +14,18 @@ from constellate.logging_config import configure_logging
 
 configure_logging()
 
+# The prefix under which this app lives behind its reverse proxy (Caddy on the rig,
+# Vite in dev). Passed to both root_path (so routing, redirects and /docs all know the
+# prefix) and servers (so the committed contract carries the entry app.openapi() now
+# produces, rather than having the exporter inject it from a copy).
+# docs/03-architecture.md "One origin" explains why all three parts must agree.
+_ROOT_PATH = "/api"
+
 app = FastAPI(
     title="Constellate",
     version="0.1.0",
-    # root_path tells Starlette where this app lives behind its reverse proxy (Caddy on
-    # the rig, Vite in dev) so routing, redirects and the docs page all know the prefix.
-    # It belongs in the constructor, not a --root-path flag, because a flag a launch
-    # script can forget is not a convention (docs/03-architecture.md, "One origin").
-    root_path="/api",
+    root_path=_ROOT_PATH,
+    servers=[{"url": _ROOT_PATH}],
     description=(
         "Activity log and atlas. Every client — the website, any app — consumes this "
         "contract on equal terms; no client gets privileged access to the data. "

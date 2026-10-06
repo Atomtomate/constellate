@@ -3,9 +3,8 @@
 Three parts carry the prefix and each has a test here:
 - main.py passes root_path="/api" to the FastAPI constructor so routing, redirects and
   the docs page all know the prefix (not a --root-path flag a launch script can forget).
-- The committed contract (api/openapi.json) declares servers: [{"url": "/api"}], because
-  FastAPI derives that entry from scope["root_path"] only at request time and app.openapi()
-  — which export_openapi.py calls — never sees it.
+- main.py also passes servers=[{"url": "/api"}] to the constructor so app.openapi()
+  carries the entry directly; export_openapi.py writes it without injecting a copy.
 - A trailing-slash redirect's Location includes /api so it does not land in the website's
   half of the origin when the proxy passes the full path through unstripped.
 """
@@ -22,9 +21,17 @@ def test_app_root_path_is_api():
     assert app.root_path == "/api"
 
 
+def test_app_openapi_declares_servers():
+    # servers is passed to the FastAPI constructor so app.openapi() carries it directly,
+    # and the exporter writes the committed spec without needing to inject it separately.
+    from constellate.main import app
+
+    assert app.openapi()["servers"] == [{"url": app.root_path}]
+
+
 def test_committed_openapi_spec_declares_api_servers():
-    # The committed file is what CI checks and what code generators consume; verifying
-    # the live endpoint is not enough because the export step is where injection happens.
+    # The committed file is what CI checks and what code generators consume; the live
+    # endpoint alone cannot catch a spec that has drifted from what is on disk.
     spec_path = pathlib.Path(__file__).resolve().parent.parent / "openapi.json"
     spec = json.loads(spec_path.read_text(encoding="utf-8"))
     assert spec.get("servers") == [{"url": "/api"}]

@@ -1,8 +1,4 @@
-"""Test fixtures.
-
-Tests run against SQLite in memory by default so they are fast and need no Docker. CI
-also runs them against Postgres (see .github/workflows/api.yml) because that is what
-production uses and the two disagree about types often enough to matter.
+"""Test fixtures — see ``api/tests/CLAUDE.md`` for why the suite runs on both backends.
 
 The model-built fixtures (``_pg_database``, ``engine``, ``session_factory``,
 ``session_override``) live here. The app-dependent fixtures (``client``,
@@ -159,7 +155,7 @@ def anon_client(client):
     """A client that carries no authentication — the scaffold equivalent of an anonymous user.
 
     At scaffold time there is no auth, so this is the same object as ``client``. It will
-    diverge once sign-in arrives (M1): ``client`` will carry a bearer token, ``anon_client``
-    will not.
+    diverge once sign-in arrives (M1): ``client`` will carry the credential M1's sign-in
+    decides, ``anon_client`` will not.
     """
     return client
