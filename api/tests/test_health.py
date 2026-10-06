@@ -51,3 +51,15 @@ def test_request_ids_are_unique_per_request(anon_client):
     r1 = anon_client.get("/health")
     r2 = anon_client.get("/health")
     assert r1.headers[HEADER] != r2.headers[HEADER]
+
+
+def test_wrong_method_is_405_with_allow_and_in_envelope(anon_client):
+    # RFC 9110 §15.5.6: a 405 response must include an Allow header listing the
+    # acceptable methods. Starlette raises HTTPException(405, headers={"Allow": "GET"});
+    # _http_error must pass exc.headers through rather than discarding them.
+    # The response body must also use the error envelope, not Starlette's default shape.
+    response = anon_client.post("/health")
+    assert response.status_code == 405
+    assert "allow" in response.headers
+    assert "GET" in response.headers["allow"]
+    assert response.json()["error"]["code"] == "invalid_request"

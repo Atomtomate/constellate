@@ -26,7 +26,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from constellate.api.request_id import HEADER_NAME, get_request_id
+from constellate.api.request_id import HEADER_NAME
+from constellate.request_context import get_request_id
 from constellate.services.errors import (
     Conflict,
     Forbidden,
@@ -78,20 +79,14 @@ class ErrorResponse(BaseModel):
 
 
 # Service errors carry no status of their own; the mapping lives here so routers do not
-# each grow a try/except that can drift from its neighbours.
-_STATUS = {
-    NotFound: 404,
-    Conflict: 409,
-    Malformed: 422,
-    Unauthenticated: 401,
-    Forbidden: 403,
-}
-_CODE: dict[type[Exception], ErrorCode] = {
-    NotFound: "not_found",
-    Conflict: "conflict",
-    Malformed: "invalid_request",
-    Unauthenticated: "unauthenticated",
-    Forbidden: "forbidden",
+# each grow a try/except that can drift from its neighbours. An unmapped subclass raises
+# KeyError, which leaves through _unhandled: 500, internal_error, the fixed message.
+_WIRE: dict[type[ServiceError], tuple[int, ErrorCode]] = {
+    NotFound: (404, "not_found"),
+    Conflict: (409, "conflict"),
+    Malformed: (422, "invalid_request"),
+    Unauthenticated: (401, "unauthenticated"),
+    Forbidden: (403, "forbidden"),
 }
 
 # Starlette raises HTTPException directly in a few places the service layer never sees —
@@ -103,9 +98,6 @@ _CODE_BY_STATUS: dict[int, ErrorCode] = {
     404: "not_found",
     409: "conflict",
 }
-
-# RFC 9110: a 401 that names no scheme is not a challenge.
-_CHALLENGE = {401: {"WWW-Authenticate": "Bearer"}}
 
 #: Attach to routers so the contract advertises what they can return. Without this the
 #: spec claims only 200/422 and every 404 and 409 is invisible to codegen.
@@ -143,15 +135,8 @@ def install(app: FastAPI) -> None:
     @app.exception_handler(ServiceError)
     def _service_error(request: Request, exc: ServiceError) -> JSONResponse:
         # Starlette walks the MRO, so one registration covers every subclass.
-        kind = type(exc)
-        status = _STATUS.get(kind)
-        if status is None:
-            # A subclass not in the map — the map was not updated when the class was added.
-            # Log it and return the same fixed message _unhandled uses; docs/03's
-            # internal_error row forbids returning the exception's own text to a client.
-            logger.exception("Unmapped ServiceError subclass %r", kind.__name__, exc_info=exc)
-            return _render(500, "internal_error", "An unexpected error occurred.")
-        return _render(status, _CODE[kind], str(exc), headers=_CHALLENGE.get(status))
+        status, code = _WIRE[type(exc)]
+        return _render(status, code, str(exc))
 
     @app.exception_handler(RequestValidationError)
     def _validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
@@ -163,10 +148,10 @@ def install(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     def _http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        # Pass exc.headers through: Starlette sets Allow on 405 (RFC 9110 §15.5.6)
+        # and a dependency may raise HTTPException with additional headers.
         code = _CODE_BY_STATUS.get(exc.status_code, "invalid_request")
-        return _render(
-            exc.status_code, code, str(exc.detail), headers=_CHALLENGE.get(exc.status_code)
-        )
+        return _render(exc.status_code, code, str(exc.detail), headers=exc.headers or None)
 
     @app.exception_handler(Exception)
     def _unhandled(request: Request, exc: Exception) -> JSONResponse:

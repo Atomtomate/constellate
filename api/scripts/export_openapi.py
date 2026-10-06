@@ -42,11 +42,6 @@ def main() -> int:
         return 1
 
     spec = app.openapi()
-    # FastAPI derives servers from scope["root_path"] only inside the /openapi.json
-    # route handler at request time; app.openapi() has no ASGI scope so the entry never
-    # appears when called directly. Inject it here so the committed file matches the spec
-    # a browser sees when root_path="/api" is in effect (docs/03, "One origin").
-    spec.setdefault("servers", [{"url": "/api"}])
     current = json.dumps(spec, indent=2, sort_keys=True) + "\n"
 
     if "--check" in sys.argv:
