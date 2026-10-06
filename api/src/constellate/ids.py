@@ -4,14 +4,14 @@ Python 3.13 has no ``uuid.uuid7``; it arrives in 3.14. This is a small local
 implementation so ids are time-ordered, which keeps index locality sane and makes
 creation order recoverable from the id alone.
 
-Ids are public and immutable once handed out — see docs/02-domain-model.md for the
-identity guarantees the domain requires.
-
 Ordering holds *within a millisecond* too, via the monotonic counter RFC 9562 permits
 in place of ``rand_a``. Without it, two ids minted in the same millisecond sort at
 random, which would make "newest first" wrong exactly when several events are ingested
 in one sitting. Guaranteed monotonic per process; across processes, ordering is only as
 good as the clock.
+
+Whether UUIDv7 is the right key type for this project's tables is decided in
+``docs/02-domain-model.md`` §7–§8, which was a placeholder at porting time.
 """
 
 import os

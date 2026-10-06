@@ -56,6 +56,31 @@ def test_all_revisions_are_covered_or_no_rows():
     )
 
 
+# ── Percent-encoded URL test ──────────────────────────────────────────────────
+
+
+def test_upgrade_succeeds_with_percent_encoded_url(tmp_path, monkeypatch):
+    """alembic upgrade head succeeds when the database URL contains a percent-encoded character.
+
+    Regression: env.py previously called config.set_main_option, which passes the URL
+    through ConfigParser's ``%`` interpolation. A ``%40`` (encoded ``@``) in the path
+    crashed with ValueError before connecting and printed the raw URL — password included
+    — to stderr. The fix builds the online engine directly from settings.database_url,
+    bypassing ConfigParser entirely.
+    """
+    import alembic.command
+
+    import constellate.config as cfg_module
+
+    db_file = tmp_path / "p%40x.db"
+    url = f"sqlite:///{db_file.as_posix()}"
+    # Patch the shared settings object. env.py reads settings.database_url at call time,
+    # not at import time, so this reaches the running migration without a module reload.
+    monkeypatch.setattr(cfg_module.settings, "database_url", url)
+
+    alembic.command.upgrade(_make_cfg(), "head")  # must not raise ValueError
+
+
 # ── Postgres-only fixtures and cases live here as they are added ──────────────
 # The first real table migration goes here. Add a ``pytest.mark.skipif`` guard on
 # ``_RUN_DATABASE_URL.get_backend_name() != "postgresql"``, a session-scoped engine

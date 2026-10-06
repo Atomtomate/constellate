@@ -1,7 +1,7 @@
 """Engine and session handling.
 
-Sync SQLAlchemy on purpose. At a few plays a week the concurrency argument for async
-does not apply, and sync avoids the standard FastAPI footgun where one blocking call
+Sync SQLAlchemy on purpose. At about a hundred events a day the concurrency argument for
+async does not apply, and sync avoids the standard FastAPI footgun where one blocking call
 inside an ``async def`` stalls the event loop. FastAPI runs plain ``def`` endpoints in
 a threadpool, so this stays correct under load we will never see.
 """
