@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from constellate.config import settings
 
-engine = create_engine(settings.database_url, pool_pre_ping=True, future=True, hide_parameters=True)
+engine = create_engine(settings.database_url, pool_pre_ping=True, hide_parameters=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
 
 
