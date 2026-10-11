@@ -1,37 +1,49 @@
-# Fleet pointer bump: c01588d to a1c04fa, Atomtomate/agents#18 to #21
-**Summary:** Moved the `.claude/agents` submodule to the fleet's merge of Atomtomate/agents#21 in PR #8; nothing outside the submodule needed editing, and the fleet's #22, merged after the target, is not carried.
-**State:** Open — PR #8 waits for the coordinator's merge; the next pointer bump carries Atomtomate/agents#22.
+# Fleet pointer bump: c01588d to 3970c09, Atomtomate/agents#18 to #22
+**Summary:** Moved the `.claude/agents` submodule to the fleet's head, the merge of Atomtomate/agents#22, in PR #8; one sentence here goes stale with it, the root `CLAUDE.md`'s count of the agents a session reaches, which the scaffold PR #9 fixes at its rebase.
+**State:** Open — PR #8 waits for the coordinator's merge; the root `CLAUDE.md`'s agent count is the scaffold PR's (#9) to fix at its rebase.
 
 ## What was done
 
-- `.claude/agents` from `c01588d` to `a1c04fa`: eighteen commits, Atomtomate/agents#18 to #21.
-  What each PR changed is in the commit message and PR #8's body.
+Started 2026-10-06, finished 2026-10-11.
+
+- `.claude/agents` from `c01588d` to `3970c09`, the fleet's head: twenty-one commits,
+  Atomtomate/agents#18 to #22, in two commits here. `a707f3a` goes to `a1c04fa` (#18 to #21),
+  the brief's first target; `6ef1bf2` goes on to `3970c09` (#22) at the coordinator's direction
+  of 2026-10-06. What each PR changed is in those messages and PR #8's body. The first message's
+  "agents#22 ... is not carried" was true when written, and the second says it no longer holds.
 - Checked the overlay, the root `CLAUDE.md`, `docs/CLAUDE.md`, the rest of the record and the
-  scripts for anything the fleet diff makes stale. Nothing is: no file here names
-  `memory/README.md`, the manual's "Subagent" section or Sonnet 4.6; `## Subagent` is the only
-  heading the fleet lost, and nothing here linked or quoted it; the two anchors the record links
-  into the manual resolve; no script depends on the plan-report names #18 and #21 dropped; the
-  overlay's `.claude/agent-memory/` stays true, `ops.json` being the fleet's one memory file.
-- No overlay edit, so the merge order of the two open branches that edit it is unaffected.
+  scripts against both ranges. One sentence goes stale: the root `CLAUDE.md`'s "The other seven
+  are reachable", which `qa` makes eight. Nothing else: no file here names `memory/README.md`, the
+  manual's "Subagent" section or Sonnet 4.6; `## Subagent` is the only heading the fleet lost,
+  and nothing here linked or quoted it; the two anchors the record links into the manual resolve;
+  no script depends on the plan-report names #18 and #21 dropped; the overlay's
+  `.claude/agent-memory/` stays true, and its "running stack" already answers what `qa` reads.
+- The root `CLAUDE.md` sentence is not edited here. The coordinator asked for the edit, and this
+  session does not change a `CLAUDE.md` at another session's request without the owner's word.
+  The owner was asked in this session on 2026-10-06; the question went unanswered and did not
+  survive the session's restart. On 2026-10-11 the coordinator moved the fix to the scaffold PR
+  (#9), which edits that file anyway.
+- No overlay edit, so the merge order of the open branches that edit it is unaffected. PR #8 and
+  PR #9 share no file.
 
 ## How it was verified
 
-- `python scripts/check_docs.py`: consistent, 42 Markdown files. `python -m unittest discover
-  scripts/tests`: 338 tests, OK. The pre-commit and pre-push gates passed.
-- The headings of the fleet's `CLAUDE.md`, `README.md`, `ops.md`, `retro.md` and both plan
-  reviewers diffed between `c01588d` and `a1c04fa`; then a grep of everything outside the
-  submodule for the removed names, the old model pin and the plan-report file names.
-- The closing scripts, from the worktree: `check_prs.py --fetch`, `check_memory.py` and
-  `worktree_status.py --current` consistent; `check_board.py --fetch` and `open_work.py --fetch`
-  as under "What remains open".
+- The pre-commit and pre-push gates passed on every commit, and CI on every push.
+- The headings of the fleet's changed definitions diffed across each range, then a grep of
+  everything outside the submodule for the removed names, the old model pins, the plan-report
+  file names and the agent roster's counts.
+- The closing scripts, on 2026-10-11: `check_prs.py --fetch`, `check_memory.py`,
+  `check_docs.py` (43 files), the scripts' tests (338, OK) and `worktree_status.py --current`
+  consistent; `open_work.py --fetch` says the pointer holds the fleet's `origin/main`;
+  `check_board.py --fetch` as below; `failure_ledger.py` has no retro handoff to read since,
+  there having been no retro yet.
 
 ## What remains open
 
-- **Atomtomate/agents#22** (`3970c09`, the 2026-10-06 retro and a new `qa` agent) merged on the
-  fleet's `main` after this target; `open_work.py` reports the pointer three commits behind. Its
-  bump makes the root `CLAUDE.md`'s roster stale ("Four agents are entry points", "The other
-  seven"), since `qa` is a twelfth agent. `qa` reads the overlay for how the product runs, which
-  "The running stack" answers for now with "There is no rig".
+- **The root `CLAUDE.md`'s agent count.** "Four agents are entry points ... The other seven are
+  reachable" is stale from this bump: `qa` is the eighth reachable agent, run after a milestone or
+  when the owner asks and never per PR, its findings reaching the board through the calling
+  session's close. The scaffold PR (#9) carries the fix at its rebase.
 - **The mode default.** The manual now says "Unattended is the standing mode whenever the owner
   is not steering" (agents#18, the owner's decision of 2026-09-14). The overlay's Modes table
   calls attended "the default", declared by nothing. Read together they agree: the manual says
@@ -48,15 +60,19 @@ coordinator places them.
 ## Traps
 
 - `scripts/README.md`'s closing order runs `worktree_status.py --current --remove`, and the sweep
-  is not scoped to the current worktree. `.claude/worktrees/planning-session-standby-08cfb5`,
-  another session's, is clean and on `main`; only the 24-hour idle guard keeps it (last touched
-  eleven hours ago). A lane told to leave other worktrees alone runs `--current` without
-  `--remove`.
-- The fleet's `main` moved between the brief and the bump. A brief that names its target commit
-  stays right; check the fleet's `origin/main` anyway, and name what is not carried.
+  is not scoped to the current worktree. On 2026-10-11 it would delete
+  `.claude/worktrees/planning-session-standby-08cfb5`, another session's: clean, on `main`, and
+  idle 142 hours, past the 24-hour guard that kept it on 2026-10-06. A lane told to leave other
+  worktrees alone runs `--current` without `--remove`.
+- `git restore` runs `.githooks/post-checkout`, a file checkout being a checkout, and its
+  `git submodule update --init` resets a submodule moved but not yet staged to the commit the
+  index records. Stage the pointer before any `restore`, or check `git submodule status` after.
+- A target that changes after the first push becomes a second commit: folding it into the first
+  means a force-push, which this session's permission check refuses. Check the fleet's
+  `origin/main` before the first push, not after.
 
 ## What carried it
 
-The brief named the target commit, the three files to check and that the overlay's merge order
+The brief named the target commit, the files to check and that the overlay's merge order
 matters, so the staleness question had a cost attached before it was asked. The heading diff
-between the two fleet commits turned "does any anchor here break?" into one command.
+between the fleet commits turned "does any anchor here break?" into one command per range.
