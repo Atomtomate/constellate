@@ -9,7 +9,8 @@ tracker first, the atlas after, apps last. The brief, and everything derived fro
 
 **M0 closed on 2026-10-05; M1, the tracker, is under way.** The stack (ADR-0002), the
 ingestion seam (ADR-0003) and the domain model (`docs/02-domain-model.md`) are decided, and
-how each service's history is captured is Q-D's answer; the scaffold is M1's first PR. The
+how each service's history is captured is Q-D's answer; the scaffold, M1's first PR, lays the
+stack out as code. The
 open questions are `docs/08-open-questions.md`'s Q-E (where it runs), Q-F (the apps) and Q-G
 (what the calendar adds to the model).
 
@@ -61,9 +62,11 @@ does not route work itself:
   says so, and `ops` invoked before there is one should stop.
 
 Invoke them by name, and write a prompt that stands alone — every agent starts cold. The
-other seven are reachable but not a menu this session chooses from: the implementation
+other eight are reachable but not a menu this session chooses from: the implementation
 specialists (`impl-database`, `impl-backend`, `impl-frontend`) are briefed by the director,
-or directly **only when the owner asks for that agent by name**; the reviewers
+or directly **only when the owner asks for that agent by name**; `qa` walks the product
+against a stated goal as a user would, after a milestone or when the owner asks and never per
+PR, its findings reaching the board through the calling session's close; the reviewers
 (`pr-tech-review`, `pr-direction-review`, `pr-parsimony-review`, `pr-architecture-review`)
 have disjoint scopes and all four run on every PR. Their scopes, models and how to brief
 one are in the fleet's [`.claude/agents/CLAUDE.md`](.claude/agents/CLAUDE.md); this
@@ -102,6 +105,7 @@ few sessions the `retro` agent runs instead of new work. Both conventions are in
 |------|------|
 | `docs/adr/` | Decisions. Check status: Accepted, Proposed, Superseded or Parked. |
 | `docs/00`, `02`, `03`, `07`, `08` | Scope, domain model, architecture, roadmap, open questions. |
+| `docs/ideas/` | Idea capture: one file per idea, developed later or never. Has its own `CLAUDE.md`; read it before filing one. |
 | `docs/investigations/` | **Parked** research. Nothing here influences a design decision until deliberately unparked. |
 | `docs/handoffs/` | One file per finished task: what was done, verified, and left open. |
 | `docs/friction/` | One note per time an agent's process failed it. Written by the agent, read by the `retro`. |
