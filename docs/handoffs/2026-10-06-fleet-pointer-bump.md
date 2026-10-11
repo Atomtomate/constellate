@@ -1,6 +1,6 @@
 # Fleet pointer bump: c01588d to 3970c09, Atomtomate/agents#18 to #22
 **Summary:** Moved the `.claude/agents` submodule to the fleet's head, the merge of Atomtomate/agents#22, in PR #8; one sentence here goes stale with it, the root `CLAUDE.md`'s count of the agents a session reaches, which the scaffold PR #9 fixes at its rebase.
-**State:** Open — PR #8 waits for the coordinator's merge; the root `CLAUDE.md`'s agent count is the scaffold PR's (#9) to fix at its rebase.
+**State:** Folded 2026-10-11 — PR #8 merged; the root `CLAUDE.md`'s agent count landed in the scaffold PR (#9), which counts `qa`; the board's M5 finding cleared when the consolidation PR (#19) put M5 in `docs/07`; the mode-default note is recorded as not worth an issue, the manual and the overlay agreeing as read.
 
 ## What was done
 
