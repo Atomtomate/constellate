@@ -1,6 +1,6 @@
 # Repository and agent-fleet setup
 **Summary:** Created `Atomtomate/constellate`, mounted the shared fleet, seeded the record and its scripts, and recorded the owner's first direction: the tracker first.
-**State:** Open — the owner corrects the scope; the data-source research, the domain model and the stack ADR are M0's remaining bullets.
+**State:** Folded 2026-10-11 — M0's bullets are done in `docs/07`; the scope is corrected in `docs/00`; the stack is ADR-0002; the ideas surface came with PR #6; the nightly worktree sweep is issue #18.
 
 ## What was done
 

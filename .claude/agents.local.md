@@ -13,13 +13,13 @@ copying it; a rule stated twice is a rule that will eventually contradict itself
 stated here in full is what has no other home — the file-ownership map and the board
 numbers.
 
-**The stack is decided (ADR-0002); its code is not written yet.** The sections it decides —
-file ownership, the contract, the layers, the toolchain — are filled below, and a file that
-arrives with the scaffold PR is named as arriving, not as present. Two sections still say
-*not yet*, each naming the question in
-[`docs/08-open-questions.md`](../docs/08-open-questions.md) that will answer it: the domain
-invariants (Q-C) and the running stack (Q-E). An agent that finds one of those empty reports
-it, as its definition says, rather than inventing the answer.
+**M0 is done (2026-10-05).** The stack (ADR-0002), the ingestion seam (ADR-0003) and the
+domain model ([`docs/02-domain-model.md`](../docs/02-domain-model.md)) are decided, and the
+sections they decide — file ownership, the contract, the layers, the toolchain, the domain
+invariants — are filled below; a file that arrives with the scaffold PR is named as
+arriving, not as present. One section still says *not yet*: the running stack, until Q-E in
+[`docs/08-open-questions.md`](../docs/08-open-questions.md) says where it runs. An agent that
+finds it empty reports it, as its definition says, rather than inventing the answer.
 
 ## Modes
 
@@ -94,7 +94,7 @@ and `pr-direction-review`:
   Superseded / Parked).
 - Parked research, off the roadmap and not to influence a design decision until unparked:
   [`docs/investigations/`](../docs/investigations/).
-- The domain model: `docs/02-domain-model.md`, **not yet written** (Q-C).
+- The domain model: [`docs/02-domain-model.md`](../docs/02-domain-model.md).
 - What is in flight — open PRs with the record files they carry, handoff items still open,
   friction notes unprocessed: `python scripts/open_work.py --fetch`
   ([`scripts/README.md`](../scripts/README.md)). The director reads it for what shares the
@@ -150,12 +150,33 @@ review report's verdict line and `### N.` headings are what the script reads fro
 
 ## Domain invariants the reviewers enforce
 
-**None decided about the domain yet.** The root
-[`CLAUDE.md`](../CLAUDE.md#standing-constraints)'s standing constraints hold ADR-0002's
-structural ones, and a reviewer holds a change to them. The domain model
-(Q-C) produces the first domain invariants, and the reviewer-facing checklist is written here
-when it does; until then a reviewer holds a change to those constraints and to
-[`docs/00-vision-and-scope.md`](../docs/00-vision-and-scope.md)'s scope and non-goals.
+A reviewer holds a change to the root [`CLAUDE.md`](../CLAUDE.md#standing-constraints)'s
+standing constraints, to [`docs/00-vision-and-scope.md`](../docs/00-vision-and-scope.md)'s
+scope and non-goals, and to the checklist below. The checklist is a derived copy, condensed
+from the documents each line names; they own the rules, and a change to one updates its line
+here in the same PR.
+
+- **One event per play.** Totals and the timeline read events. An event's item, start,
+  duration and basis are resolved from its observations by precedence, never written
+  directly, and the event carries no source (ADR-0003; `docs/02-domain-model.md` §1).
+- **Observations are immutable**, and deleted only with the ingest run that brought them,
+  where their source's terms require it, or once the export re-sources a live play, the
+  poller's or Last.fm's (ADR-0003, its Consequences and its amendment;
+  `docs/02-domain-model.md` §4).
+- **A record delivered again is dropped by its `record_key`**, the upstream record's identity,
+  never the path's (ADR-0003; `docs/02-domain-model.md` §2).
+- **A source's cursor commits in the same transaction as the observations it covers**, and
+  drafts are stored oldest first (ADR-0003; `docs/02-domain-model.md` §2).
+- **The root's two constraints from ADR-0003** — no catalogue data in the log, no item merged
+  across services — bind as it states them; within a service, a merge rests only on an
+  identifier the service gives, a Spotify ISRC (`docs/02-domain-model.md` §3).
+- **Nothing depends on the poller.** No event's existence, start, measured duration, item or
+  creator depends on the Spotify Web API poller or on a cache row; stopping either costs
+  precision, never a play (`docs/02-domain-model.md` §4).
+- **Retention follows each service's terms as `docs/02-domain-model.md` §4 sets them**: the
+  cache's refresh-or-delete window, the Web API's deletion as a set, Last.fm's cap and its
+  deletion on termination, and the backups' short life. That section owns the numbers, and a
+  change is checked against it.
 
 ## The boards
 

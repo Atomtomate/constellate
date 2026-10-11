@@ -5,7 +5,7 @@ the point. See [CLAUDE.md](CLAUDE.md) for how they are filed and developed.
 
 | Idea | Status | One line | Gated on |
 |------|--------|----------|----------|
-| [Concert and release calendar](concert-and-release-calendar.md) | `shaped` | Upcoming concerts of the owner's bands within reach, and release dates of bookmarked games and films, as a calendar the phone subscribes to; later filled by scrapers | M1's creators; favourites and bookmarks (M2); the owner's location; which feeds are open to a personal app |
+| [Concert and release calendar](concert-and-release-calendar.md) | `adopted` | Upcoming concerts of the owner's bands within reach, and release dates of bookmarked games and films, as a calendar the phone subscribes to; later filled by scrapers | M1's creators; favourites and bookmarks (M2); the owner's location; which feeds are open to a personal app |
 
 ## Status key
 

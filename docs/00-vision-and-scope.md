@@ -1,10 +1,11 @@
 # 00 — Vision & Scope
 
 > **Exploratory plan.** Everything here is a sketch to argue with, not a specification.
-> Settled choices live in [ADRs](adr/); everything else is provisional, and all of it was
-> written on the day the repository was created, from two short messages of brief.
+> Settled choices live in [ADRs](adr/); everything else is provisional. It was written on the
+> day the repository was created, from two short messages of brief, and the owner's answers
+> since are dated where they stand.
 
-*Last updated: 2026-09-23*
+*Last updated: 2026-10-11*
 
 ## The brief, in the owner's words
 
@@ -17,7 +18,8 @@ And, the same day, the first priority:
 > First things: I need tracker for spotify, youtube. what I watch/listen to how long and
 > when.
 
-Everything below is derived from those two paragraphs, and the owner corrects it.
+Everything below is derived from those two paragraphs and corrected by the owner's answers
+since, each dated where it stands.
 
 ## Long-term vision (the thing we are steering toward, not building now)
 
@@ -48,17 +50,23 @@ artist, channel, track or video.
 The atlas — favourites, themes, constellations, recommendation lists — comes after, and is
 designed so that a log entry and a favourite are the same *item* seen twice.
 
-## In scope for the first release (proposed)
+## In scope for the first release
+
+Spotify's capture paths are the owner's answer to Q-D *(2026-09-23; Premium confirmed
+2026-10-05)*; YouTube's are the research's recommendation, which Q-D records. The rest of
+this list is still proposed.
 
 - One user: the owner. No accounts beyond that.
 - **Spotify**: every play, with track, artist, album, when it started and how long it was
-  listened to — backfilled from what Spotify already holds, then kept current.
-- **YouTube**: every video watched, with title, channel, when and how long — backfilled
-  from what Google already holds, then kept current.
+  listened to — from the export, Last.fm's scrobbles and, optionally, the Web API poller (Q-D).
+  **The log never depends on the poller**: without it, the export and Last.fm still give
+  every play, and the durations arrive with the export.
+- **YouTube**: every video watched, with title, channel, when and how long — from Takeout and
+  the Data Portability API, with lengths from the Data API (Q-D). The seconds actually watched
+  need a browser extension, which comes later, and only for desktop.
 - A timeline of both, and totals by period and by creator.
-- Capture is automatic where a service allows it and an import where it does not; how
-  each is done is Q-D's answer and the subject of `01-data-sources-spotify.md` and
-  `01-data-sources-youtube.md`.
+- How each path works and what it costs: [`01-data-sources-spotify.md`](01-data-sources-spotify.md)
+  and [`01-data-sources-youtube.md`](01-data-sources-youtube.md).
 
 ## Explicitly out of scope for the first release (proposed)
 
@@ -66,13 +74,15 @@ Listed so they can be cut without debate later, and so nobody quietly builds the
 
 | Deferred | Why it is safe to defer |
 |----------|-------------------------|
-| Favourites, ratings, themes, constellations, recommendation lists | The atlas layer; M2 and M3. The log's item model has to leave room for them, and that is the whole cost today. |
+| Favourites, ratings, themes, constellations, recommendation lists | The atlas layer; M2 and M4. The log's item model has to leave room for them, and that is the whole cost today. |
+| A calendar of concerts and releases | Its own milestone, M3, after the collection, whose favourites and bookmarks it reads *(the owner, 2026-10-06)*. |
+| A browser extension for YouTube | Later, and only for the seconds watched on desktop, if the Data Portability spike passes: the history's other paths then capture what and when without one. If it fails, scheduled Takeout runs up to two months late, and the extension is the same-day signal (Q-D; Q-F). |
 | Websites and browsing history | Named in the brief, but not in the first priority. An item that is a website is one more source once the model exists. |
 | Playback of anything | The item links out; the source plays it. |
 | Automatic recommendations | The owner is the recommender; the tool remembers. A model can be laid over a well-tagged log later and constrains nothing now. |
 | Multiple users, social features, a public site | Nothing in a private single-user log prevents them later; an owner column from day one is the whole cost, and whether to pay it is in [08](08-open-questions.md). |
 | Native mobile apps | The website first; what the apps are is Q-F. |
-| Scraping a service's private pages | Imports use each service's export or API, or a file the owner already has. |
+| Scraping a service's private pages | Imports use each service's export or API, or a file the owner already has. Public pages may be scraped for the calendar's feeds: politely, without a login, and only once each site's terms are read and recorded *(the owner, 2026-10-06)*. |
 
 ## Non-goals, permanently
 

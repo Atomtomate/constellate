@@ -1,6 +1,6 @@
 # Coordinator wind-down: M0 decided on paper, four PRs open, the scaffold briefed
 **Summary:** The first day's work stream paused at the owner's request with PR #1 ready, PRs #2 to #4 complete drafts, every lane's worktree clean and the scaffold's director brief saved; nothing merged, and CI never ran.
-**State:** Open — resumes on the owner's word: merge #1, rebase and ready #4, ready #2 and #3, one consolidation PR, then the scaffold through `impl-director`.
+**State:** Folded 2026-10-11 — its decisions are in ADR-0002, ADR-0003, `docs/02`, `docs/07` and `docs/08`; its resume sequence ran (PRs #1 to #6 merged, the M0 consolidation, the scaffold as PR #9) and `2026-10-06-coordinator-handoff.md` carries what is left; the owner's open actions — the two exports, branch protection — are in `2026-10-11-consolidate-m0.md`'s Needs a decision; its traps are not worth an issue.
 
 ## Where things stand (2026-09-23, 19:45)
 

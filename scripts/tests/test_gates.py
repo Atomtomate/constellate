@@ -297,9 +297,11 @@ class PushRefsTest(unittest.TestCase):
             # running the suite there is exactly how the tree a commit *records* gets
             # checked rather than the one on disk. This case has nothing to ask git about.
             self.skipTest("not a git repository -- an extract of a commit, not a worktree")
-        gating, elsewhere = gates.gating_split(gates.ROOT, ["HEAD", "origin/main"], head)
+        # The other revision has to be one that can never be HEAD. `origin/main` was, until a
+        # branch whose first commit touched `scripts/` found it *is* HEAD at that moment.
+        gating, elsewhere = gates.gating_split(gates.ROOT, ["HEAD", self.ZERO], head)
         self.assertEqual(gating, ["HEAD"])
-        self.assertEqual(elsewhere, ["origin/main"])
+        self.assertEqual(elsewhere, [self.ZERO])
 
 
 if __name__ == "__main__":

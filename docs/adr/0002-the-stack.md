@@ -253,6 +253,10 @@ The reasons, strongest first:
     what chose the OS scheduler — nothing of ours supervises it; the alternative is the
     long-running worker rejected above. **Which shape the poller takes is the owner's to confirm
     when the Spotify document is accepted**, and until then nothing writes the sampler.
+    *Settled 2026-09-23: the owner kept the playback sampler as an optional Spotify source on
+    top of the export and Last.fm (`docs/02-domain-model.md` §4), and this shape was put to
+    them with that choice and taken without objection, as the coordinating session's
+    wind-down handoff of that day records. The Spotify document merged on 2026-10-05.*
   - *Whether YouTube can be polled.* Q-D's leaning was that it cannot. The research in flight
     (PR #2) finds a daily path, Google's Data Portability API, if a spike passes: one more
     one-shot on the OS schedule, once a day.
