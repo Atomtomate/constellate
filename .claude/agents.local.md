@@ -39,7 +39,7 @@ backend is SQL: `repos/` is the only module that knows it. `<pkg>` is `api/src/c
 |-------|------|---------------|
 | `impl-database` | `<pkg>/models/`, `<pkg>/repos/`, `<pkg>/db.py`, `api/alembic/`, and their tests under `api/tests/` | routers, services, sources, the contract |
 | `impl-backend` | `<pkg>/api/`, `<pkg>/services/`, `<pkg>/domain/`, `<pkg>/sources/`, `<pkg>/main.py`, `<pkg>/poll.py`, `api/openapi.json`, `api/scripts/`, and their tests under `api/tests/` | migrations, SQL |
-| `impl-frontend` | `web/`, and `extension/` if Q-D calls for one | anything under `api/` |
+| `impl-frontend` | `web/`, and `extension/` once it comes — desktop seconds watched, after the Data Portability spike (`docs/00`'s out-of-scope table; Q-F) | anything under `api/` |
 
 **A module these rows do not name belongs to the agent whose layer imports it** — to the lower
 one where both do, which is the direction the layering already runs — **and a module nothing
