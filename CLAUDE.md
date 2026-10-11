@@ -9,7 +9,8 @@ tracker first, the atlas after, apps last. The brief, and everything derived fro
 
 **M0 closed on 2026-10-05; M1, the tracker, is under way.** The stack (ADR-0002), the
 ingestion seam (ADR-0003) and the domain model (`docs/02-domain-model.md`) are decided, and
-how each service's history is captured is Q-D's answer; the scaffold is M1's first PR. The
+how each service's history is captured is Q-D's answer; the scaffold, M1's first PR, lays the
+stack out as code. The
 open questions are `docs/08-open-questions.md`'s Q-E (where it runs), Q-F (the apps) and Q-G
 (what the calendar adds to the model).
 
@@ -51,8 +52,8 @@ does not route work itself:
 
 - **`impl-director`** — implementation work by default, including work inside a single
   layer. It plans across the layers, says what each owns and in what order, and hands off;
-  it writes no code. Its file-ownership map is in `.claude/agents.local.md` (ADR-0002), and
-  the scaffold PR is the first work it cuts.
+  it writes no code. It cuts along the file-ownership map in `.claude/agents.local.md`
+  (ADR-0002).
 - **`manager`** — every few sessions, and always before a retro: reads the record since its
   last digest and writes one under `docs/digests/`, judged and ranked. The owner reads it
   first; the retro takes its list first. It changes nothing.
@@ -61,9 +62,11 @@ does not route work itself:
   says so, and `ops` invoked before there is one should stop.
 
 Invoke them by name, and write a prompt that stands alone — every agent starts cold. The
-other seven are reachable but not a menu this session chooses from: the implementation
+other eight are reachable but not a menu this session chooses from: the implementation
 specialists (`impl-database`, `impl-backend`, `impl-frontend`) are briefed by the director,
-or directly **only when the owner asks for that agent by name**; the reviewers
+or directly **only when the owner asks for that agent by name**; `qa` walks the product
+against a stated goal as a user would, after a milestone or when the owner asks and never per
+PR, its findings reaching the board through the calling session's close; the reviewers
 (`pr-tech-review`, `pr-direction-review`, `pr-parsimony-review`, `pr-architecture-review`)
 have disjoint scopes and all four run on every PR. Their scopes, models and how to brief
 one are in the fleet's [`.claude/agents/CLAUDE.md`](.claude/agents/CLAUDE.md); this
@@ -101,12 +104,17 @@ few sessions the `retro` agent runs instead of new work. Both conventions are in
 | Path | What |
 |------|------|
 | `docs/adr/` | Decisions. Check status: Accepted, Proposed, Superseded or Parked. |
-| `docs/00`, `03`, `07`, `08` | Scope, architecture, roadmap, open questions. `02` (domain model) arrives with Q-C's answer. |
+| `docs/00`, `02`, `03`, `07`, `08` | Scope, domain model, architecture, roadmap, open questions. |
+| `docs/ideas/` | Idea capture: one file per idea, developed later or never. Has its own `CLAUDE.md`; read it before filing one. |
 | `docs/investigations/` | **Parked** research. Nothing here influences a design decision until deliberately unparked. |
 | `docs/handoffs/` | One file per finished task: what was done, verified, and left open. |
 | `docs/friction/` | One note per time an agent's process failed it. Written by the agent, read by the `retro`. |
 | `docs/reviews/` | A branch's review pass: one report per reviewer, and the implementation agents' plans. |
 | `docs/digests/` | One file per `manager` run. |
+| `api/` | The API package, `constellate`: FastAPI, SQLAlchemy and Alembic on Postgres (ADR-0002) — the layers, the migrations, the tests, and `api/openapi.json`, the contract every client generates from. See `api/CLAUDE.md`. |
+| `web/` | The web client: React + Vite, TypeScript, a consumer of the client generated from the contract. See `web/README.md` and `web/CLAUDE.md`. |
+| `compose.yaml` | The development Postgres: one server on `127.0.0.1:5432` shared with the sibling project, this project's database and role on it. The API runs on the host. |
+| `infra/` | What runs the stack. Today the development database's bootstrap; the rig — the stack script, the Caddyfile, the scheduled task — is Q-E's and arrives with its answer. Edited from the session; no specialist owns it. See `infra/README.md`. |
 | `scripts/` | Repo-wide record checks: what the closing step and the `retro` run rather than re-derive. See `scripts/README.md`. |
 | `.claude/agents/` | The generic agent fleet, a git submodule (ADR-0001). Its `CLAUDE.md` is the fleet's process manual. |
 | `.claude/agents.local.md` | This project's answers to that fleet. |
@@ -143,11 +151,12 @@ These are decided. Changing one needs an ADR, not a commit.
 
 ## Style
 
-Applies everywhere. Language-specific rules go in the directory's own `CLAUDE.md` once a
-language is chosen.
+Applies everywhere. Language-specific rules are in the directory's own `CLAUDE.md`.
 
-- **Every public module, class and function carries a docstring.** Enforced by the linter
-  once there is one, not left to good intentions.
+- **Every public module, class and function carries a docstring.** In the API it is enforced
+  by the linter (ruff's `D1` rules, `api/pyproject.toml`), not left to good intentions; the web
+  client has no docstring linter yet, and there the rule binds by review. Tests are exempt, a
+  test's name being its documentation, and so are generated migration files.
 - **Docstrings say what and why; the signature says how.** Restating the parameter list in
   prose is noise. What earns its place: the constraint a caller must respect, the reason a
   surprising choice was made, what it does *not* do.
@@ -166,6 +175,11 @@ covering only what is specific to it. Do not restate a parent's rules in a child
 |------|--------|
 | `CLAUDE.md` (this) | The project, the working agreement, standing constraints, style |
 | `docs/CLAUDE.md` | How the written record works |
+| `api/CLAUDE.md` | Running the API package: its venv and commands, Python conventions, what CI fails on |
+| `api/src/constellate/CLAUDE.md` | The layering: what belongs in which layer and why, the `sources/` seam, the entry points |
+| `api/alembic/CLAUDE.md` | Migration rules — small directory, dangerous mistakes |
+| `api/tests/CLAUDE.md` | Testing conventions: the two backends, which checks are CI's alone |
+| `web/CLAUDE.md` | The client's conventions — the generated client, its layer rule, how it is tested |
 | `.claude/agents/CLAUDE.md` | Writing and using the agents (the fleet's; read here, edited there) |
 
 When a rule changes, change it in the one file that owns it. A rule stated twice is a rule

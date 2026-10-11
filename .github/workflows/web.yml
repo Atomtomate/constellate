@@ -1,0 +1,56 @@
+name: Web
+
+# Triggered by changes under web/, and by api/openapi.json: the client's types are
+# generated from that contract, so a change to it can break this client without touching a
+# file here. The path list lives once in scripts/gates.py's AREAS, and
+# scripts/tests/test_gates.py fails when this file and that list disagree.
+
+on:
+  pull_request:
+    paths:
+      - "web/**"
+      - "api/openapi.json"
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "api/openapi.json"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A superseded pull-request run answers about a commit nobody waits on. Pushes to main
+  # are not cancelled: each merge is the only run that will ever vouch for it.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # web/package.json's engines: ^22.18 or >=24.2; 24 is what the dev machine runs.
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Generated API client matches api/openapi.json
+        # Regenerates src/api/schema.d.ts and fails on any diff -- the same drift check
+        # api.yml runs for openapi.json itself, one step further down the chain
+        # (web/README.md).
+        run: npm run check:api-types
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

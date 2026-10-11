@@ -14,10 +14,10 @@ stated here in full is what has no other home — the file-ownership map and the
 numbers.
 
 **M0 is done (2026-10-05).** The stack (ADR-0002), the ingestion seam (ADR-0003) and the
-domain model ([`docs/02-domain-model.md`](../docs/02-domain-model.md)) are decided, and the
-sections they decide — file ownership, the contract, the layers, the toolchain, the domain
-invariants — are filled below; a file that arrives with the scaffold PR is named as
-arriving, not as present. One section still says *not yet*: the running stack, until Q-E in
+domain model ([`docs/02-domain-model.md`](../docs/02-domain-model.md)) are decided, the
+scaffold lays the stack out, and the sections they decide — file ownership, the contract, the
+layers, the toolchain, the domain invariants — are filled below and name what exists. One
+section still says *not yet*: the running stack, until Q-E in
 [`docs/08-open-questions.md`](../docs/08-open-questions.md) says where it runs. An agent that
 finds it empty reports it, as its definition says, rather than inventing the answer.
 
@@ -33,8 +33,7 @@ finds it empty reports it, as its definition says, rather than inventing the ans
 ## File ownership (the implementation specialists)
 
 The map was decided by ADR-0002, and this is its only living copy. The line between database and
-backend is SQL: `repos/` is the only module that knows it. `<pkg>` is `api/src/constellate/`, which
-the scaffold PR lays out; until it does, the rows name ground that is about to exist.
+backend is SQL: `repos/` is the only module that knows it. `<pkg>` is `api/src/constellate/`.
 
 | Agent | Owns | Never touches |
 |-------|------|---------------|
@@ -62,23 +61,38 @@ and its installer — which is edited from the session, nor the record: `docs/`,
 
 ## The contract, and the order
 
-- The contract is `api/openapi.json`; what it guarantees is the root
-  [`CLAUDE.md`](../CLAUDE.md#standing-constraints)'s standing constraints. The fleet's build
-  order — schema, then API and contract, then clients — holds.
-- Regenerate after any change to the API surface: from `api/`, run
-  `python scripts/export_openapi.py` (that is `api/scripts/export_openapi.py`). The script and
-  the CI check that the committed file matches the code arrive with the scaffold PR.
+- The contract is `api/openapi.json`: committed, and checked in CI twice — `api.yml` runs
+  `python scripts/export_openapi.py --check` against the code, and `web.yml` runs
+  `npm run check:api-types` against the client generated from it, one step further down. What
+  it guarantees is the root [`CLAUDE.md`](../CLAUDE.md#standing-constraints)'s standing
+  constraints; what its conventions mean — the envelope and the closed `ErrorCode`, cursor
+  pagination, UTC times, `X-Request-ID` — is
+  [`docs/03-architecture.md`](../docs/03-architecture.md)'s Conventions. The fleet's build
+  order — schema, then API and contract, then clients — holds, and is the order the scaffold
+  was built in.
+- Regenerate after any change to the API surface: from `api/`, with its venv,
+  `python scripts/export_openapi.py` (that is `api/scripts/export_openapi.py`; it refuses to
+  export from a `constellate` package that is not this checkout's), then from `web/`,
+  `npm run generate:api-types`, and commit both files with the change. The pre-push hook runs
+  both checks when the change calls for them (`scripts/gates.py`). What a client leans on in
+  the contract by name — the error schemas, the request-id header — is `web/CLAUDE.md`'s.
 
 ## Layers, architecture, and the standard
 
 - The standard and its reasoning: [`docs/03-architecture.md`](../docs/03-architecture.md) —
-  the layer order, where `sources/` and the entry points sit, and the three seams.
-- The per-layer rules in detail: `api/src/constellate/CLAUDE.md`, which **arrives with the
-  scaffold PR**.
-- The layering check `pr-architecture-review` runs: `scripts/check_layering.py`, which **arrives
-  with the scaffold PR**, ported to package `constellate` with the rule for `sources/` that
-  `docs/03` states. Until it exists, the reviewer's definition says what it does instead.
-- The web client's own layer rule arrives with `web/`.
+  the layer order, where `sources/` and the entry points sit, the three seams, and the API's
+  conventions.
+- The per-layer rules in detail: `api/src/constellate/CLAUDE.md` — what belongs in which
+  layer, the `SourceAdapter` seam, the entry points, the one sanctioned SQL, who configures
+  logging.
+- The layering check `pr-architecture-review` runs: `python scripts/check_layering.py` from the
+  repository root, on a bare interpreter. It derives which modules outside the layers are
+  leaves from what reaches them, sanctions the readiness probe's `select 1` by file and
+  statement, and holds `sources/` to `docs/03`'s rule — its tests under `scripts/tests/` carry
+  a case for each direction of it. `record.yml` and the pre-commit hook run it on every change
+  under `api/`.
+- The web client's own layer rule is `web/CLAUDE.md`'s, enforced by `web/src/layering.test.ts`
+  at `npm test` from `web/`.
 
 ## Project docs and record
 
@@ -191,13 +205,14 @@ fleet's to state, and the commands that drive both boards are `scripts/README.md
 
 ## Toolchain
 
-- The record scripts under `scripts/` are stdlib Python on a bare interpreter — Python 3.13 on
-  the dev machine and in CI. Their tests: `python -m unittest discover scripts/tests`.
-- The product toolchain, **once the scaffold exists**: the venv at `api/.venv` — on Windows,
-  `api/.venv/Scripts/python.exe` — and a worktree needs its own; tests from `api/` with that
-  interpreter's `python -m pytest -q`; lint and format with `ruff check .` and `ruff format .`
-  in `api/`. The web client's commands arrive with `web/`.
-- Until then there is no venv and no linter, and the record scripts' tests are the only suite.
+- The record scripts under `scripts/` run on a bare Python 3.13, and their commands are
+  `scripts/README.md`'s.
+- The API package's venv is `api/.venv`, one per worktree; making it is `api/CLAUDE.md`'s
+  "Running it".
+- The API's commands — tests, lint, the contract export — are `api/CLAUDE.md`'s "Running it".
+- The web client's commands are `web/README.md`'s.
+- `scripts/gates.py` runs whichever of these the change calls for from the hooks, and a
+  toolchain that is not installed in the worktree is a skip it reports, never a failure.
 
 ## The running stack (for `ops`)
 

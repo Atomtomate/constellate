@@ -1,0 +1,49 @@
+# `web/` — the web client
+
+React + Vite + TypeScript (ADR-0002), scaffolded here and built out screen by screen from
+here on. Everything in this directory is the web client's; it never touches `api/`
+directly -- see the root `CLAUDE.md`'s standing constraints.
+
+At scaffold time there are no product screens. The shell shows the API health status at
+`/` and a not-found fallback at every other path. M1 brings the timeline and totals;
+sign-in arrives with M1's sign-in decision.
+
+## Running it
+
+Node ^22.18 or >=24.2 is required.
+
+```bash
+npm install
+npm run dev          # http://localhost:5173, proxying /api to the API
+```
+
+The API must be running separately on `127.0.0.1:8000` -- from `api/`, activate its venv
+and run `uvicorn constellate.main:app --reload`. `vite.config.ts` proxies `/api` to it:
+the proxy decides which side answers `/api` requests and the website owns every other
+path, so neither side keeps a list of the other's routes (docs/03-architecture.md
+Conventions, "One origin"). The production proxy is Q-E's decision.
+
+**Set `API_PROXY_TARGET`** to point the dev proxy at an API on another port instead of
+`127.0.0.1:8000`. `vite.config.ts` reads it; left unset, it keeps that default.
+
+```bash
+npm run build         # tsc -b && vite build; static output in dist/, what Caddy serves
+npm run preview       # serve that build locally
+npm test              # vitest run; test files live beside their modules as *.test.ts(x)
+```
+
+## The generated API client
+
+See `web/CLAUDE.md`'s "The generated client" section. Run `npm run generate:api-types`
+after `api/openapi.json` changes; CI runs `npm run check:api-types`.
+
+## Layer rules
+
+`web/CLAUDE.md`'s "Layer rule" section is the single statement of the rules that
+`src/layering.test.ts` enforces. The test reads `src/` off the filesystem so a file added
+later is covered without being listed.
+
+## Routing
+
+The one-origin rule that the dev proxy implements is in "Running it" above. At scaffold
+time: `/` (health status), `*` (NotFound).

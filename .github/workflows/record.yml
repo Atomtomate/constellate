@@ -1,8 +1,8 @@
 name: Record
 
-# The one workflow so far: the written record and the scripts that read it. The path list
-# lives once in scripts/gates.py's AREAS, and scripts/tests/test_gates.py fails when this
-# file and that list disagree.
+# One workflow per area, triggered by the paths that area owns: this one is the written
+# record and the scripts that read it. The path list lives once in scripts/gates.py's
+# AREAS, and scripts/tests/test_gates.py fails when this file and that list disagree.
 #
 # It triggers on everything, which is not an oversight. check_docs.py answers for links
 # across the whole tree, so a rename anywhere can break a handoff's link to it and a
@@ -42,6 +42,12 @@ jobs:
 
       - name: The written record is consistent
         run: python scripts/check_docs.py
+
+      - name: The code matches the layering document
+        # Its subject is api/, but it is a script here, and an edit to the checker is
+        # answered for by running it rather than by its own fixtures alone. It parses with
+        # ast on a bare interpreter, so it costs nothing to keep beside the record checks.
+        run: python scripts/check_layering.py
 
       - name: The record scripts' own tests
         run: python -m unittest discover scripts/tests
