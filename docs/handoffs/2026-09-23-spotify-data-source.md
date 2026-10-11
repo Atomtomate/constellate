@@ -1,6 +1,6 @@
 # Spotify data source researched
 **Summary:** Wrote `docs/01-data-sources-spotify.md`: the extended streaming-history export as the backfill, a dev-mode poller of playback state and `recently-played` for live capture, and periodic re-exports to reconcile.
-**State:** Open — the owner reads the recommendation, requests the export, and says whether the account has Premium; Q-D's Spotify half and Q-C's fields then move in `docs/08`.
+**State:** Folded 2026-10-11 — the research is `docs/01-data-sources-spotify.md` and Q-D is answered in `docs/08` with the owner's paths; Premium was confirmed 2026-10-05; the quota and `timestamp` spike is in issue #13, the Last.fm checks in #12, the export importer in #15; requesting the export is the owner's, in `2026-10-11-consolidate-m0.md`.
 
 ## What was done
 

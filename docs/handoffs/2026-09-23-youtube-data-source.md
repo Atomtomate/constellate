@@ -1,6 +1,6 @@
 # YouTube data source research
 **Summary:** Wrote `docs/01-data-sources-youtube.md`: how YouTube and YouTube Music watch history is backfilled, captured ongoing and given durations, with a recommendation.
-**State:** Open — the owner reads the document and requests the Takeout; the Data Portability API spike and Q-D's answer in `docs/08` remain.
+**State:** Folded 2026-10-11 — the research is `docs/01-data-sources-youtube.md`; Q-D is answered in `docs/08` and the extension's narrowed role is in Q-F; the Data Portability spike is issue #11, the Takeout importer and three of its unverified points #16, the rest of its §7 list stays in the document; requesting the Takeout is the owner's, in `2026-10-11-consolidate-m0.md`.
 
 ## What was done
 

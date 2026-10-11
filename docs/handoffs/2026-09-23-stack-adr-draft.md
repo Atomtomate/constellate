@@ -1,6 +1,6 @@
 # The stack ADR, drafted and accepted
 **Summary:** ADR-0002 drafted, accepted by the owner as option A (the sibling's stack, a one-shot poller fired by the OS scheduler, Postgres), and carried into the overlay, the root `CLAUDE.md`, `docs/03` and `docs/08`.
-**State:** Open — the scaffold PR, cut by `impl-director` along the new map, is the next step.
+**State:** Folded 2026-10-11 — the decision is ADR-0002 and `docs/03`; the scaffold is PR #9, M1's first bullet in `docs/07`; the poller's shape, a bounded sampling run decided 2026-09-23, is issue #13; Q-E's requirement is in `docs/08`; the Task Scheduler facts to verify are issue #14.
 
 ## What was done
 

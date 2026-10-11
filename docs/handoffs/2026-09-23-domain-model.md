@@ -1,6 +1,6 @@
 # Domain model: events, items, creators, sources
 **Summary:** Wrote `docs/02-domain-model.md`, Q-C's answer, and ADR-0003, its ingestion seam, accepted and amended by the owner with no cross-service item merging and Spotify captured by export, Last.fm and an optional poller; the review pass is folded.
-**State:** Open — #1 merges first; then #4 rebases, goes ready, and the consolidation PR follows.
+**State:** Folded 2026-10-11 — the model is `docs/02` and ADR-0003; Q-C is answered in `docs/08`, and the consolidation items it named are made: the root `CLAUDE.md`'s two constraints, the overlay's checklist and lines, Q-E's requirements; retiring §7's sketch is issue #17; §8's open points are the owner's, in `2026-10-11-consolidate-m0.md`'s Needs a decision.
 
 ## What was done
 
