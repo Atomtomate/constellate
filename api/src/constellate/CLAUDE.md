@@ -51,7 +51,8 @@ commit either, for the same reason (`api/tests/CLAUDE.md`).
 |----------|-------|
 | What columns does an event have? | `models/` |
 | How do I fetch this efficiently? | `repos/` |
-| Is this draft event complete? Which local day does an instant fall in? | `domain/` |
+| Is this draft event complete? | `domain/` |
+| Which local day does an instant fall in? | `repos/`: one helper for the configured zone, so totals and the timeline agree (ADR-0002, the store) |
 | What happens when a poll lands, or an export is imported? | `services/` |
 | How does what Spotify or Takeout returns become a draft event? | `sources/` |
 | What status code, what JSON shape? | `api/` |
