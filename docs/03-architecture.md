@@ -12,7 +12,7 @@
   website    --.
                +--HTTPS--> Caddy --> API process ----------.
   extension  --'           (the contract)                  |
-  (if Q-D needs one)                                       |  each through
+  (later; Q-F)                                             |  each through
                                                            |  services/ and
   Spotify Web API <--asks-- poller ----------------------->+  repos/, in its
                             (one-shot, OS scheduler)       |  own process
@@ -31,16 +31,16 @@ Q-E's):
   for what is new since the cursor it stored, ingests it, stores the new cursor and exits. The OS
   scheduler fires it; it is the same code when the stack script, a test or the owner runs it. It
   stores its last successful run per source, so a poller failing silently cannot pass for a
-  quiet day. Which sources are pollable, and how often, is the data-source documents' to say;
-  whether Spotify's listened time needs a playback sampler, and with it a bounded sampling run
-  rather than a single fetch, is the owner's to confirm with the Spotify document (ADR-0002's
-  Consequences).
+  quiet day. Which sources are pollable, and how often, is the data-source documents' to say.
+  Spotify's playback sampler, which the owner kept as an optional source, makes each run a
+  bounded sampling run that exits after a few minutes (ADR-0002's Consequences, settled
+  2026-09-23).
 - **The store**: Postgres. At this scale, around half a million events over a decade, it needs
   indexes and nothing more: no partitioning, no time-series extension, no rollups. It has to be a
   service that starts with its machine, because the poller fires unattended.
 - **The clients**: the website (React + Vite + TypeScript in `web/`, built to static files that
-  Caddy serves), and a browser extension in `extension/` if Q-D finds YouTube needs one. Any app
-  Q-F later names joins them on the same terms.
+  Caddy serves), and later a browser extension in `extension/` for the seconds watched on
+  desktop (Q-D; Q-F). Any app Q-F later names joins them on the same terms.
 
 **Nothing polls a sleeping machine.** What leaves a source's short tail while the host sleeps is
 recovered from that source's export, not from the poll; the one ingestion path below is what
@@ -113,10 +113,8 @@ summary it expands. The website's own layer rule arrives with `web/`.
 
 Named so nobody fills the gap by typing:
 
-- The domain model — what an event, an item and a creator are, and how an item on two sources
-  is one item: Q-C, in `docs/02-domain-model.md` once written.
-- What each source gives, how often the poller runs, and whether an extension exists: Q-D, in
-  the two data-source documents.
+- How often the poller samples: Spotify's unpublished quota sets it, once M1 has measured it
+  (`01-data-sources-spotify.md` §2).
 - The host, and what keeps Postgres and the scheduled task running there: Q-E.
 - How the owner signs in, which M1 needs.
 - The API's conventions — the error envelope's codes, pagination, how times travel. The

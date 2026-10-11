@@ -159,27 +159,24 @@ here in the same PR.
 - **One event per play.** Totals and the timeline read events. An event's item, start,
   duration and basis are resolved from its observations by precedence, never written
   directly, and the event carries no source (ADR-0003; `docs/02-domain-model.md` §1).
-- **Observations are immutable**, and deleted only with the ingest run that brought them, or
-  where their source's terms require it: the Spotify Web API's, deletable as a set within
-  five days of a disconnect, and a live play's (the poller's or Last.fm's), once the export
-  re-sources the event (ADR-0003 and its amendment; `docs/02-domain-model.md` §4).
+- **Observations are immutable**, and deleted only with the ingest run that brought them,
+  where their source's terms require it, or once the export re-sources a live play, the
+  poller's or Last.fm's (ADR-0003, its Consequences and its amendment;
+  `docs/02-domain-model.md` §4).
 - **A record delivered again is dropped by its `record_key`**, the upstream record's identity,
   never the path's (ADR-0003; `docs/02-domain-model.md` §2).
 - **A source's cursor commits in the same transaction as the observations it covers**, and
   drafts are stored oldest first (ADR-0003; `docs/02-domain-model.md` §2).
-- **The log holds no catalogue data**: a service's API facts are cache rows with a fetch date
-  (the root `CLAUDE.md`; `docs/02-domain-model.md` §4).
-- **Items are per source identity**: one ref is one item, merged within a service only on an
-  identifier the service gives (a Spotify ISRC), never across services, never on a name (the
-  root `CLAUDE.md`; `docs/02-domain-model.md` §3).
+- **The root's two constraints from ADR-0003** — no catalogue data in the log, no item merged
+  across services — bind as it states them; within a service, a merge rests only on an
+  identifier the service gives, a Spotify ISRC (`docs/02-domain-model.md` §3).
 - **Nothing depends on the poller.** No event's existence, start, measured duration, item or
   creator depends on the Spotify Web API poller or on a cache row; stopping either costs
   precision, never a play (`docs/02-domain-model.md` §4).
-- **Retention follows each service's terms** (`docs/02-domain-model.md` §4, from the Q-D
-  documents): a YouTube Data API row is refreshed or deleted within 30 days and read as absent
-  after; a Spotify Web API row is kept only while something needs it, 30 days at most unless
-  refreshed; Last.fm's data stays under its 100 MB cap, credited and linked; database backups
-  are kept five days at most, and the plain-format export is the long-term copy.
+- **Retention follows each service's terms as `docs/02-domain-model.md` §4 sets them**: the
+  cache's refresh-or-delete window, the Web API's deletion as a set, Last.fm's cap and its
+  deletion on termination, and the backups' short life. That section owns the numbers, and a
+  change is checked against it.
 
 ## The boards
 

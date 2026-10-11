@@ -5,7 +5,7 @@
 > day the repository was created, from two short messages of brief, and the owner's answers
 > since are dated where they stand.
 
-*Last updated: 2026-10-06*
+*Last updated: 2026-10-11*
 
 ## The brief, in the owner's words
 
@@ -52,20 +52,18 @@ designed so that a log entry and a favourite are the same *item* seen twice.
 
 ## In scope for the first release
 
-The capture paths are the owner's answers to Q-D *(2026-09-23; Spotify Premium confirmed
-2026-10-05)*. The rest of this list is still proposed.
+Spotify's capture paths are the owner's answer to Q-D *(2026-09-23; Premium confirmed
+2026-10-05)*; YouTube's are the research's recommendation, which Q-D records. The rest of
+this list is still proposed.
 
 - One user: the owner. No accounts beyond that.
 - **Spotify**: every play, with track, artist, album, when it started and how long it was
-  listened to. The extended streaming-history export is the backfill and the record; Last.fm's
-  scrobbles are the live tail, and work with no Spotify app; the Web API playback poller is
-  optional, on top, for measured listened time. **The log never depends on the poller**:
-  without it, the export and Last.fm still give every play, and the durations arrive with the
-  export.
-- **YouTube**: every video watched, with title, channel, when and how long. Takeout is the
-  backfill; the Data Portability API is the daily capture, or scheduled Takeout if its spike
-  fails; a video's length comes from the Data API, held as a cache. The seconds actually
-  watched need a browser extension, which comes later and only for desktop.
+  listened to — from the export, Last.fm's scrobbles and, optionally, the Web API poller (Q-D).
+  **The log never depends on the poller**: without it, the export and Last.fm still give
+  every play, and the durations arrive with the export.
+- **YouTube**: every video watched, with title, channel, when and how long — from Takeout and
+  the Data Portability API, with lengths from the Data API (Q-D). The seconds actually watched
+  need a browser extension, which comes later, and only for desktop.
 - A timeline of both, and totals by period and by creator.
 - How each path works and what it costs: [`01-data-sources-spotify.md`](01-data-sources-spotify.md)
   and [`01-data-sources-youtube.md`](01-data-sources-youtube.md).
@@ -78,7 +76,7 @@ Listed so they can be cut without debate later, and so nobody quietly builds the
 |----------|-------------------------|
 | Favourites, ratings, themes, constellations, recommendation lists | The atlas layer; M2 and M4. The log's item model has to leave room for them, and that is the whole cost today. |
 | A calendar of concerts and releases | Its own milestone, M3, after the collection, whose favourites and bookmarks it reads *(the owner, 2026-10-06)*. |
-| A browser extension for YouTube | Later, and only for the seconds watched on desktop: the history's other paths capture what and when without one (Q-D; Q-F). |
+| A browser extension for YouTube | Later, and only for the seconds watched on desktop, if the Data Portability spike passes: the history's other paths then capture what and when without one. If it fails, scheduled Takeout runs up to two months late, and the extension is the same-day signal (Q-D; Q-F). |
 | Websites and browsing history | Named in the brief, but not in the first priority. An item that is a website is one more source once the model exists. |
 | Playback of anything | The item links out; the source plays it. |
 | Automatic recommendations | The owner is the recommender; the tool remembers. A model can be laid over a well-tagged log later and constrains nothing now. |

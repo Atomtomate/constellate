@@ -2,7 +2,7 @@
 
 > **Exploratory plan.** Ordering is the useful part; nothing here has an estimate yet.
 
-*Last updated: 2026-10-06*
+*Last updated: 2026-10-11*
 
 Ordered by dependency, not by date. Written on the day the repository was created and
 reordered the same day, when the owner named the tracker as the first priority; the calendar
@@ -84,12 +84,12 @@ to the model is Q-G.
 - The calendar typed by hand: a table of occasions, and a page that lists them, where the
   owner types one and marks one *going* or *not interested*.
 - An ICS feed of it, with reminders, subscribable from Proton Calendar and Google Calendar.
-- Then the feeds, which fill it with nothing typed: concerts from Ticketmaster Discovery for
-  the bands among the atlas's favourites; release dates from TMDB for films, and from Steam and
-  IGDB for games, for the releases the owner bookmarked.
+- Then the feeds, which fill it with nothing typed. Which feeds, and for which bands and
+  releases, are the idea's open questions; its leaning is Ticketmaster Discovery for concerts,
+  TMDB for films, and Steam and IGDB for games.
 
-**Done when:** the next concert of a favourite band appears on the owner's phone without being
-typed.
+**Done when:** the next concert of one of the owner's bands appears on the owner's phone
+without being typed.
 
 ---
 

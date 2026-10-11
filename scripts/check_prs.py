@@ -4,8 +4,9 @@ The rule is the root ``CLAUDE.md``'s working agreement (since 2026-09-14, after 
 before its four-reviewer pass had run): a PR opens as a draft and is marked ready only when it
 is ready to merge -- the pass run and folded, its reports committed -- and a PR that stacks on
 another stays a draft until its base has merged. Ready is the one signal the owner merges on,
-and GitHub cannot enforce the rule on a private repository on the free plan, so this script is
-the check, run at the closing step. It reports, never fixes. It reads one repository
+and nothing on GitHub enforces it -- branch protection, available since the repository went
+public on 2026-10-05, is not configured -- so this script is the check, run at the closing
+step. It reports, never fixes. It reads one repository
 (``gh_json.REPO``) and asks about another only when a body names one it must merge after: a
 stacked PR in the fleet repo is still re-pointed by hand, as the rule says.
 

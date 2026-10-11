@@ -17,7 +17,8 @@ Branch `claude/consolidate-m0` in `C:\wt\constellate-consolidate`, from `main` a
   the poller; the out-of-scope table defers the calendar and the extension and records the
   scraping stance; what nothing decided stays *proposed*.
 - **The calendar idea**: three dated decisions (its milestone, scraping, Proton and Google
-  Calendar subscriptions, the last verified on both help pages); status stays `shaped`.
+  Calendar subscriptions, the last verified on both help pages); `adopted`, which is what
+  `docs/ideas/CLAUDE.md` calls an idea the roadmap holds.
 - **Instruction files, approved by the owner in the session**: the root `CLAUDE.md`'s banner,
   ADR-0003's two standing constraints, and the public-repository sentence; the overlay's banner,
   domain-model line and a reviewer checklist of domain invariants; `docs/CLAUDE.md`'s table.
@@ -26,6 +27,11 @@ Branch `claude/consolidate-m0` in `C:\wt\constellate-consolidate`, from `main` a
   touches `scripts/`, because it took `origin/main` to be "not HEAD"; it now uses the zero sha.
 - **Folded**: the coordinator's wind-down, the four lane handoffs and the founding handoff, each
   State line naming where its content and open items went.
+- **The review pass's fold** reached past the brief's files where an answered question had left
+  a document stale: a dated note in ADR-0002 that the sampler's shape was settled on 2026-09-23;
+  `docs/02`'s banner; `docs/03`'s poller, clients and "Not decided here"; a note on the Spotify
+  document's §5 that the owner chose otherwise; the open calendar handoff's State; and
+  `check_prs.py`'s docstring, which still called the repository private.
 - **Issues**, product board, M1: #11 the Data Portability spike, #12 the Last.fm source and its
   three unknowns, #13 the playback sampler, #14 the scheduled task, #15 the Spotify export
   importer, #16 the Takeout importer, #17 retiring `docs/02` §7's sketch. Agents board: #18 the

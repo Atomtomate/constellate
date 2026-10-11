@@ -1,6 +1,6 @@
 # Idea filed: a calendar of concerts and releases, and the ideas capture surface
 **Summary:** Created `docs/ideas/` — rules, template, index — and filed the owner's calendar idea at `shaped`: how it fits the model (one new noun, the occasion), sixteen feeds verified with URL and date, open questions, and a roadmap proposal.
-**State:** Open — the owner reads the idea, answers its first three open questions and says where it sits in the roadmap; the root `CLAUDE.md`'s table gains a `docs/ideas/` row in the consolidation PR.
+**State:** Open — the owner answers the idea's first three open questions; its place, M3, was decided on 2026-10-06, and the root `CLAUDE.md`'s `docs/ideas/` row waits on the owner's approval of that instruction-file edit.
 
 ## What was done
 

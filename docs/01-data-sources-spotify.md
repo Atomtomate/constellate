@@ -366,6 +366,12 @@ the export's own fields and treat the rest as enrichment that arrives later (inf
 
 ## 5. Recommendation
 
+*The owner's choice of 2026-09-23 differs from this recommendation: the export is the record,
+Last.fm's scrobbles are the live tail and the backbone, with no Spotify app needed, and the Web
+API poller is optional on top; the tracker reads no `recently-played` of its own
+(`02-domain-model.md` §1, §4; Q-D in `08-open-questions.md`). The recommendation is kept as it
+was researched.*
+
 **Backfill from the extended history; capture with our own poller of both endpoints; reconcile
 by re-requesting the extended history every few months.** Last.fm is optional insurance for
 poller downtime. ListenBrainz is not recommended, because it publishes listens. On the text of

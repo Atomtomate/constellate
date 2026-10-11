@@ -1,7 +1,7 @@
 ---
-status: shaped
+status: adopted
 created: 2026-10-05
-updated: 2026-10-06
+updated: 2026-10-11
 ---
 
 # A calendar of concerts and releases
@@ -20,8 +20,7 @@ updated: 2026-10-06
 - [x] Checked against the [domain model](../02-domain-model.md)
 - [x] Stub or sketch written — the occasion table, under Sketch
 - [x] Sized — roughly, under Size
-- [x] Where it sits in the roadmap — its own milestone, M3 (the owner, 2026-10-06; Decisions)
-- [ ] Decision: adopt / park / drop
+- [x] Decision: adopted (the owner, 2026-10-06) — its own milestone, M3 in the roadmap
 
 ## Decisions
 
@@ -29,8 +28,8 @@ The owner's, relayed by the coordinating session:
 
 - **2026-10-06 — Where it sits: its own milestone.** Option B below. It is M3 in
   [`07`](../07-roadmap.md), between the collection (M2) and constellations and recommendations,
-  now M4; the apps are now M5. The status stays `shaped`: an idea moves one status at a time,
-  and the open questions below still stand.
+  now M4; the apps are now M5. The idea is `adopted`: the roadmap holds the work, this file
+  stays as its origin story, and the open questions below are M3's to answer.
 - **2026-10-06 — Scraping: public pages, under each site's terms.** Public pages may be scraped
   for the calendar's feeds, politely and without a login, once each site's terms have been read
   and recorded. Scraping a service's private pages stays excluded

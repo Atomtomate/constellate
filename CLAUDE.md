@@ -8,9 +8,9 @@ tracker first, the atlas after, apps last. The brief, and everything derived fro
 [`docs/00-vision-and-scope.md`](docs/00-vision-and-scope.md).
 
 **M0 closed on 2026-10-05; M1, the tracker, is under way.** The stack (ADR-0002), the
-ingestion seam (ADR-0003), the domain model (`docs/02-domain-model.md`) and the capture
-paths (`docs/01-data-sources-*.md`) are decided; the scaffold is M1's first PR. The open
-questions are `docs/08-open-questions.md`'s Q-E (where it runs), Q-F (the apps) and Q-G
+ingestion seam (ADR-0003) and the domain model (`docs/02-domain-model.md`) are decided, and
+how each service's history is captured is Q-D's answer; the scaffold is M1's first PR. The
+open questions are `docs/08-open-questions.md`'s Q-E (where it runs), Q-F (the apps) and Q-G
 (what the calendar adds to the model).
 
 ## Working agreement
@@ -134,10 +134,9 @@ These are decided. Changing one needs an ADR, not a commit.
 - **One language per deployable.** Python for the API package; TypeScript for the website and
   for the extension, each a deployable of its own; nothing crosses a language boundary but the
   contract (ADR-0002).
-- **The log holds no catalogue data.** Whatever a service's API says about an item — its
-  length, category, ISRC, artists — is a cache row with a fetch date, refreshable and
-  purgeable, never a column of the log; titles and names come from the owner's own records
-  (ADR-0003; `docs/02-domain-model.md` §4).
+- **The log holds no catalogue data.** Whatever a catalogue says about an item — its length,
+  category, ISRC, per-track artists — is a cache row with a fetch date, refreshable and
+  purgeable, never a column of the log (ADR-0003; `docs/02-domain-model.md` §4).
 - **No item is merged across services.** An item is one source identity, merged within a
   service only on an identifier the service gives, never across services and never on a name
   (the owner, 2026-09-23; ADR-0003; `docs/02-domain-model.md` §3).

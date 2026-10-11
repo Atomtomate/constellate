@@ -2,7 +2,7 @@
 
 > **Exploratory plan.** Answered questions move to the bottom rather than being deleted.
 
-*Last updated: 2026-10-06*
+*Last updated: 2026-10-11*
 
 ## Still open
 
@@ -17,13 +17,16 @@ chosen has to give what the decisions so far require of it:
   before the first migration (ADR-0002, Consequences).
 - **Database backups kept at most five days**, with the plain-format export of the log as the
   long-term copy, because a backup holds cache rows and live plays past what the services'
-  terms allow (ADR-0003's amendment; `02-domain-model.md` §4).
+  terms allow (`02-domain-model.md` §4).
 - **Encryption at rest**, if the Data Portability API carries YouTube's daily capture: its
   policy requires it (`02-domain-model.md` §4; `01-data-sources-youtube.md` §3.2).
 - **A scheduler that fires the poller every few minutes, all day**, as a bounded sampling run
-  (the owner, 2026-09-23; ADR-0002), registered to run whether or not the owner is signed in,
-  with the daily jobs beside it. If the Spotify poller runs, the owner signs in to Spotify
-  every six months (`01-data-sources-spotify.md` §2).
+  (the owner, 2026-09-23; ADR-0002's Consequences), registered to run whether or not the owner
+  is signed in, with the daily jobs beside it. If the Spotify poller runs, the owner signs in
+  to Spotify every six months (`01-data-sources-spotify.md` §2).
+- **From M3, the calendar's feed reachable from the internet**, because Proton Calendar and
+  Google Calendar fetch a subscribed calendar from their own servers (the calendar idea's
+  "How it fits the model", inferred there).
 
 ### Q-F — What is "a system of apps"?
 
@@ -75,16 +78,17 @@ not an item; a theme and a constellation share a shape, not a meaning. Items are
 source identity, merged within a service only on an identifier it gives (a Spotify ISRC) and
 never across services, the owner's choice of 2026-09-23. What the model leaves open is its §8.
 
-**Q-D — How does the history get out of Spotify and YouTube?** → **The two research
-documents' paths, Spotify's as the owner chose them** *(2026-09-23; Premium confirmed
-2026-10-05)*. The documents are
-[`01-data-sources-spotify.md`](01-data-sources-spotify.md) and
-[`01-data-sources-youtube.md`](01-data-sources-youtube.md). **Spotify**: the extended
-streaming-history export is the record; Last.fm's scrobbles of Spotify are the live tail and
-the backbone, which work with no Spotify app; the Web API playback poller is optional on top,
+**Q-D — How does the history get out of Spotify and YouTube?** → **The two research documents'
+paths, Spotify's as the owner chose them** *(2026-09-23; Premium confirmed 2026-10-05)*. The
+documents are [`01-data-sources-spotify.md`](01-data-sources-spotify.md) and
+[`01-data-sources-youtube.md`](01-data-sources-youtube.md). **Spotify**, as the owner chose: the
+extended streaming-history export is the record; Last.fm's scrobbles of Spotify are the live tail
+and the backbone, which work with no Spotify app; the Web API playback poller is optional on top,
 for measured listened time, its policy risk accepted. The log never depends on the poller.
-**YouTube**: Takeout is the backfill, the Data Portability API the daily capture (scheduled
-Takeout if its spike fails), `videos.list` gives lengths as a cache refreshed within 30 days,
-and a browser extension comes later, only for seconds watched on desktop. "How long" is time
-actually played where a source measures it, and each event's basis says when it is not
-(`02-domain-model.md` §1). No ADR: each path is a source adapter under ADR-0003's seam.
+**YouTube**, the research's recommendation, which no owner decision has changed: Takeout is the
+backfill, the Data Portability API the daily capture (scheduled Takeout if its spike fails),
+`videos.list` gives lengths as a cache refreshed within 30 days, and a browser extension comes
+later, only for seconds watched on desktop — sooner if the spike fails, since scheduled Takeout runs
+up to two months late (Q-F). "How long" is time actually played where a source measures it, and each
+event's basis says when it is not (`02-domain-model.md` §1). No ADR: each path is a source adapter
+under ADR-0003's seam.

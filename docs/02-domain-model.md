@@ -1,15 +1,14 @@
 # 02 — Domain model
 
-> **A sketch to argue with, not a specification.** This answers Q-C in
-> [08](08-open-questions.md) for the owner to accept or correct. It builds on three documents on
-> open pull requests when it was written — `01-data-sources-spotify.md`,
-> `01-data-sources-youtube.md` and the stack ADR (`0002-the-stack.md`, whose option A the owner
-> has accepted) — and cites their findings by document, section and source number, so a claim
-> can be traced to the page that made it. Two parts are decided: the ingestion seam, as
-> [ADR-0003](adr/0003-the-ingestion-seam.md), and no merging of items across services, both
-> chosen by the owner on 2026-09-23.
+> **The model M1 builds on.** This is Q-C's answer, which [08](08-open-questions.md) records.
+> It was written on three documents then on open pull requests, all merged since —
+> `01-data-sources-spotify.md`, `01-data-sources-youtube.md` and the stack ADR
+> (`0002-the-stack.md`) — and cites their findings by document, section and source number, so
+> a claim can be traced to the page that made it. The owner's decisions of 2026-09-23 in it are
+> the ingestion seam, as [ADR-0003](adr/0003-the-ingestion-seam.md), no merging of items
+> across services, and Spotify's paths (§4); what stays open is §8.
 
-*Last updated: 2026-09-23*
+*Last updated: 2026-10-11*
 
 ## The model in brief
 
