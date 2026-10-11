@@ -7,7 +7,7 @@ That only stays true if the record is maintained. Read the root `CLAUDE.md` firs
 
 | Path | Holds | Written when |
 |------|-------|--------------|
-| `00`, `03`, `07`, `08` (and `02` once it exists) | Scope, architecture, roadmap, open questions; later the domain model | The plan changes |
+| `00`, `02`, `03`, `07`, `08` | Scope, domain model, architecture, roadmap, open questions | The plan changes |
 | `adr/` | Decisions, with the reasoning that produced them | A decision is made |
 | `investigations/` | External constraints, researched then **parked** | Reality is discovered |
 | `ideas/` | Things we might want: one file per idea, captured fast and developed later or never; [`ideas/CLAUDE.md`](ideas/CLAUDE.md) says how | Someone has a thought |

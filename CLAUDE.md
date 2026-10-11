@@ -7,10 +7,11 @@ thematic constellations between their creators, so that "what would you recommen
 tracker first, the atlas after, apps last. The brief, and everything derived from it, is
 [`docs/00-vision-and-scope.md`](docs/00-vision-and-scope.md).
 
-**The project is at M0.** The stack is decided (ADR-0002) and its scaffold is the next PR;
-there is no product code and no schema yet. What exists is the written plan, the agent fleet
-and the record. The open questions the first schema and the first source wait on are
-`docs/08-open-questions.md`'s Q-C and Q-D.
+**M0 closed on 2026-10-05; M1, the tracker, is under way.** The stack (ADR-0002), the
+ingestion seam (ADR-0003), the domain model (`docs/02-domain-model.md`) and the capture
+paths (`docs/01-data-sources-*.md`) are decided; the scaffold is M1's first PR. The open
+questions are `docs/08-open-questions.md`'s Q-E (where it runs), Q-F (the apps) and Q-G
+(what the calendar adds to the model).
 
 ## Working agreement
 
@@ -37,8 +38,9 @@ The owner wants control over what happens.
   still cannot go ready states `Blocked: <reason>` in its body**, on a line of its own —
   the one fact about a PR nothing can derive, and the line `scripts/close_report.py`
   reads. `python scripts/check_prs.py --fetch` at the closing step reports a ready PR that
-  breaks what it can see. GitHub cannot enforce any of this on a private repository on the
-  free plan, so the draft flag is the guard.
+  breaks what it can see. The repository is public since 2026-10-05, so branch protection is
+  available; it is not configured yet, and until the owner decides on it the draft flag is
+  the guard.
 - **The owner reviews everything** and sends comments back to act on.
 - Keep commits logically ordered so `git log -p` reads in sequence.
 
@@ -132,6 +134,13 @@ These are decided. Changing one needs an ADR, not a commit.
 - **One language per deployable.** Python for the API package; TypeScript for the website and
   for the extension, each a deployable of its own; nothing crosses a language boundary but the
   contract (ADR-0002).
+- **The log holds no catalogue data.** Whatever a service's API says about an item — its
+  length, category, ISRC, artists — is a cache row with a fetch date, refreshable and
+  purgeable, never a column of the log; titles and names come from the owner's own records
+  (ADR-0003; `docs/02-domain-model.md` §4).
+- **No item is merged across services.** An item is one source identity, merged within a
+  service only on an identifier the service gives, never across services and never on a name
+  (the owner, 2026-09-23; ADR-0003; `docs/02-domain-model.md` §3).
 
 ## Style
 
