@@ -42,7 +42,7 @@ The owner's first priority: what was listened to and watched, when, and for how 
 
 - **The scaffold**, first: `api/` and `web/` laid out along the overlay's ownership map, the
   layering check, and the gate areas with their workflows — no product endpoint and no table
-  yet (ADR-0002).
+  yet (ADR-0002) — **done** *(2026-10-11, PR #9)*.
 - Spotify listening history into the store, each play with track, artist, album, start time
   and duration: the extended streaming-history export as the backfill and the record;
   Last.fm's scrobbles as the live tail, with no Spotify app; the Web API playback poller as an

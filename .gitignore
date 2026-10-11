@@ -9,3 +9,5 @@ __pycache__/
 .ruff_cache/
 .claude/settings.local.json
 .claude/worktrees/
+# The `sessions` skill's dump of the app's session listing: per-machine, never committed.
+.claude/sessions.json
