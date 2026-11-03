@@ -4,7 +4,7 @@
 > [ADR-0002](adr/0002-the-stack.md); where a detail waits on another question it names that
 > question rather than guessing.
 
-*Last updated: 2026-10-06*
+*Last updated: 2026-11-03*
 
 ## Shape
 
@@ -22,8 +22,8 @@
                                                        Postgres
 ```
 
-Four moving parts, on a machine the owner controls (where, and what keeps them running, is
-Q-E's):
+Four moving parts, on a machine the owner controls (Q-E has placed the store and the poller, and
+leaves the public URL and the proxy open):
 
 - **The API process**: FastAPI, Python, package `constellate` in `api/`. It serves the contract
   and is the only way a client reaches the data.
@@ -68,6 +68,13 @@ recognises a polled play and an exported play as the same play is each data-sour
 whether an import is a command or an upload through the website is Q-D's detail. Whichever, it
 enters through that one service.
 
+A catalogue-only source, such as `youtube-data-api`, is not a second write path, because it never
+writes to the log. It sits behind `CatalogueAdapter`, the second protocol in `services/sources.py`
+beside `SourceAdapter`: it yields catalogue facts for the cache, not draft events, and those facts
+reach only `catalogue_cache`, through the one cache write. The log never depends on the cache
+(`docs/02-domain-model.md` §4), so this is a clarification inside ADR-0003's line between them and
+not a new decision (`docs/reviews/m1-plan/impl-director-check-2.md`, finding 9).
+
 **One language per deployable.** Python for the API package — the API process, the poller, the
 importers. TypeScript for the website, and for the extension as a deployable of its own. Nothing
 crosses a language boundary but the contract.
@@ -82,7 +89,7 @@ services/   use cases; orchestrates repos, domain, and the interfaces sources im
 repos/      queries: the only module that knows SQL
 models/     SQLAlchemy tables: the database's shape
 domain/     types and rules, the draft event among them; no I/O of any kind
-sources/    one adapter per source: HTTP or a file format in, draft events out; never SQL
+sources/    one adapter per source: HTTP or a file in, draft events or catalogue facts out; no SQL
 ```
 
 - **Dependencies point one way**: `api/` → `services/` → `repos/` → `models/`. A router that
@@ -190,10 +197,9 @@ different thing with a shared word.
 
 **Times.** Every instant on the wire is ISO-8601 in UTC with a trailing `Z` —
 `2026-10-05T14:00:00Z` — in a response and in a request alike. In the package an instant is an
-aware `datetime` in UTC and Pydantic writes the `Z`; a naive one is a bug. Which zone buckets an
-instant into a local day is `docs/02-domain-model.md`'s open point, and nothing here pre-empts
-it: a local day, where an endpoint returns one, is a date, and the instants it was built from
-travel as above.
+aware `datetime` in UTC and Pydantic writes the `Z`; a naive one is a bug. One configured zone
+buckets an instant into a local day (`docs/02-domain-model.md` §8): a local day, where an endpoint
+returns one, is a date, and the instants it was built from travel as above.
 
 **`X-Request-ID`.** Every response carries an `X-Request-ID` header: an opaque id minted per
 request by an ASGI middleware in `api/request_id.py`, never read from the request, and the same
@@ -217,5 +223,5 @@ Named so nobody fills the gap by typing:
 
 - How often the poller samples: Spotify's unpublished quota sets it, once M1 has measured it
   (`01-data-sources-spotify.md` §2).
-- The host, and what keeps Postgres and the scheduled task running there: Q-E.
+- The public URL and the rig's proxy: Q-E, whose store half is answered.
 - How the owner signs in, which M1 needs.

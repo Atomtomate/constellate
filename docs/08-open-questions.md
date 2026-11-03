@@ -2,19 +2,24 @@
 
 > **Exploratory plan.** Answered questions move to the bottom rather than being deleted.
 
-*Last updated: 2026-10-11*
+*Last updated: 2026-11-03*
 
 ## Still open
 
 ### Q-E — Where does it run?
 
-The tracker's poller has to run somewhere all day. The sibling project serves from a PC
-the owner controls; the same rig could serve this. Open until M1 needs it. Whatever host is
-chosen has to give what the decisions so far require of it:
+**The store's half is answered** *(2026-10-19)*. The owner, asked "Q-E's store half, due before the
+first migration ends the free switch to SQLite: where does Postgres run for the owner's own data?
+(The public URL and the rig's proxy can stay open.)", chose "The sibling PC, as a service
+(Recommended)": "The same machine the boardgame tracker's Postgres already runs on, Postgres
+installed as a Windows service rather than Docker so it survives reboots unattended; the scheduled
+poller runs there too." No ADR: ADR-0002 already requires "a service that starts with the machine,
+wherever Q-E puts it", so the store stays Postgres and its SQLite fallback falls away.
 
-- **A database server that starts with the machine**, because the poller fires unattended.
-  Where that cannot be promised, the store is SQLite instead, a switch that costs nothing
-  before the first migration (ADR-0002, Consequences).
+**Still open: the public URL and the rig's proxy.** The sibling project serves from a PC the owner
+controls; the same rig could serve this. What the decisions so far require of the host, the store
+aside:
+
 - **Database backups kept at most five days**, with the plain-format export of the log as the
   long-term copy, because a backup holds cache rows and live plays past what the services'
   terms allow (`02-domain-model.md` §4).
@@ -51,8 +56,6 @@ starts. The argument so far is the idea file's "How it fits the model" and "Open
   copy of the sibling project's with its product checks left out, and two copies drift.
   The fleet's own rule is that project-measuring tooling stays with the project; these
   measure the record rather than the product, which argues for the move.
-- **Does the log need an owner column from day one?** One user today; the column is
-  cheap, the retrofit is a migration.
 
 ---
 
@@ -67,7 +70,7 @@ tracker's FastAPI, SQLAlchemy, Alembic and Postgres, with a committed OpenAPI co
 React + Vite + TypeScript client; the poller a one-shot command fired by the OS scheduler.
 Chosen by the owner over a Python-only stack with pages rendered on the server, TypeScript end
 to end, and the same stack on SQLite, chiefly because the fleet's file-ownership map for it is
-already proven. The map is in `.claude/agents.local.md`; where the store runs is still Q-E's.
+already proven. The map is in `.claude/agents.local.md`; where the store runs is Q-E's.
 
 **Q-C — What is the domain model?** → **One event per play, resolved from kept observations;
 one item per source identity** *(2026-09-23)* → ADR-0003. The model is
@@ -92,3 +95,8 @@ later, only for seconds watched on desktop — sooner if the spike fails, since 
 up to two months late (Q-F). "How long" is time actually played where a source measures it, and each
 event's basis says when it is not (`02-domain-model.md` §1). No ADR: each path is a source adapter
 under ADR-0003's seam.
+
+**Does the log need an owner column from day one?** → **Yes** *(2026-11-03)*. The owner chose "Add
+it now", against the director's leaning; [`02-domain-model.md`](02-domain-model.md) §8 quotes the
+ask and what it costs. No ADR: none rules the column out, and `00-vision-and-scope.md` defers
+multiple users, not the column.
