@@ -163,7 +163,7 @@ scaffold ships the generic codes:
 | `invalid_request` | 422 | Unreadable: a malformed body, a bad parameter. Carries `fields`. |
 | `not_found` | 404 | The thing referenced does not exist. |
 | `conflict` | 409 | Collides with something that already exists. |
-| `unauthenticated` | 401 | The caller is not signed in. In the closed set now so the contract's enum does not change when sign-in arrives; what credential a caller presents, and what challenge the 401 carries, are M1's sign-in decision. |
+| `unauthenticated` | 401 | The caller has no live session (ADR-0004). In the closed set now so the contract's enum does not change when sign-in arrives; whether the 401 carries a challenge is the sign-in lane's. |
 | `forbidden` | 403 | Signed in, but not allowed. |
 | `internal_error` | 500 | Nothing more specific caught it. A fixed message, never the exception's text, so no stack detail reaches a client. |
 
@@ -224,4 +224,3 @@ Named so nobody fills the gap by typing:
 - How often the poller samples: Spotify's unpublished quota sets it, once M1 has measured it
   (`01-data-sources-spotify.md` §2).
 - The public URL and the rig's proxy: Q-E, whose store half is answered.
-- How the owner signs in, which M1 needs.
