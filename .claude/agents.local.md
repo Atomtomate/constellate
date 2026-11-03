@@ -13,13 +13,12 @@ copying it; a rule stated twice is a rule that will eventually contradict itself
 stated here in full is what has no other home — the file-ownership map and the board
 numbers.
 
-**M0 is done (2026-10-05).** The stack (ADR-0002), the ingestion seam (ADR-0003) and the
-domain model ([`docs/02-domain-model.md`](../docs/02-domain-model.md)) are decided, the
-scaffold lays the stack out, and the sections they decide — file ownership, the contract, the
-layers, the toolchain, the domain invariants — are filled below and name what exists. One
-section still says *not yet*: the running stack, until Q-E in
-[`docs/08-open-questions.md`](../docs/08-open-questions.md) says where it runs. An agent that
-finds it empty reports it, as its definition says, rather than inventing the answer.
+Where the project stands is not restated here: [`docs/07-roadmap.md`](../docs/07-roadmap.md)'s
+done markers say what is built, and [`docs/08-open-questions.md`](../docs/08-open-questions.md)
+says what is still open (the owner's answer of 2026-11-03, which the root
+[`CLAUDE.md`](../CLAUDE.md) quotes). A section below that says *not yet* stays so until the
+question it names is answered, and an agent that finds one empty reports it, as its definition
+says, rather than inventing the answer.
 
 ## Modes
 

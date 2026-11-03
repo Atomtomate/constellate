@@ -49,7 +49,14 @@ decisions, a record that a cold agent can read, and the checks that keep both ho
 - **The fleet moves when this repository says so.** A fleet change reaches here as a
   pointer bump in a PR of its own, and `open_work.py --fetch` reports how far behind the
   pointer is. Nothing product-facing depends on the submodule being present: CI clones
-  without it, and `check_docs.py` treats its path as a boundary it does not walk.
+  without it, and `check_docs.py` treats its path as a boundary it does not walk. *Revised
+  2026-11-03: the owner, asked "The digest's fourth recommendation: a fleet pointer bump rides in
+  the next close's record commit once the fleet PR has merged, instead of a lane and a PR of its
+  own (the last one took five days for two files). ADR-0001 is untouched either way.", chose "Bump
+  in the next close (Recommended)": "The closing step moves the pointer when open_work.py shows it
+  trailing; the root CLAUDE.md's gotcha changes one sentence." So a bump no longer needs a PR of
+  its own. The decision is untouched, as the ask said: the fleet is still consumed, and it still
+  moves only when this repository moves the pointer.*
 - **A `git worktree add` leaves the submodule empty**, and a session that starts in that
   worktree is blind to the whole fleet. The `post-checkout` hook fills it; the root
   `CLAUDE.md`'s "Environment gotchas" says how to activate it and what to do when a session
