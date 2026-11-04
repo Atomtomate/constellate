@@ -135,21 +135,22 @@ class PassReasonTest(unittest.TestCase):
             _repo(root)
             self.assertIsNone(hook_stop.pass_reason(root))
 
-    def test_unattended_blocks_with_code_and_no_pass_and_attended_needs_a_pr(self):
+    def test_unattended_by_default_blocks_with_code_and_no_pass_and_attended_needs_a_pr(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._branch(root)
-            with mock.patch.object(hook_stop, "open_pr", return_value=None):
-                self.assertIsNone(hook_stop.pass_reason(root))
-            _git(root, "config", "constellate.mode", "unattended")
             why = hook_stop.pass_reason(root)
             self.assertIn("Unattended run", why)
             self.assertIn("1 commit(s) and no review pass", why)
+            _git(root, "config", "constellate.mode", "attended")
+            with mock.patch.object(hook_stop, "open_pr", return_value=None):
+                self.assertIsNone(hook_stop.pass_reason(root))
 
     def test_an_open_pr_without_a_pass_blocks_unless_the_body_says_not_run(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self._branch(root)
+            _git(root, "config", "constellate.mode", "attended")
             pr = {"number": 9, "isDraft": True, "body": "## Review pass\n\npending\n"}
             with mock.patch.object(hook_stop, "open_pr", return_value=pr):
                 self.assertIn("PR #9 is open", hook_stop.pass_reason(root))

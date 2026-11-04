@@ -22,10 +22,11 @@ that finds one empty reports it, as its definition says, rather than inventing t
 
 | Mode | Declared by | What it expects of the session |
 |------|-------------|--------------------------------|
-| attended | nothing; the default | The owner is in the loop: a decision only they can take is asked, with a leaning, and the turn waits. |
-| unattended | `git config --worktree constellate.mode unattended` in the lane's worktree (this clone has `extensions.worktreeConfig` on) | Nobody will say continue: the turn does not end with the review pass unrun, a decision only the owner can take is filed as an issue rather than waited on, and `scripts/hook_stop.py` enforces the first of those. |
+| unattended | nothing; the default (the fleet manual records the owner's decision of 2026-09-14) | Nobody will say continue: the turn does not end with the review pass unrun, and `scripts/hook_stop.py` enforces it. |
+| attended | `git config --worktree constellate.mode attended` in the owner's own checkout (this clone has `extensions.worktreeConfig` on) | The owner is in the loop: the hook asks for the pass once a PR is open, not before. |
 
-`scripts/mode.py` reads the key for both hooks; anything but `unattended` is attended.
+`scripts/mode.py` reads the key for both hooks; anything but `attended` is unattended. What waits
+for the owner in either mode is the root `CLAUDE.md`'s working agreement.
 
 ## File ownership (the implementation specialists)
 
@@ -111,9 +112,8 @@ and `pr-direction-review`:
   ([`scripts/README.md`](../scripts/README.md)). The director reads it for what shares the
   request's files or issues; every session sees it at start through the hook there.
 
-**When the diff is work on the agent setup itself** — this overlay, a `CLAUDE.md`, the
-scripts under `scripts/` — the product docs are silent on it; its direction is the agents
-board below, the fleet's `.claude/agents/CLAUDE.md`, and ADR-0001.
+**Work on the agent setup itself** — this overlay, a `CLAUDE.md`, `scripts/` — has its
+direction in ADR-0001 and on the agents board below, as `pr-direction-review` reads it.
 
 The friction and handoff channels (`docs/friction/`, `docs/handoffs/`) are the fleet's own
 conventions; the fleet `CLAUDE.md` states them, and each directory's README states its
@@ -141,10 +141,9 @@ A reviewer's brief is `python scripts/review_briefs.py`'s output, never freehand
 brief may carry — the head it was written at, the diff measured, the report's shape and
 cap — is that script's to fix, and `scripts/README.md`'s row for it is the fuller
 statement. An agent told to write its report to a file (fleet `CLAUDE.md`, "Every agent has
-its own context" — which owns the rule that the path is the agent's own working tree, and
-that the caller carries the file onto a branch checked out elsewhere) writes it to
-`docs/reviews/<branch>/<agent>.md`, `<branch>` being the branch name with a leading
-`claude/` dropped, the spelling `scripts/reviews.py` derives. Plain Markdown naming files
+its own context") writes it to `docs/reviews/<branch>/<agent>.md`, `<branch>` being the
+branch name with a leading `claude/` dropped, the spelling `scripts/reviews.py` derives.
+Plain Markdown naming files
 in backticks, never as links, since `scripts/check_docs.py` walks `docs/` and a relative
 link that does not resolve fails CI; its first line and its cap are the brief's, and
 `check_docs.py` holds it to them. The reports are committed after the fold or with it,
@@ -221,6 +220,4 @@ from, the rig's milestone, the test login — have no values. `ops` has nothing 
 until the host Q-E chose runs its first service; invoked before then it should say so and stop.
 
 - **Main checkout** — `C:\Users\Atomt\Documents\favorites_tracker`, for when there is
-  something to run from it.
-- **The rig's milestone** — none.
-- **Test login** — none.
+  something to run from it. The rig's milestone and the test login: none yet.
