@@ -350,7 +350,8 @@ decide).
 - **Same URI, near in time.** Take the export's `spotify_track_uri` and `ts`. Match the poller's
   play whose URI is equal and whose end falls within 2Δ plus a minute of `ts`. For
   `recently-played` plays, whose `played_at` may be either end, allow the track's length plus a
-  minute. Match one-to-one, nearest first, so a track played twice in a row stays two plays.
+  minute. Match one-to-one and in order, never nearest first (ADR-0003, amendment 2), so a track
+played twice in a row stays two plays and pairs the right two.
 - **URI drift.** Spotify can substitute a different URI for the same recording ("track
   relinking"). Development mode no longer returns `linked_from`, which named the original (S20,
   verified), so the API's URI and the export's can differ for one play (inferred). Fall back to

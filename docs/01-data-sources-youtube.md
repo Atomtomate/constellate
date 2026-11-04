@@ -289,7 +289,8 @@ so a total can say how much of itself is measured. That is an input to Q-C, not 
 **Matching.** A history record and an extension record for the same watch share the video id
 and a nearby time. The history's `time` is probably logged when playback starts
 **[inferred; not verified]**. So the join is on the video id, pairing each extension record
-with the nearest unclaimed history record within a window of minutes, one-to-one and in
+with the next unclaimed history record, in order and never nearest first (ADR-0003, amendment
+2), within a window of minutes, one-to-one and in
 order, so that rewatches pair up correctly. A matched pair keeps the history record as the
 event and the extension's seconds as its measured duration. An unmatched history record is
 viewing the extension could not see (phone, TV). An unmatched extension record means the

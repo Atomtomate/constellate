@@ -1,11 +1,12 @@
 """Domain types and rules.
 
-The types the whole system thinks in: the draft event, the activity record, the source
-cursor, the creator, the item. No I/O of any kind — no SQLAlchemy, no HTTP, no file
-access. Anything here is safe to import from ``services/``, ``sources/``, and
-``models/`` alike.
+The types the whole system thinks in: the draft event (``draft``), the vocabularies and the id
+type (``vocab``), the streams and the observation as a value (``streams``, ``play``), the rules
+that resolve an event from its observations (``precedence``) and
+pair a new record with a stored event (``matching``). No I/O of any kind — no SQLAlchemy, no
+HTTP, no file access, no clock. Anything here is safe to import from ``services/``,
+``sources/``, and ``models/`` alike.
 
-Nothing lives here yet: the draft event and its neighbours wait to be written as Python
-from ``docs/02-domain-model.md`` §2's fields. The migration that adds the matching tables
-comes after, not before.
+The activity record, the source cursor, the creator and the item as rows are ``models/``'s;
+this package holds the values that cross the ingestion seam.
 """
