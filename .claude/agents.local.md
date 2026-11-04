@@ -220,7 +220,7 @@ fleet's to state, and the commands that drive both boards are `scripts/README.md
 **There is no rig.** Nothing is deployed, `infra/stack.py` does not exist, and the three
 facts the `ops` definition reads back from here — the main checkout to run stack commands
 from, the rig's milestone, the test login — have no values. `ops` has nothing to operate
-until M1 needs a public URL (Q-E); invoked before then it should say so and stop.
+until the host Q-E chose runs its first service; invoked before then it should say so and stop.
 
 - **Main checkout** — `C:\Users\Atomt\Documents\favorites_tracker`, for when there is
   something to run from it.

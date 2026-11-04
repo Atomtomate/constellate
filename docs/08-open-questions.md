@@ -17,8 +17,9 @@ poller runs there too." No ADR: ADR-0002 already requires "a service that starts
 wherever Q-E puts it", so the store stays Postgres and its SQLite fallback falls away.
 
 **Still open: the public URL and the rig's proxy.** The sibling project serves from a PC the owner
-controls; the same rig could serve this. What the decisions so far require of the host, the store
-aside:
+controls; the same rig could serve this.
+
+**What the chosen host must still show**, for what the decisions so far require of it:
 
 - **Database backups kept at most five days**, with the plain-format export of the log as the
   long-term copy, because a backup holds cache rows and live plays past what the services'
