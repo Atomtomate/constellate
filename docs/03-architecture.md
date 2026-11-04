@@ -4,7 +4,7 @@
 > [ADR-0002](adr/0002-the-stack.md); where a detail waits on another question it names that
 > question rather than guessing.
 
-*Last updated: 2026-11-03*
+*Last updated: 2026-11-04*
 
 ## Shape
 
@@ -59,9 +59,9 @@ could not use. The poller, and an importer run as a command, are not clients: th
 points inside the API's own package, and they reach the data through `services/` as a router
 does.
 
-**One ingestion path.** Every source — the Spotify poll, the Spotify export, the Takeout file,
-the extension's request — is an adapter producing the same draft event, and exactly one service
-persists it. Adding a source is one new adapter, never a second write path. Ingestion is
+**One ingestion path.** Every source of the log — the Spotify poll, the Spotify export, the Takeout
+file, the extension's request — is an adapter producing the same draft event, and exactly one
+service persists it. Adding a source is one new adapter, never a second write path. Ingestion is
 idempotent: a poll that overlaps the last one, or an export that repeats what polling already
 stored, adds nothing twice. The draft event's fields are the domain model's (Q-C); the key that
 recognises a polled play and an exported play as the same play is each data-source document's;
@@ -72,8 +72,8 @@ A catalogue-only source, such as `youtube-data-api`, is not a second write path,
 writes to the log. It sits behind `CatalogueAdapter`, the second protocol in `services/sources.py`
 beside `SourceAdapter`: it yields catalogue facts for the cache, not draft events, and those facts
 reach only `catalogue_cache`, through the one cache write. The log never depends on the cache
-(`docs/02-domain-model.md` §4), so this is a clarification inside ADR-0003's line between them and
-not a new decision (`docs/reviews/m1-plan/impl-director-check-2.md`, finding 9).
+(`docs/02-domain-model.md` §4), which is why the rule can stop at the log; ADR-0002's revision of
+2026-11-04 records that.
 
 **One language per deployable.** Python for the API package — the API process, the poller, the
 importers. TypeScript for the website, and for the extension as a deployable of its own. Nothing
