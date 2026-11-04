@@ -37,10 +37,18 @@ The owner wants control over what happens.
   still cannot go ready states `Blocked: <reason>` in its body**, on a line of its own —
   the one fact about a PR nothing can derive, and the line `scripts/close_report.py`
   reads. `python scripts/check_prs.py --fetch` at the closing step reports a ready PR that
-  breaks what it can see. The repository is public since 2026-10-05, so branch protection is
-  available; it is not configured yet, and until the owner decides on it the draft flag is
-  the guard.
-- **The owner reviews everything** and sends comments back to act on.
+  breaks what it can see. `main` is protected since 2026-11-03 (the owner chose "Protect as leaned
+  (Recommended)"; `docs/handoffs/2026-11-03-m1-record-step.md` quotes the ask): the `record`
+  check is required of every merge, administrators included (the owner, 2026-11-04: "Yes, bind
+  administrators"), with no force-pushes, no deletions and no required reviews. None of this
+  knows whether a PR is ready, so the draft flag stays the guard of that.
+- **The coordinator merges ready PRs, and the owner reviews on `main`, by revert.** The owner's
+  rule, chosen on 2026-10-19 as "Confirm: coordinator merges ready PRs (Recommended)" (the same
+  handoff quotes the ask): "Ready means the gates are met; you review on main by revert.
+  Trivial held questions get the recommended option after a stated wait; real decisions are
+  filed as issues with a leaning and wait for you." The coordinator is the session planning
+  for the owner, which briefs the lanes; a briefed lane merges nothing. The wait is stated in
+  the held question itself.
 - Keep commits logically ordered so `git log -p` reads in sequence.
 
 ### Who this session talks to
@@ -135,8 +143,8 @@ These are decided. Changing one needs an ADR, not a commit.
   importers reach the data through `services/` inside the API's own package (ADR-0002).
 - **`api/openapi.json` is committed and CI-checked**, and every client generates from it.
   Regenerate it after any change to the API surface (ADR-0002).
-- **One ingestion path.** Every source produces the same draft event and exactly one service
-  persists it; a new source is an adapter, never a second write path (ADR-0002).
+- **One ingestion path.** Every source of the log produces the same draft event and exactly one
+  service persists it; a new source is an adapter, never a second write path (ADR-0002).
 - **One language per deployable.** Python for the API package; TypeScript for the website and
   for the extension, each a deployable of its own; nothing crosses a language boundary but the
   contract (ADR-0002).
@@ -200,8 +208,9 @@ that will eventually contradict itself.
   created can scan the roster before the hook has cloned the fleet: the sign is a first
   system reminder listing only the built-in agents while `.claude/agents/` is populated;
   the fleet manual's fallback says what to do meanwhile. To *edit* a definition, work in
-  the fleet repository and open a PR there, then bump the submodule pointer here in a PR
-  that says "merge after `Atomtomate/agents#N`".
+  the fleet repository and open a PR there; once it has merged, the next close moves the
+  submodule pointer here in its record commit, when `open_work.py --fetch` shows it trailing
+  (ADR-0001's revision of 2026-11-03 quotes the owner's answer).
 - **This clone has `extensions.worktreeConfig` on.** A config value — `core.hooksPath` and
   `constellate.mode` included — can be set per worktree, so what one checkout reports is
   not necessarily true in another.
