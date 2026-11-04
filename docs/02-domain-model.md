@@ -540,7 +540,7 @@ the event.
 
 **Decided since this sketch was written, and not shown in it** (§1 and §8 hold the owner's words):
 every single-column key is a UUIDv7 the application mints, not the `bigint` or `smallint` below;
-the log tables carry an `owner_id` from the first migration (issue #28 settles which); and
+the owner's own tables carry an `owner_id` from the first migration (§8 says which); and
 `event` gains `service`. Where the
 sketch and those decisions disagree, the decisions stand. The sketch stays until the first schema
 migration retires it (issue #17).
@@ -681,6 +681,15 @@ The event with no item is the fourth of these, and §1 holds its words.
   leans no.", chose "Add it now": "An owner_id on the log tables from the first migration, filled
   with the one owner; costs a column and an index per table, buys nothing until a second user
   exists."
+- **Which tables carry `owner_id`, and what it holds.** Settled by the director on 2026-11-04
+  (`docs/reviews/m1-plan/impl-director-check-3.md`, within the owner's words above; issue #28): the
+  column is on the owner's own rows — `event`, `observation`, `ingest_run`, `source` — and not on
+  what names the world — `item`, `item_ref`, `creator`, `creator_ref`, `item_creator`,
+  `catalogue_cache`; it holds one configured owner UUID, with no table of users ("No accounts
+  beyond that", `docs/00`); uniqueness stays global — `observation.record_key`,
+  `item_ref (namespace, value)` and `source.key` — so a second user's identical record would
+  collide, which the owner's "buys nothing until a second user exists" accepts and is stated here
+  rather than papered over.
 - **The import choices, as a set.** 2026-11-03, asked "docs/02 §8's import choices (issue #21), as
   a set: import every row of an export and filter in totals rather than at import; split YouTube
   Music from YouTube by the export's header; strip ip_addr and keep conn_country; one configured
@@ -706,8 +715,6 @@ The event with no item is the fourth of these, and §1 holds its words.
 
 **Open:**
 
-- **Which tables carry `owner_id`, and what it holds.** The owner's words stop at "the log tables"
-  and "the one owner", and there is no table of users. Issue #28 gates the first migration.
 - **Spotify's terms**: the readings §4 leaves open, which Spotify has published nothing on. The
   owner accepts that risk for the poller alone.
 - **The matching windows**: inferences from the data-source documents, to be tuned on the
