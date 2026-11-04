@@ -2,7 +2,7 @@
 
 > **Exploratory plan.** Answered questions move to the bottom rather than being deleted.
 
-*Last updated: 2026-11-03*
+*Last updated: 2026-11-04*
 
 ## Still open
 
@@ -98,5 +98,5 @@ under ADR-0003's seam.
 
 **Does the log need an owner column from day one?** → **Yes** *(2026-11-03)*. The owner chose "Add
 it now", against the director's leaning; [`02-domain-model.md`](02-domain-model.md) §8 quotes the
-ask and what it costs. No ADR: none rules the column out, and `00-vision-and-scope.md` defers
-multiple users, not the column.
+ask and what it costs, and issue #28 settles which tables and what it holds. No ADR: none rules
+the column out, and `00-vision-and-scope.md` defers multiple users, not the column.

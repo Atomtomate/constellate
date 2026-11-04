@@ -144,9 +144,9 @@ None of the three changes the decision's sentence. The first narrows it.
 
 *Revised 2026-11-03, before any code built on either change, on the owner's answers of 2026-10-19
 and 2026-11-03; `docs/02-domain-model.md` §1 and §8 quote the ask and the option chosen.* The
-revision makes two changes.
+revision makes three changes.
 
-1. **The event gains a fifth column, `service`, which is not resolved.** The owner chose "Null item,
+1. **The event gains a column, `service`, which is not resolved.** The owner chose "Null item,
    record rewritten first (Recommended)", and a null-item event has no item to read a service
    through. `service` is set when the event is created, from the draft's source's service, and is
    immutable. The four columns the decision names are still the ones precedence resolves, and the
@@ -159,9 +159,14 @@ revision makes two changes.
    record not kept (the owner's import choices, chosen as "Take the set (Recommended)"). This is
    safe because nothing reads it, no column, total or `record_key`, and because an observation is
    still immutable once written.
+3. **The log tables gain `owner_id`**, `event` among them, written once and not resolved (the
+   owner's "Add it now"). This is safe while there is one owner, because the column then holds one
+   value and cannot disagree with anything matching does. What matching and `record_key`'s
+   uniqueness must do for a second owner is not decided here: the column "buys nothing until a
+   second user exists".
 
-The first adds to the decision's sentence without changing what it says of the four columns. The
-second narrows its "verbatim" by one field.
+The first and third add to the decision's sentence without changing what it says of the four
+columns. The second narrows its "verbatim" by one field.
 
 **What is expensive to reverse.**
 

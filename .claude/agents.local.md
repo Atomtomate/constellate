@@ -171,9 +171,9 @@ here in the same PR.
 
 - **One event per play.** Totals and the timeline read events. An event's item, start,
   duration and basis are resolved from its observations by precedence, never written
-  directly. Its `service` is the one column that is not resolved: set when the event is created,
-  from the draft's source, and never changed. The event carries no source, and its item may be
-  null (ADR-0003, its revision of 2026-11-03; `docs/02-domain-model.md` §1).
+  directly. Its `service`, from the draft's source, and its `owner_id` are not resolved: set when
+  the event is created, and never changed. The event carries no source, and its item may be null
+  (ADR-0003, its revision of 2026-11-03; `docs/02-domain-model.md` §1).
 - **Observations are immutable**, and deleted only with the ingest run that brought them,
   where their source's terms require it, or once the export re-sources a live play, the
   poller's or Last.fm's (ADR-0003, its Consequences and its amendment;
