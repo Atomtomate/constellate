@@ -208,10 +208,18 @@ service needs, so the service never has to go back to the source.
 | `item_ref` | Namespace and value, or none when the record names no item. |
 | `item_hint` | Kind, title, album, creator refs and names, as the record gives them. |
 | `started_at` | UTC. Observed, or derived: the export's is `ts − ms_played`. |
+| `ended_at` | UTC. The instant the source saw the play end, when it saw one: the export's `ts`, the poller's closing sample; none for a scrobble or a watch. A pause sits between `started_at + duration_ms` and this, so pairing across streams compares observed ends, never derived ones *(2026-11-04, from Lane 2a's review)*. |
 | `duration_ms` | The time measured, or none. |
 | `duration_basis` | `measured`, `to_end` or `start_only`. |
 | `raw` | The record as sent, less the catalogue facts below and the export's `ip_addr` (§8). |
 | `catalogue` | Length, ISRC, per-track artists, when the response carried them. |
+
+**A record the adapter cannot turn into a draft** — a field the source promised and did not
+send, text the store cannot hold — is not silently dropped and does not stop the batch: the
+adapter counts it as rejected in the batch's counts, the ingest run shows the count beside the
+others (§4), and a run with a rejected record is not marked ok, so the file-hash check reads
+the same file again once the parser is fixed *(2026-11-04, from Lane 2a's review; the
+import-everything choice of §8 reaches only what the parser can read)*.
 
 ### What the service does with one
 
@@ -249,7 +257,7 @@ matches them to one event:
 | Pair | Match on | Within (to tune on real data) |
 |------|----------|-------------------------------|
 | export and Last.fm | title, artist and time | scrobble start within 1 min of `ts − ms_played` |
-| export and poller | the track URI | the poller's end within 2Δ + 1 min of `ts` |
+| export and poller | the track URI | the two observed ends (`ended_at`) within 2Δ + 1 min of each other |
 | Last.fm and poller | title, artist and time | scrobble start within Δ + 1 min of the poller's |
 | Takeout or Portability, and extension | the video id | minutes |
 
