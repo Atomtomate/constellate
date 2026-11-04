@@ -9,10 +9,8 @@ tracker first, the atlas after, apps last. The brief, and everything derived fro
 
 Where the project stands is not restated here: [`docs/07-roadmap.md`](docs/07-roadmap.md)'s done
 markers say what is built, and [`docs/08-open-questions.md`](docs/08-open-questions.md) says what
-is still open. The owner, 2026-11-03, asked "The digest's third recommendation: the status banners
-at the top of the root CLAUDE.md and the overlay restate status that docs/07's done markers and
-docs/08 already hold, and each went stale within a week. Drop them, or keep them?", chose "Drop the
-banners (Recommended)".
+is still open (the owner, 2026-11-03, chose "Drop the banners (Recommended)";
+`docs/handoffs/2026-11-03-m1-record-step.md` quotes the ask).
 
 ## Working agreement
 

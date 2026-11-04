@@ -13,12 +13,10 @@ copying it; a rule stated twice is a rule that will eventually contradict itself
 stated here in full is what has no other home — the file-ownership map and the board
 numbers.
 
-Where the project stands is not restated here: [`docs/07-roadmap.md`](../docs/07-roadmap.md)'s
-done markers say what is built, and [`docs/08-open-questions.md`](../docs/08-open-questions.md)
-says what is still open (the owner's answer of 2026-11-03, which the root
-[`CLAUDE.md`](../CLAUDE.md) quotes). A section below that says *not yet* stays so until the
-question it names is answered, and an agent that finds one empty reports it, as its definition
-says, rather than inventing the answer.
+Where the project stands is [`docs/07-roadmap.md`](../docs/07-roadmap.md)'s and
+[`docs/08-open-questions.md`](../docs/08-open-questions.md)'s to say (the owner, 2026-11-03). A
+section below that says *not yet* stays so until the question it names is answered, and an agent
+that finds one empty reports it, as its definition says, rather than inventing the answer.
 
 ## Modes
 
