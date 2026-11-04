@@ -1,7 +1,8 @@
 """Domain types and rules.
 
 The types the whole system thinks in: the draft event (``draft``), the vocabularies and the id
-type (``vocab``), the rules that resolve an event from its observations (``precedence``) and
+type (``vocab``), the streams and the observation as a value (``streams``, ``play``), the rules
+that resolve an event from its observations (``precedence``) and
 pair a new record with a stored event (``matching``). No I/O of any kind — no SQLAlchemy, no
 HTTP, no file access, no clock. Anything here is safe to import from ``services/``,
 ``sources/``, and ``models/`` alike.

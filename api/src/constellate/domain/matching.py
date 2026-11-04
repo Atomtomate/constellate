@@ -14,9 +14,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
 
-from constellate.domain.draft import DraftEvent
-from constellate.domain.precedence import stream_of
-from constellate.domain.vocab import CreatorRole, EntityId
+from constellate.domain.play import Play
+from constellate.domain.streams import Stream
 
 
 def name_key(text: str) -> str:
@@ -54,67 +53,18 @@ class MatchWindows:
     export_lastfm: timedelta = timedelta(minutes=1)
     google_extension: timedelta = timedelta(minutes=5)
 
-    def between(self, stream_a: str, stream_b: str) -> PairWindow | None:
+    def between(self, stream_a: Stream, stream_b: Stream) -> PairWindow | None:
         """Return the window for a pair of streams, or None if they are never paired."""
         pair = {stream_a, stream_b}
-        if pair == {"spotify-export", "lastfm-scrobbles"}:
+        if pair == {Stream.SPOTIFY_EXPORT, Stream.LASTFM_SCROBBLES}:
             return PairWindow(self.export_lastfm, Moment.START)
-        if pair == {"spotify-export", "spotify-poller"}:
+        if pair == {Stream.SPOTIFY_EXPORT, Stream.SPOTIFY_POLLER}:
             return PairWindow(2 * self.poll_interval + timedelta(minutes=1), Moment.END)
-        if pair == {"lastfm-scrobbles", "spotify-poller"}:
+        if pair == {Stream.LASTFM_SCROBBLES, Stream.SPOTIFY_POLLER}:
             return PairWindow(self.poll_interval + timedelta(minutes=1), Moment.START)
-        if pair == {"google-history", "youtube-extension"}:
+        if pair == {Stream.GOOGLE_HISTORY, Stream.YOUTUBE_EXTENSION}:
             return PairWindow(self.google_extension, Moment.START)
         return None
-
-
-@dataclass(frozen=True)
-class Play:
-    """One observation as pairing sees it: its stream, instants and what it says it played.
-
-    ``item_id`` is the item the observation's ref resolved to (None for a name-only scrobble
-    with no stand-in); ``title`` and ``creator`` are the names it carried, for the fallback.
-    """
-
-    source: str
-    started_at: datetime
-    duration_ms: int | None
-    item_id: EntityId | None
-    title: str | None
-    creator: str | None
-
-    @property
-    def stream(self) -> str:
-        """The stream the play's source belongs to."""
-        return stream_of(self.source)
-
-    def at(self, moment: Moment) -> datetime | None:
-        """Return the play's start or end; None when the end of a play of unknown length."""
-        if moment is Moment.START:
-            return self.started_at
-        if self.duration_ms is None:
-            return None
-        return self.started_at + timedelta(milliseconds=self.duration_ms)
-
-    @classmethod
-    def from_draft(cls, draft: DraftEvent, item_id: EntityId | None) -> "Play":
-        """Build the play a draft will be paired as, given the item its ref resolved to."""
-        hint = draft.item_hint
-        creator = None
-        if hint is not None and hint.creators:
-            # The album artist when the record gives one, else the first credited.
-            credited = sorted(
-                hint.creators, key=lambda c: (c.role is not CreatorRole.ALBUM_ARTIST, c.position)
-            )
-            creator = credited[0].name
-        return cls(
-            draft.source,
-            draft.started_at,
-            draft.duration_ms,
-            item_id,
-            hint.title if hint is not None else None,
-            creator,
-        )
 
 
 @dataclass(frozen=True)
@@ -140,6 +90,11 @@ def same_play(a: Play, b: Play) -> bool:
     ) == name_key(b.creator or "")
 
 
+def _instant(play: Play, moment: Moment) -> datetime | None:
+    """Return the play's start or its observed end; None for an end the source never saw."""
+    return play.started_at if moment is Moment.START else play.ended_at
+
+
 def _meeting(draft: Play, slot: Slot, windows: MatchWindows) -> datetime | None:
     """Return the stored instant at which a draft meets a slot, or None if it cannot."""
     meets = []
@@ -147,7 +102,7 @@ def _meeting(draft: Play, slot: Slot, windows: MatchWindows) -> datetime | None:
         window = windows.between(draft.stream, stored.stream)
         if window is None or not same_play(draft, stored):
             continue
-        ours, theirs = draft.at(window.moment), stored.at(window.moment)
+        ours, theirs = _instant(draft, window.moment), _instant(stored, window.moment)
         if ours is not None and theirs is not None and abs(ours - theirs) <= window.tolerance:
             meets.append(theirs)
     return min(meets) if meets else None
