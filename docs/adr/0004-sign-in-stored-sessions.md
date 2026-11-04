@@ -22,26 +22,20 @@ shapes the contract and the web client's session handling.", chose "Stored sessi
 "Same login, but sessions live in a table (one more migration, three repo functions) so a single
 session can be revoked and listed."
 
-"Same login" is the ask's first option's: "One owner password in config, exchanged for a stateless
-signed HttpOnly session cookie", with "401 in the envelope". Taken together, without the first
-option's stateless signature:
+"Same login" is the signed-cookie option's, under Alternatives, without its stateless signature.
+Taken together:
 
 **One owner password, in config, is exchanged for an HttpOnly session cookie. Each session is a row
-in a table, so a single session can be revoked and the sessions can be listed. A caller with no live
-session gets a 401 in the error envelope, code `unauthenticated`.**
-
-What the M1 plan adds is derived from that and is not the owner's decision; its lanes may move it.
-The table is `auth_session`, holding a hash of the token and an expiry, in a migration of its own
-that does not block the first schema migration (`docs/reviews/m1-plan/impl-database-plan.md`). A
-`RequireSession` dependency guards every endpoint but `/health*`
-(`docs/reviews/m1-plan/impl-director.md`, Lane 3).
+in a table, so a single session can be revoked and the sessions can be listed. A request that needs
+a session and has no live one gets a 401 in the error envelope, code `unauthenticated`.**
 
 ## Consequences
 
 **What becomes easy.**
 
-- One session can end without ending the others, and the owner can see which exist. A stateless
-  cookie can only revoke everything at once, by rotating its secret.
+- One session can end without ending the others, and the owner can see which exist, once something
+  exposes them (below). A stateless cookie can only revoke everything at once, by rotating its
+  secret.
 - The contract's error enum does not move, because `unauthenticated` is already in it.
 
 **What becomes hard.**
@@ -56,9 +50,14 @@ that does not block the first schema migration (`docs/reviews/m1-plan/impl-datab
 stateless cookie later would drop a table and whatever endpoints list and revoke sessions, and leave
 the rest of the contract and the web client alone.
 
-**Not decided here**, because no option distinguished them, and so the sign-in lane's to state in
-its plan: whether config holds the password or a hash of it; the cookie's `SameSite`, `Secure` and
-`Path`; and whether a 401 carries a `WWW-Authenticate` challenge.
+**Not decided here.** Whether M1 builds what lists and revokes sessions, as endpoints and a screen
+or as a command: the plan's Lane 3 has only login, logout and `/me`, and until something exposes
+them the table buys nothing, so the M1 plan's re-cut settles it (issue #20). How a client that is
+not a browser, the later extension, presents a credential: every client consumes the contract on
+equal terms, and `SameSite` decides whether it can use the cookie at all. And, because no option
+distinguished them, the sign-in lane's to state in its plan: whether config holds the password or a
+hash of it; the cookie's `SameSite`, `Secure` and `Path`; and whether a 401 carries a
+`WWW-Authenticate` challenge.
 
 ## Alternatives considered
 

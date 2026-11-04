@@ -163,7 +163,7 @@ scaffold ships the generic codes:
 | `invalid_request` | 422 | Unreadable: a malformed body, a bad parameter. Carries `fields`. |
 | `not_found` | 404 | The thing referenced does not exist. |
 | `conflict` | 409 | Collides with something that already exists. |
-| `unauthenticated` | 401 | The caller has no live session (ADR-0004). In the closed set now so the contract's enum does not change when sign-in arrives; whether the 401 carries a challenge is the sign-in lane's. |
+| `unauthenticated` | 401 | The caller has no live session (ADR-0004). In the closed set now so the contract's enum does not change when sign-in arrives. |
 | `forbidden` | 403 | Signed in, but not allowed. |
 | `internal_error` | 500 | Nothing more specific caught it. A fixed message, never the exception's text, so no stack detail reaches a client. |
 
