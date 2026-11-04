@@ -113,9 +113,10 @@ written, and deleted only with its ingest run or where its source's terms requir
 the ground truth the event's resolved columns come from, so changing a precedence or the way a
 start is derived is a recompute over stored observations.
 
-Fields: its event; its source and ingest run; `record_key`, unique, the upstream record's
-identity (§2); the item ref the source named, if any; the source's own `started_at`,
-`duration_ms` and `duration_basis`; and `raw`.
+Fields: its event; its source and ingest run; `owner_id`, the one owner (§8), set at creation and
+never re-resolved; `record_key`, unique, the upstream record's identity (§2); the item ref the
+source named, if any; the source's own `started_at`, `duration_ms` and `duration_basis`; and
+`raw`.
 
 ### Item
 
@@ -177,12 +178,15 @@ The tracker reads no `recently-played` of its own, because Last.fm's connection 
 | `youtube-data-api` | YouTube | catalogue facts only | none |
 
 The cursor is JSON because its shape differs per source and only that source's adapter reads it.
+A source row also carries `owner_id`, the one owner (§8), set at creation and never re-resolved;
+its key stays unique across owners, and §8 says what that costs a second one.
 
 ### Ingest run
 
 One row per run of an adapter: a file import, a poll, an extension batch. It records when the run
-started and finished, how it ended, the file's hash for an import, and what it counted (new,
-duplicate, matched). Three things come from it: the last successful poll per source, which the
+started and finished, how it ended, the file's hash for an import, what it counted (new,
+duplicate, matched), and `owner_id`, the one owner (§8), set at creation and never re-resolved.
+Three things come from it: the last successful poll per source, which the
 stack ADR requires to be stored and shown; an import that went wrong is undone by deleting its
 observations and re-resolving their events; and a file offered twice is recognised by its hash
 before it is parsed.
@@ -681,15 +685,6 @@ The event with no item is the fourth of these, and §1 holds its words.
   leans no.", chose "Add it now": "An owner_id on the log tables from the first migration, filled
   with the one owner; costs a column and an index per table, buys nothing until a second user
   exists."
-- **Which tables carry `owner_id`, and what it holds.** Settled by the director on 2026-11-04
-  (`docs/reviews/m1-plan/impl-director-check-3.md`, within the owner's words above; issue #28): the
-  column is on the owner's own rows — `event`, `observation`, `ingest_run`, `source` — and not on
-  what names the world — `item`, `item_ref`, `creator`, `creator_ref`, `item_creator`,
-  `catalogue_cache`; it holds one configured owner UUID, with no table of users ("No accounts
-  beyond that", `docs/00`); uniqueness stays global — `observation.record_key`,
-  `item_ref (namespace, value)` and `source.key` — so a second user's identical record would
-  collide, which the owner's "buys nothing until a second user exists" accepts and is stated here
-  rather than papered over.
 - **The import choices, as a set.** 2026-11-03, asked "docs/02 §8's import choices (issue #21), as
   a set: import every row of an export and filter in totals rather than at import; split YouTube
   Music from YouTube by the export's header; strip ip_addr and keep conn_country; one configured
@@ -712,6 +707,36 @@ The event with no item is the fourth of these, and §1 holds its words.
   - *Keep `header` and `incognito_mode` in `raw` until a total needs them.* Promoting one is a
     migration of one table with no re-import (§1). Until then M1's totals count private-session
     plays and do not split YouTube Music.
+
+**Settled by the director, within the owner's words, 2026-11-04** (issue #28;
+`docs/reviews/m1-plan/impl-director-check-3.md` and `impl-director-check-4.md`). Derived, not
+decided by the owner: "Add it now" put `owner_id` on "the log tables" and stopped there, and the
+issue handed which tables, what the column holds and what uniqueness does with it to the plan's
+re-cut.
+
+- **Which tables.** `owner_id` is on the tables whose rows are one owner's own — `event`,
+  `observation`, `ingest_run`, `source`, and `auth_session`, M1's sign-in table (ADR-0004),
+  because a session is the owner's own, so it carries the column like the four log tables (the
+  director, check-4) — and not on what names the world: `item`, `item_ref`, `creator`,
+  `creator_ref`, `item_creator`, `catalogue_cache`. "The log tables" is read as the owner's own
+  rows, narrower than §3's and §5's use of "the log" for everything that is not the atlas or the
+  cache, because a track, its refs and its credits would be the same rows for a second owner, so a
+  column on them could hold no one owner; the credit the owner sets by hand (§3) corrects a shared
+  row and stays one.
+- **What it holds.** One configured owner UUID, read from config when the row is created; no table
+  of users ("No accounts beyond that", `docs/00`).
+- **Uniqueness stays global**, and what that costs a second owner differs per key.
+  `item_ref (namespace, value)` is shared by design: a second owner who played the same track
+  would point at the same ref, which is the world row working, not a collision.
+  `observation.record_key` is global, so a second owner's record with the very same key — the
+  same track in the same second — would be dropped as the same record. `source.key` is global, so
+  while the first owner has a `spotify-export` row a second owner can have none, and
+  `source.owner_id` sits inert. So the column buys a second owner nothing until a later migration
+  makes `source.key` unique per `(owner_id, key)` and `record_key` per owner; the director leaves
+  that migration for when a second user arrives, not made now (check-4), and what "Add it now"
+  saves then is backfilling the column. The option's "buys nothing until a second user exists" is
+  the owner's; that the migration remains is the director's reading, stated here rather than
+  papered over.
 
 **Open:**
 

@@ -3,7 +3,8 @@
 - **Status:** Accepted
 - **Date:** 2026-09-23
 - **Accepted:** 2026-09-23, by the owner, over B, C and A-with-SQLite
-- **Revised:** 2026-11-04, on a catalogue-only source, from the M1 plan round (Consequences)
+- **Revised:** 2026-11-04, on a catalogue-only source, from the M1 plan round, and on sign-in,
+  decided since by ADR-0004 (Consequences)
 
 ## Context
 
@@ -241,7 +242,14 @@ The reasons, strongest first:
   start, measured duration, item or creator depends on a cache row (`docs/02-domain-model.md` §4).
 - **Not decided here**: the domain model (Q-C); where it runs (Q-E); what the apps are (Q-F); how
   the owner signs in, which M1 needs (the sibling's `ADR-0014` is a starting point, not a
-  precedent); the poll interval, which is the Spotify document's to set.
+  precedent); the poll interval, which is the Spotify document's to set. *Revised 2026-11-04:
+  sign-in is decided, by [ADR-0004](0004-sign-in-stored-sessions.md), accepted 2026-11-03 — one
+  owner password, and stored sessions that can be revoked, which the owner chose over the stateless
+  cookie the sibling's `ADR-0014` would have given. The line stays as written because it was true
+  of this ADR and still is: nothing in its decision rests on the scheme, and the one thing
+  ADR-0004 adds to the stack, a session table, rides the migration chain this ADR already has.
+  What was stale was the pointer to a starting point for a decision since taken; this note
+  redirects it.*
 - **Where the data-source research could change this.**
   - *Whether YouTube needs an extension* (`01-data-sources-youtube.md`). If it does, M1 has a
     second client: reason 2 is confirmed, `extension/` and its gate area exist from the start, and

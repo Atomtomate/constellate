@@ -42,6 +42,14 @@ website has proved the model (M5). The extension's role has narrowed: if the Dat
 API's spike passes, it captures what was watched and when without one, which leaves the
 extension the route to seconds watched on desktop (`01-data-sources-youtube.md` §6).
 
+**Deferred here, 2026-11-04: how a client that is not a browser presents a credential.** ADR-0004
+gives the browser an HttpOnly session cookie and leaves this undecided ("Not decided here"). PR
+#27's direction review leaned to deciding it with the extension, and the M1 plan's re-cut
+(`reviews/m1-plan/impl-director-check-3.md`) deferred it so: the director's call, not the owner's.
+The one constraint Lane 3 carries meanwhile is that a session is found by its token, and the
+cookie is only the browser's way of carrying it, so a token borne in a header later is additive
+and needs no migration.
+
 ### Q-G — What does the calendar add to the model?
 
 The calendar (M3) brings what the log has never held: a future-dated **occasion**, a concert
@@ -99,5 +107,6 @@ under ADR-0003's seam.
 
 **Does the log need an owner column from day one?** → **Yes** *(2026-11-03)*. The owner chose "Add
 it now", against the director's leaning; [`02-domain-model.md`](02-domain-model.md) §8 quotes the
-ask and what it costs, and issue #28 settles which tables and what it holds. No ADR: none rules
+ask and what it costs, and its §8 states which tables carry it, what it holds and what uniqueness
+does with it, settled by the director within the owner's words (2026-11-04). No ADR: none rules
 the column out, and `00-vision-and-scope.md` defers multiple users, not the column.
