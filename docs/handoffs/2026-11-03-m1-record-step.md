@@ -65,7 +65,9 @@ PR #27's body says what each finding became.
 - **#31, waiting on the owner:** four root `CLAUDE.md` edits, with their exact text, and whether to
   turn on `enforce_admins`.
 - **#28 gates Lane 1:** which tables carry `owner_id`, and what it holds.
-- **#30:** `reviews.py` reads the pointer as the record; stale `.py` docstrings go with it.
+- **#30:** `reviews.py` reads the pointer as the record; stale `.py` docstrings go with it. The
+  pointer trails the fleet by eight commits (its retro of 2026-10-16) and this close did not move
+  it: its reports were already committed, so the move would have read as stale. The next close does.
 - **#29:** the promotions from `raw`, on M2 as a leaning.
 - **#20 and #21 stay open** for their done-whens' second halves. #20 gained two questions.
 - **The director's re-cut, no issue:** `impl-director.md` still has the stateless cookie and no
