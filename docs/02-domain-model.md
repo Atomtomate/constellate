@@ -115,8 +115,9 @@ start is derived is a recompute over stored observations.
 
 Fields: its event; its source and ingest run; `owner_id`, the one owner (§8), set at creation and
 never re-resolved; `record_key`, unique, the upstream record's identity (§2); the item ref the
-source named, if any; the source's own `started_at`, `duration_ms` and `duration_basis`; and
-`raw`.
+source named, if any; the source's own `started_at`, `ended_at` where the source saw the end
+(§2's observed end, which pairing across streams compares; none for a scrobble or a watch),
+`duration_ms` and `duration_basis`; and `raw`.
 
 ### Item
 
@@ -185,11 +186,15 @@ its key stays unique across owners, and §8 says what that costs a second one.
 
 One row per run of an adapter: a file import, a poll, an extension batch. It records when the run
 started and finished, how it ended, the file's hash for an import, what it counted (new,
-duplicate, matched), and `owner_id`, the one owner (§8), set at creation and never re-resolved.
-Three things come from it: the last successful poll per source, which the
-stack ADR requires to be stored and shown; an import that went wrong is undone by deleting its
-observations and re-resolving their events; and a file offered twice is recognised by its hash
-before it is parsed.
+duplicate, matched, rejected), and `owner_id`, the one owner (§8), set at creation and never
+re-resolved. How it ended is one of three: `ok` means every batch committed and no record was
+rejected; a run that rejected a record (§2) is `partial`, committed but not ok, so the hash check
+reads the same file again once the parser is fixed; a run that rolled back is `failed`
+*(2026-11-04, from Lane 2a's review; before this the rejected case fell to `failed` by
+elimination)*. Three things come from it: the last successful poll per source, which the stack ADR
+requires to be stored and shown and which counts only `ok` runs; an import that went wrong is
+undone by deleting its observations and re-resolving their events; and a file offered twice is
+recognised by its hash before it is parsed, unless the run that read it was not `ok`.
 
 ## 2. The ingestion seam
 
@@ -260,7 +265,7 @@ matches them to one event:
 
 | Pair | Match on | Within (to tune on real data) |
 |------|----------|-------------------------------|
-| export and Last.fm | title, artist and time | scrobble start within 1 min of `ts − ms_played` |
+| export and Last.fm | title, artist and time | scrobble start within 1 min after `ts − ms_played`, or before it by up to a pause allowance (to tune): every pause moves the export's derived start later than the true one the scrobble saw |
 | export and poller | the track URI | the two observed ends (`ended_at`) within 2Δ + 1 min of each other |
 | Last.fm and poller | title, artist and time | scrobble start within Δ + 1 min of the poller's |
 | Takeout or Portability, and extension | the video id | minutes |
