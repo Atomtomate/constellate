@@ -6,14 +6,16 @@
 > (`0002-the-stack.md`) — and cites their findings by document, section and source number, so
 > a claim can be traced to the page that made it. The owner's decisions of 2026-09-23 in it are
 > the ingestion seam, as [ADR-0003](adr/0003-the-ingestion-seam.md), no merging of items
-> across services, and Spotify's paths (§4); what stays open is §8.
+> across services, and Spotify's paths (§4). Those of 2026-10-19 and 2026-11-03 are the event
+> with no item (§1), the key type, the owner column and the import choices (§8). What stays open
+> is the rest of §8.
 
-*Last updated: 2026-10-11*
+*Last updated: 2026-11-04*
 
 ## The model in brief
 
 A play or a watch is an **event**. Every source that saw it contributes an **observation** of it,
-kept as the source sent it, and the event's columns are resolved from its observations by
+kept as the source sent it, and the event's item, start and duration are resolved from them by
 precedence: the export's measured milliseconds beat the poller's estimate, whichever arrived
 first. An event references an **item** — a track, an episode, a video — which each source knows
 by an **item ref**: a URI, a video id. An item is by one or more **creators**. What a catalogue
@@ -39,17 +41,18 @@ Q-C's four open points, answered:
 ### What is a column, and what is JSON
 
 A **column** is what a total, a filter, a join or a constraint reads, and it means the same for
-every source. Everything else a source says is kept as the record it sent — `raw`, verbatim JSON
-on the observation. Two reasons. A parser fix is then a re-derivation from stored records, not a
-new export request, and Spotify's takes up to a month (`01-data-sources-spotify.md` §1, S3).
-And promoting a field later is cheap: add a column, fill it from `raw` — a migration of one
-table, no re-import. The fields most likely to be promoted are YouTube's `header` (YouTube Music
-or YouTube, if listening and watching are totalled apart) and Spotify's `incognito_mode`.
+every source. Everything else a source says is kept as the record it sent — `raw`, verbatim JSON on
+the observation, less the one field §8 strips. Two reasons. A parser fix is then a re-derivation
+from stored records, not a new export request, and Spotify's takes up to a month
+(`01-data-sources-spotify.md` §1, S3). And promoting a field later is cheap: add a column, fill it
+from `raw` — a migration of one table, no re-import. The fields the owner's import choices promote
+after M1 are YouTube's `header` (YouTube Music or YouTube, totalled apart) and Spotify's
+`incognito_mode` (§8).
 
 What stays in `raw` only: Spotify's `reason_start`, `reason_end`, `shuffle`, `skipped`,
-`offline`, `incognito_mode`, `platform`, `conn_country`, `ip_addr`, the API's `context` (the
-playlist or album a play came from); Takeout's `header`, `subtitles`, `activityControls`; the
-extension's playback rate.
+`offline`, `incognito_mode`, `platform`, `conn_country`, the API's `context` (the playlist or
+album a play came from); Takeout's `header`, `subtitles`, `activityControls`; the extension's
+playback rate. Not even `raw` keeps the export's `ip_addr`, which is stripped on import (§8).
 
 ### Event
 
@@ -58,6 +61,8 @@ One play or one watch. The row every total and the timeline read.
 | Field | Kind | Holds |
 |-------|------|-------|
 | `item_id` | column | The item played. Null only when no observation names one (below). |
+| `service` | column | The service it was played on. Set at creation, never re-resolved (below). |
+| `owner_id` | column | The one owner (§8). Set at creation, never re-resolved. |
 | `started_at` | column | UTC, from the observation that saw the start most directly. |
 | `duration_ms` | column | Time actually played. Set only when an observation measured it. |
 | `duration_basis` | column | What the observations say about the duration: see below. |
@@ -84,20 +89,28 @@ number. The YouTube document's estimate `min(length, time until the next watch)`
 (`01-data-sources-youtube.md` §5) is one way to read `start_only` events. It is computed when
 read, because a backfill can insert an event between two others.
 
-**The event carries no source.** An event may have three observations from three sources; which
-one is "its" source has no single answer. The observations carry theirs, and a total per service
-reads the item's service.
+**The event carries no source, but it does carry a service.** An event may have three observations
+from three sources; which one is "its" source has no single answer, so the observations carry
+theirs. Its service has one answer: matching never crosses services (§2, §3), so every observation
+on an event is of one service, and its item, when it has one, is of that service too. `service`
+is therefore set when the event is created, from the draft's source, and never re-resolved, and a
+total per service reads it, since an event with no item could not read it through the item.
 
 **An event with no item.** A removed or private video appears in Takeout with a generic title and
 no usable URL or channel (`01-data-sources-youtube.md` §2, S9). The watch happened, at a known
 time, so it is an event, with a null item. The timeline shows it, per-item totals cannot, and a
-total says how many such events it left out.
+total says how many such events it left out. The owner, 2026-10-19, asked "An unidentifiable watch
+(a removed or private video) becomes an event with no item, which needs an immutable event.service
+column that docs/02 §1 and §6 and ADR-0003 as written forbid; or a placeholder item per such record
+instead. This gates the first migration too (issue #21).", chose "Null item, record rewritten first
+(Recommended)": "Honest about what is unknown; the record edits (docs/02 §1 and §6, ADR-0003's
+columns, the overlay's invariant) become Lane 1's precondition, done in the record step."
 
 ### Observation
 
 One source's record of one event: the draft an adapter produced (§2), stored. Immutable once
 written, and deleted only with its ingest run or where its source's terms require it (§4). It is
-the ground truth the event's columns are resolved from, so changing a precedence or the way a
+the ground truth the event's resolved columns come from, so changing a precedence or the way a
 start is derived is a recompute over stored observations.
 
 Fields: its event; its source and ingest run; `record_key`, unique, the upstream record's
@@ -183,9 +196,10 @@ when an observation may be deleted. What follows is their detail, not a second s
 
 ### The draft event
 
-Every adapter produces the same draft. The adapter knows HTTP or a file format and never SQL
-(the stack ADR's appendix). The draft carries everything the ingestion service needs, so the
-service never has to go back to the source.
+Every adapter of a log source produces the same draft; a catalogue-only source yields facts for
+the cache instead (`03-architecture.md`, "One ingestion path"). The adapter knows HTTP or a file
+format and never SQL (the stack ADR's appendix). The draft carries everything the ingestion
+service needs, so the service never has to go back to the source.
 
 | Field | Holds |
 |-------|-------|
@@ -196,7 +210,7 @@ service never has to go back to the source.
 | `started_at` | UTC. Observed, or derived: the export's is `ts − ms_played`. |
 | `duration_ms` | The time measured, or none. |
 | `duration_basis` | `measured`, `to_end` or `start_only`. |
-| `raw` | The record as sent, less the catalogue facts below. |
+| `raw` | The record as sent, less the catalogue facts below and the export's `ip_addr` (§8). |
 | `catalogue` | Length, ISRC, per-track artists, when the response carried them. |
 
 ### What the service does with one
@@ -206,7 +220,7 @@ In one transaction per draft, or per batch of them:
 1. **Drop it** if its `record_key` is already stored: the same record, delivered again.
 2. **Resolve the item**: find the ref, or create the ref and its item from `item_hint`; the same
    for the creators.
-3. **Find the event it also sees** (below), or create one.
+3. **Find the event it also sees** (below), or create one, its `service` from the draft's source.
 4. **Store the observation**, and re-resolve the event's columns from all its observations.
 5. **Write `catalogue` to the cache**, never to the log (§4).
 
@@ -222,6 +236,12 @@ reads repeat `lastfm:<artist>|<title>@<start>`. Last.fm occasionally scrobbles o
 (Spotify §3, S29): if the two copies carry the same start, the key drops the second. If they do
 not, the export's one-to-one pairing leaves the extra one unmatched, and the ingest run counts
 it like any other miss (§4).
+
+**A record that names no item has no identifier to key on.** Takeout's keys on its time,
+`google-watch:-@<time>` (`docs/reviews/m1-plan/impl-backend-plan.md`, 4b). The export's `ts` is
+only to the second (Spotify §1), so its row with no URI needs more than `ts`: two such rows ending
+in the same second would share a key, and step 1 would drop the second as delivered again. What
+more is the adapter's, tested on the owner's first real export as ADR-0003 requires of every key.
 
 **The same play, seen by two streams**, arrives as two different records with two keys. Step 3
 matches them to one event:
@@ -242,6 +262,13 @@ relinked the track (Spotify §4, S20), or the record is a Last.fm scrobble, whic
 (Spotify §6) — the match falls back to title, artist and time. The export–poller and YouTube
 windows are the data-source documents' own (Spotify §4, YouTube §5). The two Last.fm windows are
 this model's. All of them are inferences, to be tuned against the owner's first weeks.
+
+**Which observation names the item.** ADR-0003 gives an event the item of the highest-ranked
+observation that names one. The rank is the owner's own records first: the export, then Takeout or
+Portability, then the extension, then the poller, then a Last.fm scrobble, which names only by
+title and artist. It is `impl-backend`'s reading, which the M1 plan confirmed as the specialists' to
+make and not the owner's (`docs/reviews/m1-plan/impl-director.md`, under its decision 9): a tunable
+rule in `domain/`, like the windows.
 
 ### The source cursor
 
@@ -502,13 +529,21 @@ would have to follow (§8).
 ref, a match on title, artist and time instead of on a ref, and a stand-in item until an export
 names the track. The event table does not notice.
 
-**The answer: yes, the event table survives both without a migration.** Its columns are an item,
-a start, a duration and a basis, and none of them names a service or a format. What a new source
-costs lands on the item: a kind, a ref namespace, and identity rules. Those rules — URLs for the
-web, cross-service works for music — are where the next source will argue, and neither argument
-reaches the event.
+**The answer: yes, the event table survives both without a migration.** What it records of a play is
+an item, a service, a start, a duration and a basis. A new source adds no column for them: a new
+service is one more value of `service`, and none of them names a format. What a new source costs
+lands on the item: a kind, a ref namespace, and identity rules. Those rules — URLs for the web,
+cross-service works for music — are where the next source will argue, and neither argument reaches
+the event.
 
 ## 7. The core tables, sketched
+
+**Decided since this sketch was written, and not shown in it** (§1 and §8 hold the owner's words):
+every single-column key is a UUIDv7 the application mints, not the `bigint` or `smallint` below;
+the log tables carry an `owner_id` from the first migration (issue #28 settles which); and
+`event` gains `service`. Where the
+sketch and those decisions disagree, the decisions stand. The sketch stays until the first schema
+migration retires it (issue #17).
 
 ```sql
 -- A SKETCH to argue with, not a migration. Postgres; names and types are placeholders.
@@ -618,6 +653,9 @@ create table catalogue_cache (
    favourite, a rating or a constellation membership on a merged item has no mechanical owner
    when the item splits, and a cross-service merge would reshape every per-service total.
 
+Expensive too, once the first migration has run: the key type, which then rewrites every foreign
+key, and which the ask below calls "the hardest thing to change afterwards".
+
 **In between.** The `record_key` scheme: a wrong key silently duplicates or drops records, and
 re-keying is a recompute from `raw`. The log–cache line: moving a fact from the log to the cache
 later is a purge of the log, so the model errs toward the cache, the cheap side.
@@ -629,28 +667,53 @@ to a column; a new source; a new item kind.
 services; and Spotify's paths (§4). The export is the record, Last.fm is the live tail and the
 backbone with no Spotify app, and the Web API poller is optional, on top, for measured time.
 
+**Decided by the owner, 2026-10-19 and 2026-11-03**, each as the ask put it and the option chosen.
+The event with no item is the fourth of these, and §1 holds its words.
+
+- **The key type of every table.** 2026-10-19, asked "The key type of every table (issue #10):
+  UUIDv7 app-minted as the scaffold ports from the sibling, or bigint identity as docs/02 §7
+  sketches? It gates the first migration and is the hardest thing to change afterwards.", chose
+  "UUIDv7, app-minted (Recommended)": "Public, stable ids across devices and imports for the atlas
+  later; time-ordered so the event index stays local; 16 bytes a row against 8 is nothing at this
+  scale. Owned and ids.py stay as ported."
+- **An owner column from day one.** 2026-11-03, asked "The owner column from day one (docs/08,
+  smaller for later): one user today; the column is cheap now and a migration later. The director
+  leans no.", chose "Add it now": "An owner_id on the log tables from the first migration, filled
+  with the one owner; costs a column and an index per table, buys nothing until a second user
+  exists."
+- **The import choices, as a set.** 2026-11-03, asked "docs/02 §8's import choices (issue #21), as
+  a set: import every row of an export and filter in totals rather than at import; split YouTube
+  Music from YouTube by the export's header; strip ip_addr and keep conn_country; one configured
+  time zone for local days; keep header and incognito_mode in raw until a total needs them. Take
+  the set, or change one?", chose "Take the set (Recommended)": "All five as the consolidation
+  handoff and the director lean; the YouTube Music split and private-session filtering ship after
+  M1 as column promotions from raw." The reasons below are this model's, not the owner's words:
+  - *Import every row of an export, and filter in totals.* Private-session plays, podcasts,
+    audiobooks and Spotify's video plays are all stored. A row dropped at import never returns,
+    because a re-offered file is recognised by its hash (§1, Ingest run). This model reads "every
+    row" as every play: Takeout's rows marked "From Google Ads" are not watches, and no total could
+    filter them, so they stay dropped and counted at import, as `01-data-sources-youtube.md` §2 has
+    it. The ask did not name them.
+  - *Split YouTube Music from YouTube by the export's `header`.* After M1, as `header` promoted
+    from `raw` (issue #29).
+  - *Strip `ip_addr`, keep `conn_country`.* The site never shows `raw`, but the store keeps it for
+    years, so `ip_addr` would be personal data at rest for no reader. `conn_country` stays because
+    it is enough to add a zone per event later.
+  - *One configured time zone for local days.* The simplest; a zone per event would follow travel.
+  - *Keep `header` and `incognito_mode` in `raw` until a total needs them.* Promoting one is a
+    migration of one table with no re-import (§1). Until then M1's totals count private-session
+    plays and do not split YouTube Music.
+
 **Open:**
 
+- **Which tables carry `owner_id`, and what it holds.** The owner's words stop at "the log tables"
+  and "the one owner", and there is no table of users. Issue #28 gates the first migration.
 - **Spotify's terms**: the readings §4 leaves open, which Spotify has published nothing on. The
   owner accepts that risk for the poller alone.
 - **The matching windows**: inferences from the data-source documents, to be tuned on the
   owner's first weeks of data (§2).
-- **The owner's choices, which the model holds but does not make.** Whether to import
-  private-session plays, podcasts, audiobooks and Spotify's video plays. Whether totals split
-  YouTube Music listening from YouTube watching, which promotes `header`.
-- **Whether to strip `ip_addr` and `conn_country`** from the export's records on import. The site
-  never shows `raw`, but the store keeps it for years.
-- **Local time.** Totals by local day need a time zone. One configured zone is simplest; a zone
-  per event would follow travel, and `conn_country` in `raw` is enough to add it later.
-- **An event with no item**, or a placeholder item per unidentifiable record (§1).
 - **Theme, constellation and list**: one table or three (§5).
 - **A work above items**, if the owner later wants one song totalled across services (§6). It
   would group items, and so would not contradict the owner's choice against merging them.
 - **Spotify's account-data package** (past year, names only) is not an input. Names are not
   identifiers (Spotify §1), and the extended history covers the same year with URIs.
-- **The key type of every single-key table**: UUIDv7 minted by the application, which the
-  scaffold's `Owned` mixin ports from the sibling, or the `bigint` identity §7 sketches. Decided
-  before the first table migration, which inherits it. The coordinator leans to UUIDv7 — public,
-  stable ids across devices and imports, and a time-ordered key keeps the index local — at
-  sixteen bytes a row against eight. Filed as issue #10.
-- **An owner column** stays with docs/08's "Smaller, for later". Nothing here depends on it.

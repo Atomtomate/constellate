@@ -2,7 +2,7 @@
 
 > **Exploratory plan.** Ordering is the useful part; nothing here has an estimate yet.
 
-*Last updated: 2026-10-11*
+*Last updated: 2026-11-04*
 
 Ordered by dependency, not by date. Written on the day the repository was created and
 reordered the same day, when the owner named the tracker as the first priority; the calendar
@@ -53,6 +53,10 @@ The owner's first priority: what was listened to and watched, when, and for how 
 - A timeline of both, and totals by day, week and month, and by artist, channel, track and
   video.
 - Private, single user; the owner signs in.
+
+**Not in M1**, at the owner's word of 2026-11-03 (`02-domain-model.md` §8; issue #29): the YouTube
+Music split and private-session filtering, which ship after it as columns promoted from `raw`.
+M1's totals count private-session plays and do not split YouTube Music.
 
 **Done when:** a week of real listening and watching is in the log with nothing typed, and
 the totals match what the owner remembers.

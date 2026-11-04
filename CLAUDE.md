@@ -7,12 +7,10 @@ thematic constellations between their creators, so that "what would you recommen
 tracker first, the atlas after, apps last. The brief, and everything derived from it, is
 [`docs/00-vision-and-scope.md`](docs/00-vision-and-scope.md).
 
-**M0 closed on 2026-10-05; M1, the tracker, is under way.** The stack (ADR-0002), the
-ingestion seam (ADR-0003) and the domain model (`docs/02-domain-model.md`) are decided, and
-how each service's history is captured is Q-D's answer; the scaffold, M1's first PR, lays the
-stack out as code. The
-open questions are `docs/08-open-questions.md`'s Q-E (where it runs), Q-F (the apps) and Q-G
-(what the calendar adds to the model).
+Where the project stands is not restated here: [`docs/07-roadmap.md`](docs/07-roadmap.md)'s done
+markers say what is built, and [`docs/08-open-questions.md`](docs/08-open-questions.md) says what
+is still open (the owner, 2026-11-03, chose "Drop the banners (Recommended)";
+`docs/handoffs/2026-11-03-m1-record-step.md` quotes the ask).
 
 ## Working agreement
 

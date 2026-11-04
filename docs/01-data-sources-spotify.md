@@ -107,7 +107,8 @@ and 2026 samples read for this document (S4, S5), so they were probably dropped 
 **Podcasts and audiobooks are in it:** the episode and audiobook fields exist for them, and the
 page describes the history as "songs, videos, and podcasts" (S1, verified). **Private-session
 plays are in it too**, marked by `incognito_mode` (S1, verified). Those are the plays the app's own
-Recently Played list omits (S37, reported). Whether the tracker keeps them is the owner's call.
+Recently Played list omits (S37, reported). The owner chose to keep them (2026-11-03;
+`02-domain-model.md` §8).
 **Offline plays are in it**, marked `offline` (S1, verified).
 
 **What `ms_played` means:** "For how many milliseconds the track was played" (S1, verified). It

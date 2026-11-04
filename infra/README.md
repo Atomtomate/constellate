@@ -7,12 +7,12 @@ What is here now is the development database's bootstrap, and nothing else:
   one server on port 5432 is shared with the sibling project; this one says how the database
   gets onto it.
 
-The serving rig is Q-E's (`docs/08-open-questions.md`): the stack script, the Caddyfile, the
-scheduled task's definition and its installer arrive with the PR that answers it, and ADR-0002's
-Consequences say they belong here when they do. Until then the `infra` gate area
-(`scripts/gates.py`, `infra.yml`) checks only `compose.yaml`; the Caddyfile-validate and
-stack-script checks the ADR's appendix names arrive with that same PR. No specialist owns this
-directory; it is edited from the session (`.claude/agents.local.md`).
+The serving rig follows Q-E (`docs/08-open-questions.md`), whose store half is answered: the stack
+script, the Caddyfile, the scheduled task's definition and its installer arrive with the PR that
+brings that host up, and ADR-0002's Consequences say they belong here when they do. Until then the
+`infra` gate area (`scripts/gates.py`, `infra.yml`) checks only `compose.yaml`; the
+Caddyfile-validate and stack-script checks the ADR's appendix names arrive with that same PR. No
+specialist owns this directory; it is edited from the session (`.claude/agents.local.md`).
 
 ## Creating the database
 

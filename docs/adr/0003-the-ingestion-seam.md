@@ -4,6 +4,7 @@
 - **Date:** 2026-09-23
 - **Accepted:** 2026-09-23, by the owner, over a last-writer-wins upsert
 - **Amended:** 2026-09-23, confirmed by the owner the same day (Consequences)
+- **Revised:** 2026-11-03, on the owner's answers of 2026-10-19 and 2026-11-03 (Consequences)
 
 ## Context
 
@@ -117,8 +118,8 @@ The draft's fields, the matching table and the tables themselves are in `docs/02
 - **Two writers to one service could race** and create two events for one play. Ingestion takes a
   lock per service, so a Spotify export import and the Spotify poller run one after the other.
 - **Every record is kept verbatim, for years**, and with it whatever personal data it carries,
-  such as the export's `ip_addr`. The stack ADR's size estimate already allows for keeping raw
-  records. Whether to strip fields on import is open in `docs/02-domain-model.md` §8.
+  such as the export's `conn_country`. The stack ADR's size estimate already allows for keeping raw
+  records. The one field stripped on import is `ip_addr` (the revision below).
 - **Spotify's live plays are kept only until the export replaces them.** When the export
   re-sources an event, the poller's more exact start and its playlist context go with the deleted
   observation, and no later change of precedence can reach them. A disconnect deletes every Web
@@ -140,6 +141,32 @@ on top (`docs/02-domain-model.md` §4). The amendment makes three changes.
    scrobble needs it, and Last.fm is the live tail the owner chose.
 
 None of the three changes the decision's sentence. The first narrows it.
+
+*Revised 2026-11-03, before any code built on either change, on the owner's answers of 2026-10-19
+and 2026-11-03; `docs/02-domain-model.md` §1 and §8 quote the ask and the option chosen.* The
+revision makes three changes.
+
+1. **The event gains a column, `service`, which is not resolved.** The owner chose "Null item,
+   record rewritten first (Recommended)", and a null-item event has no item to read a service
+   through. `service` is set when the event is created, from the draft's source's service, and is
+   immutable. The four columns the decision names are still the ones precedence resolves, and the
+   event still carries no source. This is safe because matching never crosses services: every pair
+   `docs/02-domain-model.md` §2 matches is within one, ingestion takes its lock per service, and a
+   merge stays within one (§3). So every observation an event can hold is of the same service, the
+   column cannot disagree with any of them, whichever order they arrive in or are deleted in, and a
+   recompute over the observations would give the value it already holds.
+2. **The export's `ip_addr` is stripped before its observation is written**, the one field of a
+   record not kept (the owner's import choices, chosen as "Take the set (Recommended)"). This is
+   safe because nothing reads it, no column, total or `record_key`, and because an observation is
+   still immutable once written.
+3. **The log tables gain `owner_id`**, `event` among them, written once and not resolved (the
+   owner's "Add it now"). This is safe while there is one owner, because the column then holds one
+   value and cannot disagree with anything matching does. What matching and `record_key`'s
+   uniqueness must do for a second owner is not decided here: the column "buys nothing until a
+   second user exists".
+
+The first and third add to the decision's sentence without changing what it says of the four
+columns. The second narrows its "verbatim" by one field.
 
 **What is expensive to reverse.**
 

@@ -3,6 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-09-23
 - **Accepted:** 2026-09-23, by the owner, over B, C and A-with-SQLite
+- **Revised:** 2026-11-04, on a catalogue-only source, from the M1 plan round (Consequences)
 
 ## Context
 
@@ -230,6 +231,14 @@ The reasons, strongest first:
 - **The scaffold PR builds it; the accepting PR only recorded it.** Porting
   `check_layering.py` to package `constellate` and adding the appendix's gate areas with their
   workflows are code, so they are the scaffold PR's, the first work `impl-director` cuts.
+- **One ingestion path binds the log, not the cache.** *Revised 2026-11-04, from the M1 plan round
+  (`docs/reviews/m1-plan/impl-director-check-2.md`, finding 9), which derived it and did not put it
+  to the owner.* "Every source an adapter producing the same draft event" holds for every source of
+  the log. A catalogue-only source, `youtube-data-api` among them, produces no draft: it sits behind
+  a second protocol and yields catalogue facts that reach only `catalogue_cache`
+  (`docs/03-architecture.md`, "One ingestion path"). This is safe because the rule exists to stop a
+  second write path into the log, and this writes nothing the log reads: no event's existence,
+  start, measured duration, item or creator depends on a cache row (`docs/02-domain-model.md` §4).
 - **Not decided here**: the domain model (Q-C); where it runs (Q-E); what the apps are (Q-F); how
   the owner signs in, which M1 needs (the sibling's `ADR-0014` is a starting point, not a
   precedent); the poll interval, which is the Spotify document's to set.

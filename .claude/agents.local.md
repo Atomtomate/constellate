@@ -13,13 +13,10 @@ copying it; a rule stated twice is a rule that will eventually contradict itself
 stated here in full is what has no other home — the file-ownership map and the board
 numbers.
 
-**M0 is done (2026-10-05).** The stack (ADR-0002), the ingestion seam (ADR-0003) and the
-domain model ([`docs/02-domain-model.md`](../docs/02-domain-model.md)) are decided, the
-scaffold lays the stack out, and the sections they decide — file ownership, the contract, the
-layers, the toolchain, the domain invariants — are filled below and name what exists. One
-section still says *not yet*: the running stack, until Q-E in
-[`docs/08-open-questions.md`](../docs/08-open-questions.md) says where it runs. An agent that
-finds it empty reports it, as its definition says, rather than inventing the answer.
+Where the project stands is [`docs/07-roadmap.md`](../docs/07-roadmap.md)'s and
+[`docs/08-open-questions.md`](../docs/08-open-questions.md)'s to say (the owner, 2026-11-03). A
+section below that says *not yet* stays so until the question it names is answered, and an agent
+that finds one empty reports it, as its definition says, rather than inventing the answer.
 
 ## Modes
 
@@ -172,7 +169,9 @@ here in the same PR.
 
 - **One event per play.** Totals and the timeline read events. An event's item, start,
   duration and basis are resolved from its observations by precedence, never written
-  directly, and the event carries no source (ADR-0003; `docs/02-domain-model.md` §1).
+  directly. Its `service`, from the draft's source, and its `owner_id` are not resolved: set when
+  the event is created, and never changed. The event carries no source, and its item may be null
+  (ADR-0003, its revision of 2026-11-03; `docs/02-domain-model.md` §1).
 - **Observations are immutable**, and deleted only with the ingest run that brought them,
   where their source's terms require it, or once the export re-sources a live play, the
   poller's or Last.fm's (ADR-0003, its Consequences and its amendment;
@@ -219,7 +218,7 @@ fleet's to state, and the commands that drive both boards are `scripts/README.md
 **There is no rig.** Nothing is deployed, `infra/stack.py` does not exist, and the three
 facts the `ops` definition reads back from here — the main checkout to run stack commands
 from, the rig's milestone, the test login — have no values. `ops` has nothing to operate
-until M1 needs a public URL (Q-E); invoked before then it should say so and stop.
+until the host Q-E chose runs its first service; invoked before then it should say so and stop.
 
 - **Main checkout** — `C:\Users\Atomt\Documents\favorites_tracker`, for when there is
   something to run from it.

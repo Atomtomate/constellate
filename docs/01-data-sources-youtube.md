@@ -322,8 +322,8 @@ What the tracker does next, in order:
    export proves the refresh token outlived the 7-day testing limit (§3.2). Pass: daily
    capture needs no extension. Fail: scheduled Takeout carries the history, and freshness
    becomes the extension's job.
-2. **Import the Takeout**: drop ads, split by `header`, strip the localised verb, and keep the
-   channel id from `subtitles`.
+2. **Import the Takeout**: drop ads, keep `header` in `raw` (the split ships after M1,
+   `02-domain-model.md` §8), strip the localised verb, and keep the channel id from `subtitles`.
 3. **Enrich** with `videos.list` under an API key, 50 ids a call, cached and refreshed within
    30 days (§4).
 
