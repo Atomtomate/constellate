@@ -544,109 +544,18 @@ lands on the item: a kind, a ref namespace, and identity rules. Those rules — 
 cross-service works for music — are where the next source will argue, and neither argument reaches
 the event.
 
-## 7. The core tables, sketched
+## 7. The core tables
 
-**Decided since this sketch was written, and not shown in it** (§1 and §8 hold the owner's words):
-every single-column key is a UUIDv7 the application mints, not the `bigint` or `smallint` below;
-the log tables carry an `owner_id` from the first migration (issue #28 settles which); and
-`event` gains `service`. Where the
-sketch and those decisions disagree, the decisions stand. The sketch stays until the first schema
-migration retires it (issue #17).
-
-```sql
--- A SKETCH to argue with, not a migration. Postgres; names and types are placeholders.
-
-create table source (
-  id           smallint primary key,
-  key          text not null unique,        -- 'spotify-export', 'youtube-takeout', ...
-  service      text not null,               -- 'spotify', 'youtube'
-  cursor       jsonb                        -- shape per source; only its adapter reads it
-);
-
-create table ingest_run (
-  id           bigint generated always as identity primary key,
-  source_id    smallint not null references source,
-  started_at   timestamptz not null,
-  finished_at  timestamptz,
-  outcome      text,                        -- 'ok', 'failed'; null while running
-  file_sha256  text,                        -- file imports only
-  counts       jsonb,                       -- new, duplicate, matched
-  error        text
-);
-
-create table item (
-  id           bigint generated always as identity primary key,
-  service      text not null,
-  kind         text not null check (kind in ('track', 'episode', 'chapter', 'video')),
-  title        text not null,               -- from the owner's records, never a catalogue
-  detail       jsonb not null default '{}'  -- album or show name: labels no total reads
-);
-
-create table item_ref (
-  id           bigint generated always as identity primary key,
-  item_id      bigint not null references item,
-  namespace    text not null,               -- 'spotify:track', 'youtube:video', ...
-  value        text not null,
-  unique (namespace, value)
-);
-
-create table creator (
-  id           bigint generated always as identity primary key,
-  service      text not null,
-  kind         text not null check (kind in ('artist', 'channel', 'show')),
-  name         text not null
-);
-
-create table creator_ref (
-  creator_id   bigint not null references creator,
-  namespace    text not null,               -- 'spotify:artist-name', 'youtube:channel'
-  value        text not null,
-  primary key (namespace, value)
-);
-
-create table item_creator (
-  item_id      bigint not null references item,
-  creator_id   bigint not null references creator,
-  role         text not null,               -- 'artist', 'album-artist', 'channel', 'show'
-  position     smallint not null default 0,
-  primary key (item_id, creator_id, role)
-);
-
-create table event (
-  id             bigint generated always as identity primary key,
-  item_id        bigint references item,    -- null: no observation names an item
-  started_at     timestamptz not null,
-  duration_ms    integer,                   -- set only when measured
-  duration_basis text not null check (duration_basis in ('measured', 'to_end', 'start_only')),
-  check ((duration_basis = 'measured') = (duration_ms is not null))
-);
-create index on event (started_at);
-create index on event (item_id, started_at);
-
-create table observation (
-  id             bigint generated always as identity primary key,
-  event_id       bigint not null references event,
-  source_id      smallint not null references source,
-  ingest_run_id  bigint not null references ingest_run,
-  record_key     text not null unique,      -- the upstream record's identity
-  item_ref_id    bigint references item_ref,
-  started_at     timestamptz not null,
-  duration_ms    integer,
-  duration_basis text not null,
-  raw            jsonb not null             -- the record as sent, less catalogue facts
-);
-create index on observation (event_id);
-
--- Catalogue facts, never read as log (section 4).
-create table catalogue_cache (
-  item_ref_id  bigint primary key references item_ref,
-  source_id    smallint not null references source,
-  fetched_at   timestamptz not null,        -- read as absent once 30 days old
-  status       text not null,               -- 'found', 'not-found'
-  length_ms    integer,
-  payload      jsonb                        -- category, ISRC, per-track artists, ...
-);
-```
+The schema is code, not a sketch, since 2026-11-04 (Lane 1 of the M1 plan; issue #17 retired the
+sketch that argued for it here). Each table's columns, keys, checks and indexes live in
+`api/src/constellate/models/`, one module per cluster: `ingest.py` (source, ingest run),
+`item.py`, `creator.py`, `event.py` (event, observation), `cache.py`; the migration that created
+them is `api/alembic/versions/0002_core_log.py`. What a table is for and what each column means is
+section 1's; the model class's docstring says what the table guarantees and why. The vocabularies a
+CHECK admits are `api/src/constellate/domain/vocab.py`'s members, and a test pushes every member
+through the store and back so the two cannot drift. The decisions the sketch never showed stand in
+the models: UUIDv7 keys the application mints, `owner_id` on the owner's own rows (section 8),
+`event.service`.
 
 ## 8. What stays open, and what is expensive to reverse
 

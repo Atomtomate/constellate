@@ -1,7 +1,7 @@
 """Test fixtures — see ``api/tests/CLAUDE.md`` for why the suite runs on both backends.
 
 The model-built fixtures (``_pg_database``, ``engine``, ``session_factory``,
-``session_override``) live here. The app-dependent fixtures (``client``,
+``session``, ``session_override``) live here. The app-dependent fixtures (``client``,
 ``anon_client``) follow below them.
 """
 
@@ -9,7 +9,7 @@ import os
 import uuid
 
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool, StaticPool
@@ -97,6 +97,10 @@ def engine(_pg_database: URL):
     if _pg_database.get_backend_name() == "sqlite":
         kwargs = {"connect_args": {"check_same_thread": False}, "poolclass": StaticPool}
     eng = create_engine(_pg_database, **kwargs)
+    if eng.dialect.name == "sqlite":
+        # SQLite ignores foreign keys unless asked, which would leave RESTRICT and CASCADE
+        # untested on the backend the hook runs.
+        event.listen(eng, "connect", lambda conn, _: conn.execute("PRAGMA foreign_keys=ON"))
     Base.metadata.drop_all(eng)
     Base.metadata.create_all(eng)
     yield eng
@@ -108,6 +112,13 @@ def engine(_pg_database: URL):
 def session_factory(engine):
     """A sessionmaker bound to the test engine."""
     return sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+
+
+@pytest.fixture
+def session(session_factory):
+    """A session on the test engine; like production's, it does not commit."""
+    with session_factory() as s:
+        yield s
 
 
 @pytest.fixture

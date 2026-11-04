@@ -11,8 +11,14 @@ the registry fails loudly so that a new migration cannot slip through untested.
 
 import pathlib
 
+import alembic.command
+from alembic.autogenerate import compare_metadata
 from alembic.config import Config
+from alembic.migration import MigrationContext
 from alembic.script import ScriptDirectory
+from sqlalchemy import CheckConstraint, create_engine, inspect
+
+from constellate.models import Base
 
 # ── Path constants ────────────────────────────────────────────────────────────
 _API_DIR = pathlib.Path(__file__).parent.parent  # api/
@@ -25,6 +31,7 @@ _COVERED: frozenset[str] = frozenset()
 #: Revisions that touch no existing rows and need no data case, with the reason.
 NO_ROWS: dict[str, str] = {
     "0001_scaffold": "empty first migration; creates no tables and touches no rows",
+    "0002_core_log": "creates the ten core tables on a database that has none; no row exists",
 }
 
 
@@ -79,8 +86,47 @@ def test_upgrade_succeeds_with_percent_encoded_url(tmp_path, monkeypatch):
     alembic.command.upgrade(_make_cfg(), "head")  # must not raise ValueError
 
 
-# ── Postgres-only fixtures and cases live here as they are added ──────────────
-# The first real table migration goes here. Add a ``pytest.mark.skipif`` guard on
-# ``_RUN_DATABASE_URL.get_backend_name() != "postgresql"``, a session-scoped engine
-# fixture that runs up/down, and the test itself. See the sibling project's
-# test_migrations.py for the full pattern.
+# ── 0002_core_log, on SQLite ──────────────────────────────────────────────────
+# The Postgres round trip and the drift check are CI's (alembic/CLAUDE.md); these read the
+# same revision on SQLite, so the hook sees a revision that stopped matching its models.
+
+
+def _migrate(tmp_path, *, then_downgrade=False):
+    """Upgrade a fresh SQLite file to head, and optionally back to base; return its engine."""
+    engine = create_engine(f"sqlite:///{(tmp_path / 'm.db').as_posix()}")
+    cfg = _make_cfg()
+    with engine.begin() as connection:
+        cfg.attributes["connection"] = connection
+        alembic.command.upgrade(cfg, "head")
+        if then_downgrade:
+            alembic.command.downgrade(cfg, "base")
+    return engine
+
+
+def test_upgrade_head_creates_exactly_the_models_tables(tmp_path):
+    engine = _migrate(tmp_path)
+    assert set(inspect(engine).get_table_names()) - {"alembic_version"} == set(Base.metadata.tables)
+
+
+def test_downgrade_base_leaves_no_table(tmp_path):
+    engine = _migrate(tmp_path, then_downgrade=True)
+    assert set(inspect(engine).get_table_names()) - {"alembic_version"} == set()
+
+
+def test_migrated_schema_has_no_drift_from_the_models(tmp_path):
+    engine = _migrate(tmp_path)
+    with engine.connect() as connection:
+        context = MigrationContext.configure(connection, opts={"compare_type": True})
+        assert compare_metadata(context, Base.metadata) == []
+
+
+def test_every_check_constraint_in_the_revision_is_the_models(tmp_path):
+    """Autogenerate does not compare CHECKs, so a retyped list would drift unseen."""
+    engine = _migrate(tmp_path)
+    inspector = inspect(engine)
+    for name, table in Base.metadata.tables.items():
+        in_models = {
+            (c.name, str(c.sqltext)) for c in table.constraints if isinstance(c, CheckConstraint)
+        }
+        in_database = {(c["name"], c["sqltext"]) for c in inspector.get_check_constraints(name)}
+        assert in_database == in_models, name

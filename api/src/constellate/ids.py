@@ -10,7 +10,8 @@ random, which would make "newest first" wrong exactly when several events are in
 in one sitting. Guaranteed monotonic per process; across processes, ordering is only as
 good as the clock.
 
-``Owned`` in ``models/base.py`` is the one caller; the key-type question lives there.
+``Owned`` in ``models/base.py`` is the one caller. The key type is the owner's decision of
+2026-10-19 (``docs/02-domain-model.md`` §8).
 """
 
 import os

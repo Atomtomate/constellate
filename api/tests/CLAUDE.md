@@ -30,8 +30,9 @@ as they stand at import; the late import there is load-bearing, and so is the au
 fixture of its own.
 
 **What is CI's alone**: the Postgres pass, and the Alembic round trip and drift check
-(`alembic/CLAUDE.md`). No Postgres-only migration cases exist yet — the first real table
-migration brings the first — and the coverage registry test there runs everywhere.
+(`alembic/CLAUDE.md`). `0002_core_log` creates tables and touches no rows, so it sits in
+`NO_ROWS`; the first Postgres-only migration case comes with the first migration that moves
+data, and the coverage registry test there runs everywhere.
 
 ## Fixtures
 
