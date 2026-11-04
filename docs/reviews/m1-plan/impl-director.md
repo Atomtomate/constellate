@@ -24,7 +24,40 @@ export lane added; Lane 8 re-gated to schedule every unattended job; the extensi
 conditional on the #11 spike; the `CatalogueAdapter` protocol recorded; and the codegen-ownership
 claim corrected (the overlay already blesses it).*
 
+*Re-cut again by `impl-director-check-3.md` (round 3, 2026-11-04), after the owner answered
+every decision and the record step (PR #27, `50c96bc`) wrote the answers in. The `[C3]`
+amendments below touch only what two reversed leanings change - decision 2 (sign-in: ADR-0004's
+stored, revocable sessions, over the stateless-cookie leaning) and decision 7 (the owner column:
+added, over the no-column leaning). `owner_id` lands on the four log tables (Lane 1); the
+`auth_session` table is a separate `0003` small `impl-database` task (Lane 3); issue #28's
+granularity is settled here, and issue #20's two re-cut questions answered (a command, not a
+screen) and deferred (the non-browser credential, with Q-F). Every other lane stands as cut.*
+
+*Checked again by `impl-director-check-4.md` (round 4, 2026-11-04), folding pr-direction-review's
+report on the re-cut. The `[C4]` marks below correct four things round 3 got wrong: the "all nine
+answered" count (decisions 4 and 5 are owner actions still outstanding, not answers); issue #20's
+two leanings, which came from PR #27's direction reviewer, not the owner; the second-owner
+consequence of global `source.key`/`record_key`; and a stale `docs/03` fold that is now
+ADR-0002's. `owner_id` is settled onto `auth_session`, and Lane 9's `docs/07` line is restored as a
+session step. The doc halves (`docs/02` §1/§8, `docs/07`, `docs/08`, ADR-0002) are a session hand's
+this round; check-4 states what each should say so the two halves agree.*
+
 ## Open decisions for the owner (settle before the lanes they gate; one message)
+
+**[C3: all nine are now answered - decisions 1, 3, 4-6, 8 and 9 as their leanings (PR #27
+recorded them); decision 2 by ADR-0004 (stored sessions, against the leaning) and decision 7 by
+the owner's "add it now" (against the leaning). Nothing below still waits on the owner. The
+`[C3]` notes record what the two reversed answers change; the decision text is left as it stood,
+so the leaning and the override both read.]**
+
+**[C4: the C3 banner overcounts (finding 1). Six of the nine are answered - 1, 3, 6 and 8 as their
+leanings, 2 and 7 against the leaning - and decision 9 (each answer recorded before its code) is
+met by the PR #27 record step and ADR-0004. Decisions 4 and 5 are **owner actions still
+outstanding**, not answers: decision 4 is the owner's data requests and account steps (#15, #16,
+#12, #13, all open) and decision 5 is the #11 spike, the owner's to run (#11 open). They gate when
+a lane can **close**, never its code. So "nothing below still waits on the owner" is wrong - 4 and
+5 do, as actions - and the coordinator should keep prompting the spike and the data requests
+early.]**
 
 1. **The key type of every table (#10).** Gates Lane 1, and Lane 1 gates the whole milestone,
    so this is the first thing to settle and the cheapest. `Owned` in `models/base.py` offers
@@ -49,7 +82,15 @@ claim corrected (the overlay already blesses it).*
    sessions win, they add a separate migration `0003_auth_session` and three repo functions as an
    `impl-database` small task that does **not** block Lane 1/0002.] "Port the sibling's scheme"
    is a build from its description, not a copy: its code was deliberately not ported by the
-   scaffold and is outside the worktree, so no specialist has read it. Gates Lane 3.
+   scaffold and is outside the worktree, so no specialist has read it. Gates Lane 3. **[C3: resolved - ADR-0004 (Accepted 2026-11-03)
+chose **stored, revocable sessions** over the stateless-cookie leaning: one owner password in
+config exchanged for an HttpOnly cookie carrying an opaque token, each session a row in an
+`auth_session` table so one can be revoked and all listed; the 401 and `unauthenticated` code are
+unchanged. The stateless/stored sub-choice is moot. The table is a separate `0003` small
+`impl-database` task (not Lane 1's 0002), so Lane 3's backend now gates on it, which gates on
+0002 - see Lane 3 and Order. ADR-0004 left three things to this re-cut: whether M1 exposes
+list/revoke (answered - a command, issue #20), how a non-browser client presents a credential
+(deferred with Q-F), and the cookie/password details (the sign-in lane's, stated in its plan).]**
 
 3. **The `docs/02` §8 import choices** (before Lanes 4 and 6; the null-item half is **decision 8**,
    which gates Lane 1 - the rest live in `raw` or are already allowed by §7 and do not block Lane 1). **Leanings, from the M0
@@ -104,7 +145,20 @@ claim corrected (the overlay already blesses it).*
    root `CLAUDE.md` forbids for a `docs/08` question. **Leaning: no column.** One user is the
    scope, `docs/00` defers multi-user, and `docs/02` §8 already says nothing depends on it; the
    retrofit is a migration, taken if the scope changes. Settled, the answer moves to `docs/08`'s
-   Answered.
+   Answered. **[C3: resolved against the leaning - the owner chose "Add it
+   now" (`docs/02` §8). `owner_id` is on the log tables from the first migration, a configured
+   owner UUID with no users table. Issue #28 left three sub-points to this re-cut, settled here
+   as its leaning has them (director's call: none reverses the owner's choice, none is expensive
+   to reverse pre-data, and the issue hands them to the re-cut): the column on the owner's-own
+   cluster - `event`, `observation`, `ingest_run`, `source` - and not on the world/catalogue
+   tables (`item`, `item_ref`, `creator`, `creator_ref`, `item_creator`, `catalogue_cache`); it
+   holds one configured UUID read from config at creation; and uniqueness is unchanged
+   (`observation.record_key`, `item_ref (namespace, value)`, `source.key` stay global), which the
+   owner's "buys nothing until a second user" accepts. **[C4: the *consequence* of that for a second
+   owner is corrected in Lane 1 and `docs/02` §8 (finding 4) - `item_ref` is shared by design,
+   a global `source.key` blocks any second-owner `source` row, and the per-owner migration stays
+   needed.]** The session edit recording this in
+   `docs/02` §8 (issue #28's done-when) heads Lane 1, like #17's folds.]**
 8. **A null item, hence `event.service` - and the record it rewrites (direction review 3).** This
    is decision 3's null-item half, pulled out because it alone **gates Lane 1** (it sets 0002's
    shape: a nullable `item_id` and an immutable `event.service`), and because `event.service` is
@@ -160,6 +214,25 @@ M1 waits on this hand-off.
   bucketed by service, which reading service through the item cannot do. Dependent on decision 8 (it
   gates Lane 1, and the `docs/02` §1/§6 + overlay + ADR-0003 record edits it needs are a Lane 1
   precondition): dropped if the owner chooses a placeholder item.]**
+- **[C3: `owner_id` (decision 7) is added to the four owner's-own tables - `event`,
+  `observation`, `ingest_run`, `source` - a `uuid.UUID` NOT NULL with an index each, set at
+  creation from a configured owner UUID and never resolved (the overlay invariant; ADR-0003's
+  2026-11-03 revision). The world/catalogue tables do not get it (issue #28, settled under
+  decision 7). The repo functions that create an owned row - `get_or_create_source`, `start_run`,
+  `create_event`, `add_observation` - take an `owner_id` argument; the ingestion service (Lane
+  2b) passes the configured value. Uniqueness is unchanged (global `record_key`, `item_ref`,
+  `source.key`). **[C4: what that global uniqueness means for a second owner, stated
+  right (finding 4): `item_ref (namespace, value)` is a *world* row with no `owner_id`, shared
+  across owners by design - not a collision; `observation.record_key` carries `owner_id`, so a
+  second owner's identical key *would* collide; and a global `source.key` means a second owner
+  cannot hold any `source` row at all (every owner uses the same keys, e.g. `spotify-export`), so
+  `source.owner_id` stays inert until a later migration makes `source.key` unique per
+  `(owner_id, key)` and `record_key` per owner. The director leaves that migration for when a
+  second user arrives (the owner's "buys nothing until a second user exists"); it is **not** made
+  now. `docs/02` §8 is corrected to say this - the session hand's edit.]** The `auth_session` table is **not** here: it is a separate `0003_auth_session`
+  small `impl-database` task briefed with Lane 3 (decision 2, ADR-0004), gated on this 0002 by
+  the migration chain. The session records issue #28's table list in `docs/02` §8 (Open ->
+  Answered) before this lane codes, with the #17 folds.]**
 - `repos/` for Lane 2's steps 1–5 only (the specialist drafted the signatures; the capabilities
   the hand-off names): find-item-by-ref / create item+ref from a hint; resolve-or-create creators
   and their `item_creator` links; the **per-service advisory lock** (SQL, so `impl-database`'s, a
@@ -242,6 +315,52 @@ adapter, importer and the poller call.
   here" sign-in line and the `unauthenticated`-row note; `api/CLAUDE.md`'s auth settings. **[C2: the scheme is recorded in `docs/03` (or an ADR, the
   owner's call - decision 9) *before* this lane's code, not folded in the same PR.]**
 - Frontend (`web/`): a sign-in route, the 401 → clear-session wiring, a route guard.
+
+**[C3: decision 2 is ADR-0004 (stored, revocable sessions), not the stateless cookie this lane
+was cut under. What changes:**
+- **A new `0003_auth_session` migration + repo functions, a small `impl-database` task** briefed
+  when this lane plans, gated on Lane 1's 0002 (the migration chain is linear). Shape as a
+  constraint, the specialist details it: `Owned` id, `token_hash` unique (store a hash of the
+  token, never the token itself), `expires_at`; and **[C4: `owner_id` too (finding 3). The C3 note
+  dropped it by the wrong test ("not a log table"); the §8 test is "the owner's own rows", and a
+  session is one of the owner's own, so `auth_session` carries `owner_id` like the four log tables -
+  a configured UUID, one value while there is one owner. Decided here, the director's call within
+  the owner's words (they place the column on their own rows); the session hand names `auth_session`
+  in `docs/02` §8's settlement.]**
+  Capabilities the lane needs: create a session; find the live (unexpired) session by token
+  hash; delete one (logout / revoke); list sessions and delete-expired (hygiene - ADR-0004 makes
+  expiry removal this lane's). ADR-0004's "three repo functions" was the ask's estimate, not a
+  cap.
+- **Backend (`services/auth.py`, `api/`)**: login verifies the password (a hash in config,
+  constant-time) and **creates a session row**, setting the cookie to the opaque token;
+  `require_session` **looks the token up** and rejects a missing/expired/deleted session with the
+  401 envelope; logout **deletes the row**. Revoke-all is deleting the rows, not rotating a
+  secret.
+- **A `python -m constellate.sessions` command (list + revoke-by-id + revoke-all)** - issue #20
+  question 1, answered: a command in M1, not endpoints and not a Lane 7 screen. **[C4: the
+  director's call, as issue #20's leaning has it (finding 2) - the leaning came from PR #27's
+  direction reviewer (finding 4), posted under the owner's `gh` login, not the owner's own words;
+  ADR-0004 delegates the choice to this re-cut.]** It keeps the contract and Lane 7 as cut, and
+  management endpoints are M2+ polish. An entry point, no contract impact.
+- **Issue #20 question 2 (a non-browser client's credential) is deferred**
+  **[C4: again the director's call on the reviewer's leaning (finding 2), not the owner's words;
+  and its home is ADR-0004's "Not decided here", not Q-F, which names no credential question
+  (finding 5). The session hand adds a pointer in `docs/08` Q-F to ADR-0004's caveat and to this
+  lane's transport-agnostic-lookup constraint, so whoever designs the extension finds it. Read
+  "deferred, it stays ADR-0004's open item" for "deferred to Q-F".]** The one constraint so this
+  lane does not foreclose it by accident: the
+  session is found by a token, and the cookie is only the browser's way of carrying it - keep the
+  lookup transport-agnostic, so a later header-borne token is additive and needs no migration.
+  The cookie attributes (`SameSite`, `Secure`, `Path`), whether config holds the password or its
+  hash, and whether a 401 carries `WWW-Authenticate` are the lane's to state in its plan
+  (ADR-0004, "Not decided here").
+- **This lane no longer runs fully parallel to Lane 1**: its table-backed half gates on `0003` ->
+  `0002`; only the password-hashing helper drafts ahead. Sign-in is already recorded (ADR-0004),
+  so decision 9's record step is met. **[C4: there is no `docs/03` "Not decided here" line left to
+  fold (finding 6) - PR #27 already removed sign-in from it and its 401 row cites ADR-0004. The
+  line actually left is in ADR-0002's "Not decided here" (`docs/adr/0002-the-stack.md:242-244`),
+  which still lists how the owner signs in; folding it to point at ADR-0004 is the session hand's
+  edit this round, not Lane 3's.]**]**
 
 Build this before Lane 6 ships so the read endpoints land already protected.
 
@@ -393,6 +512,14 @@ daily jobs beside it" is what this covers.]**
 
 ### Lane 9 - The plain-format export (`docs/00` v1 criterion), `impl-backend`. Gate: Lane 1. Entry point, no contract. [C2]
 
+**[C4: a session step heads this lane (finding 7). The record-step handoff passed Lane 9's
+`docs/07` line to this re-cut - "a milestone's scope is not changed in passing" - and check-3
+dropped it, so `docs/07`'s M1 still does not name the export the lane builds. Before this lane
+codes, the session adds a `docs/07` M1 bullet naming the plain-format export and citing `docs/00`'s
+v1 success criterion ("the whole log can be exported, in a plain format, at any time"). It is
+recording, not a new owner choice - the vision already makes it v1 scope - so a bullet suffices,
+no owner message. The session hand writes it this round.]**
+
 **[C2: added - the cut named it in neither a lane nor "Not in scope" (direction review 6).** A
 command (`python -m constellate.export`) that reads the log through `services/` and writes a
 plain-format dump of the owner's own records and the events they resolve, leaving out the cache
@@ -421,6 +548,15 @@ half and decision 8 (the null item, hence 0002's shape) settle *before* Lane 1 a
 4d; and Lane 9 (the export) gates only on Lane 1 and should precede continuous reliance on the live
 tail.]**
 
+**[C3: the two reversed answers move only Lane 3. Stored sessions (decision 2) put a
+`0003_auth_session` migration between Lane 3's backend and Lane 1's 0002, so Lane 3 no longer
+runs fully parallel to Lane 1 - its table-backed half waits on `0003` -> `0002`; only the
+password-hashing helper drafts ahead. The sessions list/revoke is a command (issue #20), not a
+screen, so Lane 7 is unmoved. Decision 7's `owner_id` sits inside Lane 1 and moves nothing in the
+order. With both answers in, Lane 1's gates all resolve - decision 1 (UUIDv7), decision 8 (null
+item + `event.service`) and decision 7 (`owner_id` / #28) are recorded by PR #27 and settled
+here - so Lane 1 is unblocked once the session writes #28's table list into `docs/02` §8.]**
+
 ## Contract impact
 
 **Additive only; nothing breaking for a generated client.** New paths — `/events`,
@@ -447,6 +583,13 @@ with the change (`.claude/agents.local.md`). [C2: the earlier "(friction filed)"
 no note was written and the overlay already blesses this - so the claim is withdrawn (direction
 review follow-up).]**
 
+**[C3: the two reversed answers keep the contract additive. `owner_id` (decision 7) is a
+server-internal column, read from config and never on any response, so it adds nothing to the
+contract. Stored sessions (ADR-0004) keep sign-in exactly as cut on the wire - `/auth/login`,
+`/auth/logout`, `/me`, a security scheme, 401s, and **no new `ErrorCode`** (the cookie's opacity
+is why moving stateless<->stored later touches no client). The `python -m constellate.sessions`
+command is an entry point and adds nothing. Nothing here is breaking.]**
+
 ## Not in scope (so no lane builds it helpfully)
 
 The atlas and all of M2 — favourites, ratings, notes, themes, constellations, recommendation
@@ -457,7 +600,12 @@ owner, decision 5 (direction review 8)]**; a cross-service "work above items"
 (§6); an upload endpoint for imports (M2+ polish); the account-data package (names, not an input);
 **[C1: promoting `incognito_mode`/`header` to columns and the private-session / YouTube-Music-split
 totals filters they enable — a later migration, so totals ship unfiltered for those two (decision
-3); any revocable `auth_session` table unless decision 2 chooses stored sessions;]** any `docs/08`
+3); any revocable `auth_session` table unless decision 2 chooses stored sessions;]**
+**[C3: two items
+leave "not in scope": `owner_id` is now built in Lane 1 (decision 7) and the `auth_session`
+table is now built as `0003` (decision 2, ADR-0004). What stays out: a sessions **screen** in the
+web client and list/revoke **endpoints** - M1 lists and revokes with a command (issue #20); and a
+non-browser-client credential path (deferred with Q-F).]** any `docs/08`
 §8 point the owner does not settle now stays as written (e.g. a per-event time zone). Branch
 protection on `main` and the root `CLAUDE.md` `docs/ideas/` row are prior bookkeeping tracked in
 their own handoffs, not this plan's to cut.

@@ -80,7 +80,7 @@ Listed so they can be cut without debate later, and so nobody quietly builds the
 | Websites and browsing history | Named in the brief, but not in the first priority. An item that is a website is one more source once the model exists. |
 | Playback of anything | The item links out; the source plays it. |
 | Automatic recommendations | The owner is the recommender; the tool remembers. A model can be laid over a well-tagged log later and constrains nothing now. |
-| Multiple users, social features, a public site | Nothing in a private single-user log prevents them later; an owner column from day one is the whole cost, and the owner chose to pay it *(2026-11-03; [08](08-open-questions.md))*. |
+| Multiple users, social features, a public site | Nothing in a private single-user log prevents them later; an owner column from day one is the first cost and a uniqueness migration the rest (02 section 8), and the owner chose to pay the first now *(2026-11-03; [08](08-open-questions.md))*. |
 | Native mobile apps | The website first; what the apps are is Q-F. |
 | Scraping a service's private pages | Imports use each service's export or API, or a file the owner already has. Public pages may be scraped for the calendar's feeds: politely, without a login, and only once each site's terms are read and recorded *(the owner, 2026-10-06)*. |
 

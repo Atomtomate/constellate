@@ -52,6 +52,10 @@ The owner's first priority: what was listened to and watched, when, and for how 
   Takeout if its spike fails; lengths from the Data API's `videos.list`, held as a cache.
 - A timeline of both, and totals by day, week and month, and by artist, channel, track and
   video.
+- The whole log exported, in a plain format, at any time (00's success criterion): the copy kept
+  for years, because a database backup holds cache rows and live plays past what the services'
+  terms allow and is kept at most five days (`02-domain-model.md` §4). Added 2026-11-04, from the
+  M1 plan's Lane 9, which builds it: the criterion is 00's own, so no owner decision was needed.
 - Private, single user; the owner signs in.
 
 **Not in M1**, at the owner's word of 2026-11-03 (`02-domain-model.md` §8; issue #29): the YouTube
