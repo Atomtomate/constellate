@@ -11,9 +11,9 @@ does with the rows that do not fit. Refuse and name them; do not invent data to 
 migration that stops with a list a person can act on is worth more than one that guesses and
 succeeds.
 
-Right now the chain is one empty revision, `0001_scaffold`, anchoring it at a known id so the
-first table migration has a `down_revision` to point at; the tables arrive with that migration,
-cut from `docs/02-domain-model.md`'s schema. Mistakes are free until the first deploy, and the
+The chain is two revisions: `0001_scaffold`, empty, anchoring it at a known id, and
+`0002_core_log`, the ten tables of `docs/02-domain-model.md` section 7 as the models define
+them (2026-11-04). Mistakes are free until the first deploy, and the
 habits formed now are the ones that will be in place after it.
 
 ## Writing one
