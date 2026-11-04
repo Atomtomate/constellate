@@ -37,7 +37,7 @@ def main() -> int:
     print("Session start — the tree and the open work (scripts/hook_session_start.py):")
     print(
         f"Mode: {mode.read(ROOT)} "
-        f"(`git config --worktree {mode.KEY} {mode.UNATTENDED}` declares the other)"
+        f"(`git config --worktree {mode.KEY} {mode.ATTENDED}` declares the other)"
     )
     print(run("scripts/worktree_status.py")[1])
     print(run("scripts/record_index.py", "handoffs", "--open")[1])

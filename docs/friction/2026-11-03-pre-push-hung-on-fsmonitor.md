@@ -1,7 +1,7 @@
 # The pre-push gate hung on a test repository's filesystem monitor
 **Agent:** the session on PR #27, briefed by the coordinator
 **Summary:** A push sat over ten minutes on a `git add -A` inside the script tests, because the system gitconfig turns on `core.fsmonitor` and each temp repository starts a daemon; it cost a failed push and a retry.
-**Retro:** Unprocessed
+**Retro:** Filed 2026-11-04 — issue #36: `-c core.fsmonitor=false` in `scripts/git_cmd.py` and the tests' `_git`, and the fetch test off the network.
 
 **What you were doing.** Pushing `claude/m1-record-step` for the first time, a documents-only diff,
 through `.githooks/pre-push`, which runs `python -m unittest discover scripts/tests`.

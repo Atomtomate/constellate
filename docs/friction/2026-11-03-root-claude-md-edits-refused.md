@@ -1,7 +1,7 @@
 # A lane cannot be assumed able to edit the root `CLAUDE.md`
 **Agent:** the session on PR #27, briefed by the coordinator
 **Summary:** Two root `CLAUDE.md` edits an owner's answer had asked for were refused as self-modification, late in the task, so the PR shipped without them and #31 now waits on the owner.
-**Retro:** Unprocessed
+**Retro:** Applied 2026-11-04 — a root `CLAUDE.md` gotcha says the refusal can happen and what a brief says about it; whether a `CLAUDE.md` edit is on the list of what waits for the owner is in the retro handoff's Needs a decision.
 
 **What you were doing.** M1's record step, PR #27, under the coordinator's brief: writing the
 owner's answers of 2026-10-19 and 2026-11-03 into the files that own them, the root `CLAUDE.md`

@@ -26,8 +26,8 @@ The owner wants control over what happens.
   `docs/reviews/<branch>/` and its findings folded; the PR body's **Review pass** section
   saying what was acted on and what was dismissed, with reasons; the handoff written. The
   one exception is a PR with no behaviour or decision content — docs, tooling,
-  bookkeeping — which may be marked ready with a Review pass section that says the pass
-  was not run and why. A PR that stacks on another is based on that branch, says "merge
+  bookkeeping — which may be marked ready with a Review pass section opening "Not run:" and
+  saying why. A PR that stacks on another is based on that branch, says "merge
   after #N", carries the `reviewable` label once its own gates are met, and stays a draft
   until its base has merged; GitHub then retargets it to `main`, because this repository
   deletes head branches on merge. **A PR waiting on one in another repository** — a fleet
@@ -64,15 +64,14 @@ does not route work itself:
   last digest and writes one under `docs/digests/`, judged and ranked. The owner reads it
   first; the retro takes its list first. It changes nothing.
 - **`retro`** — runs instead of new work, once every few sessions, after the `manager`.
-- **`ops`** — the running stack, not the repository. **There is no stack yet**; the overlay
-  says so, and `ops` invoked before there is one should stop.
+- **`ops`** — the running stack, not the repository; whether there is one yet to operate is
+  the overlay's to say, and `ops` invoked before there is stops.
 
 Invoke them by name, and write a prompt that stands alone — every agent starts cold. The
-other eight are reachable but not a menu this session chooses from: the implementation
+rest are reachable but not a menu this session chooses from: the implementation
 specialists (`impl-database`, `impl-backend`, `impl-frontend`) are briefed by the director,
 or directly **only when the owner asks for that agent by name**; `qa` walks the product
-against a stated goal as a user would, after a milestone or when the owner asks and never per
-PR, its findings reaching the board through the calling session's close; the reviewers
+against a stated goal, after a milestone or when the owner asks and never per PR; the reviewers
 (`pr-tech-review`, `pr-direction-review`, `pr-parsimony-review`, `pr-architecture-review`)
 have disjoint scopes and all four run on every PR. Their scopes, models and how to brief
 one are in the fleet's [`.claude/agents/CLAUDE.md`](.claude/agents/CLAUDE.md); this
@@ -101,8 +100,7 @@ with a reason.
 A task ends with a handoff in `docs/handoffs/` and a closing step that keeps the record
 and the two GitHub boards — product work, and the agent setup — in step with what it did:
 the scripts under `scripts/` say what drifted, and `scripts/README.md` lists the order to
-run them in. Every few sessions, and always before a retro, the `manager` runs. Once every
-few sessions the `retro` agent runs instead of new work. Both conventions are in
+run them in. The convention, and the `manager`'s and `retro`'s cadence, are in
 [`.claude/agents/CLAUDE.md`](.claude/agents/CLAUDE.md).
 
 ## Where things are
@@ -198,9 +196,13 @@ that will eventually contradict itself.
   `.githooks/pre-push` runs what the build would; both ask `scripts/gates.py`. Activate
   them once per clone with `git config core.hooksPath .githooks`. Past one, once:
   `--no-verify`.
-- **`gh` is on PATH** on the dev machine and authenticated as the owner. **PowerShell 5.1
-  mangles double quotes inside a `--body` or `--jq` argument**: write the body to a scratch
-  file and pass `--body-file`.
+- **`gh` is on PATH** on the dev machine and authenticated as the owner. **A long argument
+  does not survive the shell**: PowerShell 5.1 mangles double quotes inside `--body` or
+  `--jq`, and a quoted heredoc past a kilobyte or two with backticks or apostrophes fails to
+  parse in the Bash tool or silently alters an escape — nothing in the chained call ran.
+  Write the file with the Write tool, then `--body-file` or `python <file>`.
+- **A lane's permission check can refuse an edit to a `CLAUDE.md` as self-modification**; a
+  brief that asks for one says who applies it if refused, and the lane files the text, not waits.
 - **The agent fleet is a git submodule at `.claude/agents/`, and `git worktree add`
   leaves it empty.** `.githooks/post-checkout` fills it once `core.hooksPath` is set
   (above). Without that, run `git submodule update --init .claude/agents` in the worktree

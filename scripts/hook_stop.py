@@ -12,7 +12,7 @@ nine of thirty sessions the pass started only when the owner asked for it, and o
 build ended its turn at 23:08 with the pass unrun and eight hours of budget left; the rule was
 prose ("before asking the user to review"), and prose does not fire at a turn's end. This does.
 
-A session declares an unattended run the way `mode.py` says; anything else is attended. A dirty tree as such is
+A run is unattended unless its worktree declares attended, the way `mode.py` says. A dirty tree as such is
 not a finding here -- mid-task it is the normal state -- and `worktree_status.py --current`
 stays the closing step's gate for it.
 

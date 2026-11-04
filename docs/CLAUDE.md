@@ -43,15 +43,18 @@ build.
 single most common failure in a project like this: a decision made well, argued in a code
 comment, and never written where the next person will look.
 
-Two specific traps, both seen in the sibling project:
+Three specific traps, the first two seen in the sibling project:
 
 - **Citing an ADR that does not contain the decision.** Worse than citing none, because it
   looks reviewed. If the ADR does not say it, add it to the ADR.
 - **A milestone redefined in conversation.** If what is being built stops matching
   `07-roadmap.md`, the roadmap is wrong and must be rewritten — including what replaced any
   sequencing rule that was dropped.
+- **A derived reading written as the owner's.** "The owner, <date>" quotes their words — the
+  ask's question and the option chosen, or the message — and what a session, a director or a
+  reviewer derived from them is written as whose it is, however well it follows.
 
-`pr-direction-review` checks for both, but catching it there means it already reached a PR.
+`pr-direction-review` checks for all three, but catching it there means it already reached a PR.
 
 ## Style
 
