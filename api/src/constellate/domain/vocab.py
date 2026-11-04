@@ -1,8 +1,8 @@
 """The closed vocabularies the log's columns hold, and the type of an entity's id.
 
 The values are ``docs/02-domain-model.md`` §7's ``CHECK`` lists. The database enforces the
-same lists as literals; a test pushes every member through the ORM, so the two cannot drift
-apart unseen.
+same lists as literals, and no test pushes the members through the ORM yet: the round-trip
+guard is Lane 1's, which builds its ``CHECK`` lists from these members.
 """
 
 import uuid

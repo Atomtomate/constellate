@@ -21,7 +21,7 @@ from constellate.domain.draft import (
 from constellate.domain.vocab import CreatorKind, CreatorRole, DurationBasis, ItemKind
 
 T0 = datetime(2026, 11, 1, 12, 0, tzinfo=UTC)
-HINT = ItemHint("spotify", ItemKind.TRACK, "Song")
+HINT = ItemHint(ItemKind.TRACK, "Song")
 
 
 def draft(**changes) -> DraftEvent:
@@ -38,7 +38,7 @@ def draft(**changes) -> DraftEvent:
     return replace(base, **changes)
 
 
-def test_vocab_values_are_docs_02_section_7_check_lists():
+def test_vocab_members_match_the_literals_docs_02_section_7_lists_today():
     assert [m.value for m in DurationBasis] == ["measured", "to_end", "start_only"]
     assert [m.value for m in ItemKind] == ["track", "episode", "chapter", "video"]
     assert [m.value for m in CreatorKind] == ["artist", "channel", "show"]
@@ -119,7 +119,7 @@ def test_a_record_naming_no_item_builds():
 
 
 def test_title_and_creator_name_are_truncated_not_rejected():
-    hint = ItemHint("spotify", ItemKind.TRACK, "t" * (MAX_TITLE_CHARS + 50))
+    hint = ItemHint(ItemKind.TRACK, "t" * (MAX_TITLE_CHARS + 50))
     creator = CreatorHint("n" * (MAX_NAME_CHARS + 50), CreatorKind.ARTIST, CreatorRole.ARTIST)
     assert len(hint.title) == MAX_TITLE_CHARS
     assert len(creator.name) == MAX_NAME_CHARS
@@ -139,3 +139,43 @@ def test_batch_defaults_write_no_cursor_and_drop_nothing():
     batch = Batch((draft(),))
     assert batch.cursor is None
     assert batch.dropped == {}
+
+
+def test_batch_negative_rejected_count_is_refused():
+    with pytest.raises(ValueError, match="negative"):
+        Batch((), rejected=-1)
+
+
+def test_batch_carries_a_rejected_count():
+    assert Batch((), rejected=2).rejected == 2
+
+
+def test_nul_in_key_title_name_or_raw_is_refused():
+    with pytest.raises(ValueError, match="record_key"):
+        draft(record_key="k\x00")
+    with pytest.raises(ValueError, match="title"):
+        ItemHint(ItemKind.TRACK, "a\x00b")
+    with pytest.raises(ValueError, match="name"):
+        CreatorHint("a\x00b", CreatorKind.ARTIST, CreatorRole.ARTIST)
+    for raw in ({"name": "a\x00b"}, {"a\x00": 1}, {"xs": [{"y": "\x00"}]}):
+        with pytest.raises(ValueError, match="raw"):
+            draft(raw=raw)
+
+
+def test_a_backslash_u0000_in_text_is_not_a_nul():
+    assert draft(raw={"s": "\\u0000"})
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf")])
+def test_nan_or_infinity_in_raw_is_refused(bad):
+    with pytest.raises(ValueError, match="JSON"):
+        draft(raw={"x": bad})
+
+
+def test_ended_at_is_none_by_default_utc_and_not_before_the_start():
+    assert draft().ended_at is None
+    assert draft(ended_at=T0 + timedelta(minutes=3)).ended_at == T0 + timedelta(minutes=3)
+    with pytest.raises(ValueError, match="ended_at"):
+        draft(ended_at=datetime(2026, 11, 1, 12, 5))
+    with pytest.raises(ValueError, match="precede"):
+        draft(ended_at=T0 - timedelta(seconds=1))
