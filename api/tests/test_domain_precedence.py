@@ -7,8 +7,8 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from constellate.domain.play import Play
-from constellate.domain.precedence import Resolved, resolve
-from constellate.domain.streams import stream_of
+from constellate.domain.precedence import ITEM_ORDER, START_ORDER, Resolved, resolve
+from constellate.domain.streams import Stream, stream_of
 from constellate.domain.vocab import DurationBasis
 
 T0 = datetime(2026, 11, 1, 12, 0, tzinfo=UTC)
@@ -100,10 +100,16 @@ def test_takeout_and_portability_are_one_stream():
 
 
 def test_a_source_with_no_place_in_the_orders_is_refused():
-    with pytest.raises(ValueError, match="no place"):
+    with pytest.raises(ValueError, match="no stream"):
         resolve([Play("brand-new", None, T0, None, DurationBasis.START_ONLY)])
 
 
 def test_no_observations_is_an_error_not_a_default_event():
     with pytest.raises(ValueError, match="nothing to resolve"):
         resolve([])
+
+
+def test_every_stream_has_its_place_in_the_item_and_start_orders():
+    ranked_for_start = {s for group in START_ORDER for s in group}
+    assert set(ITEM_ORDER) == set(Stream)
+    assert ranked_for_start == set(Stream)

@@ -1,4 +1,10 @@
-"""The streams a source's records belong to, which precedence and matching are written in."""
+"""The streams a source's records belong to, which precedence and matching are written in.
+
+A new source takes its place in one of two ways. A source of a service already observed joins
+a stream: one line of ``_STREAM_OF_SOURCE``. A new observer adds a ``Stream`` member, its rank
+in ``precedence.py``'s ``ITEM_ORDER`` and ``START_ORDER`` (``DURATION_ORDER`` too if it
+measures), and a window in ``matching.py`` if it pairs with another stream.
+"""
 
 from enum import StrEnum
 
@@ -28,8 +34,8 @@ _STREAM_OF_SOURCE: dict[str, Stream] = {
 
 
 def stream_of(source: str) -> Stream:
-    """Return the stream a source belongs to, refusing a source with no place in the orders."""
+    """Return the stream a source belongs to, refusing a source with no stream."""
     try:
         return _STREAM_OF_SOURCE[source]
     except KeyError:
-        raise ValueError(f"source {source!r} has no place in the precedence orders") from None
+        raise ValueError(f"source {source!r} belongs to no stream") from None

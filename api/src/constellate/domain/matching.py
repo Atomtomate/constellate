@@ -6,16 +6,21 @@ equality lives here and nowhere in SQL, because it is what the first weeks of da
 Pairing is one-to-one and *in order*: each incoming play, oldest first, takes the earliest
 unclaimed stored play it could be. Nearest-first is wrong for a track played twice back to
 back, where one stream's end of the first play sits close to the other's start of the second.
+
+A stored play's ``ended_at`` is the observation's column, and the export-poller pair compares
+it on both sides: a play stored or built without one never pairs on that window.
 """
 
 import unicodedata
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
 
+from constellate.domain.draft import DraftEvent
 from constellate.domain.play import Play
 from constellate.domain.streams import Stream
+from constellate.domain.vocab import CreatorRole, EntityId
 
 
 def name_key(text: str) -> str:
@@ -36,10 +41,24 @@ class Moment(StrEnum):
 
 @dataclass(frozen=True)
 class PairWindow:
-    """How close two streams' instants must be to be the same play, and which instants."""
+    """How close two streams' instants must be to be the same play, and which instants.
+
+    Symmetric by default. With ``skewed`` set, that stream's instant is derived and a pause
+    makes it later than the true one, never earlier: it may follow the other's by up to
+    ``allowance`` and precede it by ``tolerance``.
+    """
 
     tolerance: timedelta
     moment: Moment
+    skewed: Stream | None = None
+    allowance: timedelta = timedelta(0)
+
+    def admits(self, stream_a: Stream, instant_a: datetime, instant_b: datetime) -> bool:
+        """Say whether ``stream_a``'s instant and the other stream's instant can be one play."""
+        if self.skewed is None:
+            return abs(instant_a - instant_b) <= self.tolerance
+        late = instant_a - instant_b if stream_a is self.skewed else instant_b - instant_a
+        return -self.tolerance <= late <= self.allowance
 
 
 @dataclass(frozen=True)
@@ -47,17 +66,25 @@ class MatchWindows:
     """The windows of ``docs/02-domain-model.md`` §2's table; all inferences, tuned on real data.
 
     ``poll_interval`` is the poller's Δ, which two of the windows are written in.
+    ``export_pause_allowance`` is how far before the export's derived start (``ts - ms_played``)
+    a scrobble may start: every pause moves the derived start later than the true one.
     """
 
     poll_interval: timedelta = timedelta(seconds=30)
     export_lastfm: timedelta = timedelta(minutes=1)
     google_extension: timedelta = timedelta(minutes=5)
+    export_pause_allowance: timedelta = timedelta(minutes=5)
 
     def between(self, stream_a: Stream, stream_b: Stream) -> PairWindow | None:
         """Return the window for a pair of streams, or None if they are never paired."""
         pair = {stream_a, stream_b}
         if pair == {Stream.SPOTIFY_EXPORT, Stream.LASTFM_SCROBBLES}:
-            return PairWindow(self.export_lastfm, Moment.START)
+            return PairWindow(
+                self.export_lastfm,
+                Moment.START,
+                Stream.SPOTIFY_EXPORT,
+                self.export_pause_allowance,
+            )
         if pair == {Stream.SPOTIFY_EXPORT, Stream.SPOTIFY_POLLER}:
             return PairWindow(2 * self.poll_interval + timedelta(minutes=1), Moment.END)
         if pair == {Stream.LASTFM_SCROBBLES, Stream.SPOTIFY_POLLER}:
@@ -90,6 +117,35 @@ def same_play(a: Play, b: Play) -> bool:
     ) == name_key(b.creator or "")
 
 
+def credited_creator(credits: Iterable[tuple[CreatorRole, int, str]]) -> str | None:
+    """Choose the creator name a play is matched by, from (role, position, name) credits.
+
+    The album artist when there is one, else the first credited; None for no credits. A draft's
+    hints and the creators read back for a stored item both go through here, so the two sides
+    of ``same_play`` cannot choose differently.
+    """
+    ranked = sorted(credits, key=lambda c: (c[0] is not CreatorRole.ALBUM_ARTIST, c[1]))
+    return ranked[0][2] if ranked else None
+
+
+def play_from_draft(draft: DraftEvent, item_id: EntityId | None) -> Play:
+    """Build the play a draft will be paired as, given the item its ref resolved to."""
+    hint = draft.item_hint
+    creator = (
+        credited_creator((c.role, c.position, c.name) for c in hint.creators) if hint else None
+    )
+    return Play(
+        draft.source,
+        item_id,
+        draft.started_at,
+        draft.duration_ms,
+        draft.duration_basis,
+        draft.ended_at,
+        hint.title if hint is not None else None,
+        creator,
+    )
+
+
 def _instant(play: Play, moment: Moment) -> datetime | None:
     """Return the play's start or its observed end; None for an end the source never saw."""
     return play.started_at if moment is Moment.START else play.ended_at
@@ -103,7 +159,7 @@ def _meeting(draft: Play, slot: Slot, windows: MatchWindows) -> datetime | None:
         if window is None or not same_play(draft, stored):
             continue
         ours, theirs = _instant(draft, window.moment), _instant(stored, window.moment)
-        if ours is not None and theirs is not None and abs(ours - theirs) <= window.tolerance:
+        if ours is not None and theirs is not None and window.admits(draft.stream, ours, theirs):
             meets.append(theirs)
     return min(meets) if meets else None
 
@@ -127,7 +183,7 @@ def pair_in_order(
             if s in claimed or any(p.stream == draft.stream for p in slot.plays):
                 continue
             meeting = _meeting(draft, slot, windows)
-            if meeting is not None and (best is None or (meeting, s) < best):
+            if meeting is not None and (best is None or meeting < best[0]):
                 best = (meeting, s)
         if best is not None:
             paired[d] = best[1]

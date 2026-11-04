@@ -8,7 +8,14 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from constellate.domain.draft import CreatorHint, DraftEvent, ItemHint, Ref
-from constellate.domain.matching import MatchWindows, Slot, name_key, pair_in_order
+from constellate.domain.matching import (
+    MatchWindows,
+    Slot,
+    credited_creator,
+    name_key,
+    pair_in_order,
+    play_from_draft,
+)
 from constellate.domain.play import Play
 from constellate.domain.precedence import resolve
 from constellate.domain.vocab import CreatorKind, CreatorRole, DurationBasis, ItemKind
@@ -67,8 +74,8 @@ def test_takeout_and_portability_count_as_one_stream():
 
 def test_a_draft_outside_the_window_pairs_with_nothing():
     slots = [Slot((play("lastfm-scrobbles", 0),))]
-    assert pair_in_order(slots, [play("spotify-export", 61)], WINDOWS) == (None,)
-    assert pair_in_order(slots, [play("spotify-export", 60)], WINDOWS) == (0,)
+    assert pair_in_order(slots, [play("spotify-export", -61)], WINDOWS) == (None,)
+    assert pair_in_order(slots, [play("spotify-export", -60)], WINDOWS) == (0,)
 
 
 def test_a_relinked_uri_pairs_by_title_and_creator():
@@ -160,7 +167,7 @@ def test_a_draft_pairs_with_a_slot_through_any_one_of_its_plays():
     assert pair_in_order([slot], [neither], WINDOWS) == (None,)
 
 
-def test_from_draft_takes_the_album_artist_over_a_first_credited_artist():
+def test_play_from_draft_takes_the_album_artist_over_a_first_credited_artist():
     hint = ItemHint(
         ItemKind.TRACK,
         "Song",
@@ -179,10 +186,10 @@ def test_from_draft_takes_the_album_artist_over_a_first_credited_artist():
         DurationBasis.MEASURED,
         {},
     )
-    built = Play.from_draft(replace(draft, ended_at=T0 + timedelta(seconds=1)), ITEM)
+    built = play_from_draft(replace(draft, ended_at=T0 + timedelta(seconds=1)), ITEM)
     assert (built.title, built.creator, built.item_id) == ("Song", "Band", ITEM)
     assert (built.duration_basis, built.ended_at) == (DurationBasis.MEASURED, at(1))
-    bare = Play.from_draft(
+    bare = play_from_draft(
         DraftEvent("youtube-takeout", "k2", None, None, T0, None, DurationBasis.START_ONLY, {}),
         None,
     )
@@ -216,3 +223,40 @@ def test_every_arrival_order_of_export_poller_and_scrobble_makes_one_identical_e
     assert events[0].item_id == export_item
     assert events[0].started_at == at(5)
     assert events[0].duration_ms == 178_000
+
+
+def test_credited_creator_prefers_the_album_artist_then_the_first_credited():
+    guest, band = (CreatorRole.ARTIST, 0, "Guest"), (CreatorRole.ALBUM_ARTIST, 1, "Band")
+    assert credited_creator([guest, band]) == "Band"
+    assert credited_creator([(CreatorRole.ARTIST, 1, "B"), (CreatorRole.ARTIST, 0, "A")]) == "A"
+    assert credited_creator([]) is None
+
+
+def test_a_scrobble_may_precede_the_exports_derived_start_by_a_pause():
+    # Listened from 12:00:00, paused 90 s: the export's start (ts - ms_played) is 90 s later
+    # than the true start the scrobble saw.
+    scrobble = Slot((play("lastfm-scrobbles", 0),))
+    paused = play("spotify-export", 90, duration_ms=180_000, end=270)
+    assert pair_in_order([scrobble], [paused], WINDOWS) == (0,)
+    allowance = WINDOWS.export_pause_allowance.total_seconds()
+    edge = play("spotify-export", allowance, duration_ms=1, end=allowance + 1)
+    over = play("spotify-export", allowance + 0.001, duration_ms=1, end=allowance + 1)
+    assert pair_in_order([scrobble], [edge], WINDOWS) == (0,)
+    assert pair_in_order([scrobble], [over], WINDOWS) == (None,)
+
+
+def test_the_pause_allowance_is_the_same_with_the_scrobble_as_the_draft():
+    export = Slot((play("spotify-export", 90, duration_ms=1, end=91),))
+    assert pair_in_order([export], [play("lastfm-scrobbles", 0)], WINDOWS) == (0,)
+    late = 90 + WINDOWS.export_lastfm.total_seconds() + 0.001
+    assert pair_in_order([export], [play("lastfm-scrobbles", late)], WINDOWS) == (None,)
+
+
+def test_the_earliest_play_of_a_slot_is_where_it_meets_the_draft():
+    # Slot A meets through a scrobble at 20 s and an export end at 100 s; slot B at 50 s.
+    # Slot A's earliest is 20 s, so it wins from either position in the list.
+    a = Slot((play("spotify-export", 0, duration_ms=1, end=100), play("lastfm-scrobbles", 20)))
+    b = Slot((play("lastfm-scrobbles", 50),))
+    draft = play("spotify-poller", 0, duration_ms=1, end=100)
+    assert pair_in_order([b, a], [draft], WINDOWS) == (1,)
+    assert pair_in_order([a, b], [draft], WINDOWS) == (0,)

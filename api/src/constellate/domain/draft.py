@@ -163,8 +163,9 @@ class Batch:
     than skips. A ``None`` cursor writes none (files, the extension). ``dropped`` counts records
     the adapter skipped on purpose, by reason; ``rejected`` counts records it could not turn into
     a draft (a ``ValueError`` from building one, a malformed row). Both go in the run's counts,
-    and a run whose ``rejected`` is non-zero is not marked ok (``docs/02-domain-model.md`` §2):
-    Lane 2b's ingestion enforces that, this type only carries the count.
+    and a run whose ``rejected`` is non-zero is ``partial``, not ok (``docs/02-domain-model.md``
+    §1): committed, yet the file hash does not spare a second read. The ingestion service
+    enforces that; this type only carries the count.
     """
 
     drafts: tuple[DraftEvent, ...]

@@ -3,9 +3,8 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from constellate.domain.draft import DraftEvent
 from constellate.domain.streams import Stream, stream_of
-from constellate.domain.vocab import CreatorRole, DurationBasis, EntityId
+from constellate.domain.vocab import DurationBasis, EntityId
 
 
 @dataclass(frozen=True)
@@ -15,7 +14,9 @@ class Play:
     ``item_id`` is the item the observation's ref resolved to (None for a name-only scrobble
     with no stand-in); ``title`` and ``creator`` are the names it carried, for matching's
     fallback, and stay None where a caller only resolves. ``ended_at`` is the observed end,
-    not ``started_at + duration_ms``: a pause sits between the two.
+    not ``started_at + duration_ms``: a pause sits between the two. For a stored play it is the
+    observation's ``ended_at`` column (``docs/02-domain-model.md`` §1), which the export-poller
+    pair needs on both sides: a play built without it pairs with nothing on that pair.
     """
 
     source: str
@@ -31,25 +32,3 @@ class Play:
     def stream(self) -> Stream:
         """The stream the play's source belongs to."""
         return stream_of(self.source)
-
-    @classmethod
-    def from_draft(cls, draft: DraftEvent, item_id: EntityId | None) -> "Play":
-        """Build the play a draft will be paired as, given the item its ref resolved to."""
-        hint = draft.item_hint
-        creator = None
-        if hint is not None and hint.creators:
-            # The album artist when the record gives one, else the first credited.
-            credited = sorted(
-                hint.creators, key=lambda c: (c.role is not CreatorRole.ALBUM_ARTIST, c.position)
-            )
-            creator = credited[0].name
-        return cls(
-            draft.source,
-            item_id,
-            draft.started_at,
-            draft.duration_ms,
-            draft.duration_basis,
-            draft.ended_at,
-            hint.title if hint is not None else None,
-            creator,
-        )
