@@ -1,7 +1,7 @@
 # A fix-round brief that names a lane plan that does not exist and a tree that is not clean
 **Agent:** the session-docs and impl-database lanes of the scaffold's second and third fix rounds (workflow subagents), and the session-docs lane of the first; filed by the session from their returned friction text
 **Summary:** a reconstructed scope, an exact-match edit script aborted on anchor drift, and three session-owned files edited by specialists, each because the round's brief stated the tree and the lane's plan as facts a lane could not verify were true
-**Retro:** Unprocessed
+**Retro:** Applied 2026-11-04 — the fleet manual's "State what is already known" now asks a brief to say how it knows a fact, as of a sha or a command, the class the digest named; the fix-round template itself is the session's.
 
 ## What you were doing
 

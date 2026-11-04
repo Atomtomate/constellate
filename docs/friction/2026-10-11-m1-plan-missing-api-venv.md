@@ -1,7 +1,7 @@
 # The M1 plan brief named an `api/.venv` the worktree did not have
 **Agent:** impl-director
 **Summary:** The brief promised a ready API venv at `api/.venv`; it was absent, so `impl-database` built a throwaway venv to probe SQLAlchemy and every M1 lane that runs the API must make one first.
-**Retro:** Unprocessed
+**Retro:** Applied 2026-11-04 — the same manual rule: a brief says how it knows a venv, a tree or a file is there; the overlay's Toolchain already says the venv is one per worktree.
 
 ## What I was doing
 

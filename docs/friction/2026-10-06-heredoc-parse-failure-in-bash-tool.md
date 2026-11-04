@@ -1,7 +1,7 @@
 # A long quoted heredoc fails to parse in the Bash tool, and nothing in the call runs
 **Agent:** the session-docs lane of the scaffold's first fix round (a workflow subagent), and the coordinating session itself; filed by the session from the lane's returned friction text
 **Summary:** two turns and one aborted chain of commits-plus-push-plus-PR, because a quoted heredoc past a few kilobytes of prose with backticks and apostrophes is a parse error for the whole call
-**Retro:** Unprocessed
+**Retro:** Applied 2026-11-04 — the root `CLAUDE.md`'s "Environment gotchas" carries the bullet, merged with the PowerShell quoting one, as the digest's verdict said.
 
 ## What you were doing
 
